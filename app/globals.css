@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* globals.css */
+:root {
+  --bg: 248 250 252;
+  --fg: 15 23 42;
+  --primary: 29 78 216;
+  --secondary: 20 184 166;
+  --hover: 29 78 216;
+  --hover_text: 255 255 255;
+  --border: 209 213 219;
+  --menu: 255 255 255;
+  --nav: 248 250 252;
+  --title: 15 23 42;
+  --input: 255 255 255;
+  --button: 29 78 216;
+  --accent: 20 184 166;
+  --content: 255 255 255;
+  --info: 2 132 199;
+  --warn: 245 175 54;
+  --danger: 235 64 52;
+  --toast: 15 23 42;
+  --icons: 51 65 85;
+}
