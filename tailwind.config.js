@@ -27,6 +27,7 @@ module.exports = {
         accent: "rgb(var(--accent) / <alpha-value>)",
         toast: "rgb(var(--toast) / <alpha-value>)",
         info: "rgb(var(--info) / <alpha-value>)",
+        success: "rbg(var(--success) / <alpha-value>)",
         warn: "rgb(var(--warn) / <alpha-value>)",
         danger: "rgb(var(--danger) / <alpha-value>)",
       },

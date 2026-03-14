@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useDevice } from "@/src/api/hooks/useDevice";
+import { useDevice } from "@/src/api/hooks/settings/useDevice";
 import {
   FaDesktop,
   FaLaptop,
@@ -87,10 +87,10 @@ export default function LoggedDevices() {
 
         <div className="pt-4">
           <button
-            className="bg-danger text-hover_text px-3 py-2 rounded-xl disabled:opacity-60"
+            className="bg-accent text-hover_text px-3 py-2 rounded-xl disabled:opacity-60 text-nowrap"
             type="button"
             disabled={
-              loading || sessions.length === 0 || !!actionLoading.logoutOthers
+              loading || sessions.length <= 1 || !!actionLoading.logoutOthers
             }
             onClick={handleLogoutOthers}
           >
@@ -107,7 +107,7 @@ export default function LoggedDevices() {
         ) : sessions.length === 0 ? (
           <div className="text-sm text-title/70">No other devices found!</div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
             {sessions.map((s: DeviceSession) => (
               <div
                 key={s.id}
@@ -192,7 +192,7 @@ export default function LoggedDevices() {
 
                 <div className="shrink-0">
                   <button
-                    className="px-3 py-2 rounded-xl border border-danger/30 text-danger hover:bg-danger/10 disabled:opacity-60"
+                    className="px-3 py-2 rounded-xl border border-accent/30 text-accent hover:bg-danger/10 disabled:opacity-60"
                     type="button"
                     disabled={
                       loading ||

@@ -1,4 +1,4 @@
-import { csrf, http } from "../config/http";
+import { csrf, http } from "../../config/http";
 
 export const updateTheme = async (payload: any) => {
     try {
@@ -17,7 +17,6 @@ export const updateTheme = async (payload: any) => {
 
 export const getTheme = async (tenantKey: any) => {
     try {
-        await csrf();
         const result = await http.get(`api/company/bootstrap/theme?tenantKey=${tenantKey}`);
 
         if (result.data) {

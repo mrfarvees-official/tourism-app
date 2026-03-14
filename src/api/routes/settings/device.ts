@@ -1,4 +1,4 @@
-import { csrf, http } from "../config/http";
+import { csrf, http } from "../../config/http";
 
 type DeviceSession = {
   id: string;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { updateTheme, getTheme } from "../routes/theme"; // Ensure `getTheme` is imported
+import { updateTheme, getTheme } from "../../routes/settings/theme"; // Ensure `getTheme` is imported
 
 export const useTheme = (tenantKey: string) => {
     const [loading, setLoading] = useState<boolean>(false);

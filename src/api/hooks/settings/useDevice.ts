@@ -4,7 +4,7 @@ import {
   getLoggedDevicesInfo,
   logoutOtherDevices as apiLogoutOtherDevices,
   logoutSingleDevice as apiLogoutSingleDevice,
-} from "../routes/device";
+} from "../../routes/settings/device";
 
 type DeviceSession = {
   id: string;
@@ -30,7 +30,10 @@ function normalizeSessions(res: ApiResponse | null): NormalizedSessions {
   if (Array.isArray(res)) return { sessions: res };
 
   if ("sessions" in res && Array.isArray(res.sessions)) {
-    return { sessions: res.sessions, current_session_id: res.current_session_id };
+    return {
+      sessions: res.sessions,
+      current_session_id: res.current_session_id,
+    };
   }
 
   return { sessions: [] };
@@ -56,7 +59,9 @@ export function useDevice() {
       setRaw(res ?? null);
     } catch (e: any) {
       setRaw([]);
-      setErrors([e?.response?.data?.message ?? e?.message ?? "Failed to load devices"]);
+      setErrors([
+        e?.response?.data?.message ?? e?.message ?? "Failed to load devices",
+      ]);
     } finally {
       setLoading(false);
     }
@@ -68,7 +73,7 @@ export function useDevice() {
 
   const { sessions, current_session_id } = useMemo(
     () => normalizeSessions(raw ?? null),
-    [raw]
+    [raw],
   );
 
   const sessionsWithCurrent = useMemo(() => {
@@ -89,13 +94,15 @@ export function useDevice() {
         await fetchDevices(); // refresh list
         return true;
       } catch (e: any) {
-        setErrors([e?.response?.data?.message ?? e?.message ?? "Failed to logout device"]);
+        setErrors([
+          e?.response?.data?.message ?? e?.message ?? "Failed to logout device",
+        ]);
         return false;
       } finally {
         setActionLoading((p) => ({ ...p, logoutOne: undefined }));
       }
     },
-    [fetchDevices]
+    [fetchDevices],
   );
 
   const logoutOtherDevices = useCallback(async () => {
@@ -107,24 +114,55 @@ export function useDevice() {
       await fetchDevices(); // refresh list
       return true;
     } catch (e: any) {
-      setErrors([e?.response?.data?.message ?? e?.message ?? "Failed to logout other devices"]);
+      setErrors([
+        e?.response?.data?.message ??
+          e?.message ??
+          "Failed to logout other devices",
+      ]);
       return false;
     } finally {
       setActionLoading((p) => ({ ...p, logoutOthers: false }));
     }
   }, [fetchDevices]);
 
+  const sessionsSorted = useMemo(() => {
+    // ensure current flag is set consistently
+    const withCurrent = sessionsWithCurrent;
+
+    // sort rules:
+    // 1) current session(s) first
+    // 2) then by last_seen_at desc (fallback created_at desc)
+    return [...withCurrent].sort((a, b) => {
+      const aCur = a.is_current ? 1 : 0;
+      const bCur = b.is_current ? 1 : 0;
+
+      if (aCur !== bCur) return bCur - aCur;
+
+      const aTime =
+        (a.last_seen_at ? Date.parse(a.last_seen_at) : NaN) ||
+        (a.created_at ? Date.parse(a.created_at) : NaN) ||
+        0;
+
+      const bTime =
+        (b.last_seen_at ? Date.parse(b.last_seen_at) : NaN) ||
+        (b.created_at ? Date.parse(b.created_at) : NaN) ||
+        0;
+
+      return bTime - aTime;
+    });
+  }, [sessionsWithCurrent]);
+
   return {
-    loading,                 // loading sessions list
-    actionLoading,           // loading states for logout actions
+    loading, // loading sessions list
+    actionLoading, // loading states for logout actions
     errors,
     clearState,
     refetch: fetchDevices,
 
-    sessions: sessionsWithCurrent, // always array
+    sessions: sessionsSorted, // always array
     current_session_id,
 
-    logoutDevice,            // (sessionId) => boolean
-    logoutOtherDevices,      // () => boolean
+    logoutDevice, // (sessionId) => boolean
+    logoutOtherDevices, // () => boolean
   };
 }

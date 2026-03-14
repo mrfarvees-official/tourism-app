@@ -3,6 +3,7 @@ import General from "./Settings/General";
 import { MdOutlineSettings } from "react-icons/md";
 import { useQueryState } from "@/src/utils/useParam";
 import LoggedDevices from "./DeviceManagement/LoggedDevices";
+import OrganizationProfile from "./OrganizationProfile/OrganizationProfile";
 
 export type SettingKey =
   | "General"
@@ -71,7 +72,7 @@ export default function SettingsPanel() {
       <div className="w-full flex-grow overflow-hidden">
         {/* Navigation Panel */}
         <nav className="mt-1 overflow-x-auto whitespace-nowrap">
-          <ul className="w-full inline-flex items-center justify-evenly border-b border-accent">
+          <ul className="w-full inline-flex items-start justify-start border-accent">
             {settings.map((key) => (
               <li key={key}>
                 <SettingItem
@@ -83,12 +84,14 @@ export default function SettingsPanel() {
             ))}
           </ul>
         </nav>
+        
+        <hr className="border-t-2"/>
 
         {/* Main Content Section with Scroll */}
         <div className="flex-grow overflow-auto"> {/* Makes this section scrollable */}
           {setting === "General" && <General />}
           {setting === "Ownership" && <></>}
-          {setting === "Organization Profile" && <></>}
+          {setting === "Organization Profile" && <OrganizationProfile />}
           {setting === "SSO" && <></>}
           {setting === "2FA" && <></>}
           {setting === "Device Management" && <LoggedDevices />}

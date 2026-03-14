@@ -7,7 +7,7 @@ import { FaRegCopy } from "react-icons/fa6";
 import { IoMdRefresh } from "react-icons/io";
 import { useRouter } from "next/navigation";
 import PreviewComponent from "./Preview";
-import { useTheme } from "@/src/api/hooks/useTheme";
+import { useTheme } from "@/src/api/hooks/settings/useTheme";
 
 export default function General() {
   const router = useRouter();
@@ -285,7 +285,7 @@ export default function General() {
               <button
                 type="button"
                 onClick={onApply}
-                className="bg-hover px-3 py-2 rounded-xl text-hover_text"
+                className="bg-accent px-3 py-2 rounded-xl text-hover_text"
               >
                 Apply
               </button>

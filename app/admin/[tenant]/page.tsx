@@ -1,7 +1,7 @@
 import AuthGuard from "@/src/app/AuthGuard";
 import MainPanel from "./widgets/MainPanel";
 
-export default async function TenantHome({
+export default async function TenantAdmin({
   params,
 }: {
   params: Promise<{ tenant: string }>;

@@ -25,12 +25,12 @@ function getTenantKey(user: any): TenantKey | null {
 }
 
 // owner check (based on your JSON shape)
-function isOwner(user: any): boolean {
+function isCustomer(user: any): boolean {
   const tenants = Array.isArray(user?.tenants) ? user.tenants : [];
   return tenants.some(
     (t: any) =>
       (t?.status ?? "").toLowerCase() === "active" &&
-      (t?.role ?? "").toLowerCase() === "owner"
+      (t?.role ?? "").toLowerCase() === "customer"
   );
 }
 
@@ -73,7 +73,7 @@ export function redirectToTenantIfNeeded(user: any, path = "/") {
   const adminPath = tenantKey ? `/admin/${tenantKey}` : "/admin"; // or `/admin/${tenantKey}`
 
   // RULE 1: Owners go to base /admin/<tenantKey>
-  if (isOwner(user)) {
+  if (!isCustomer(user)) {
     // If no tenant key, just go base /admin (or your fallback)
     const adminTarget = `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}${adminPath}`;
     if (window.location.href !== adminTarget) window.location.replace(adminTarget);
