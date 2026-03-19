@@ -1,4 +1,5 @@
-import React from "react";
+import AuthGuard from "@/src/app/AuthGuard";
+import MainPanel from "./widgets/MainPanel";
 
 export default async function TenantSiteDesigner({
   params,
@@ -6,5 +7,9 @@ export default async function TenantSiteDesigner({
   params: Promise<{ tenant: string }>;
 }) {
   const { tenant } = await params;
-  return <div>{tenant}</div>;
+  return (
+  <AuthGuard tenant={tenant}>
+    <MainPanel />
+  </AuthGuard>
+  );
 }

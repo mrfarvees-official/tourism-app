@@ -1,8 +1,10 @@
+// AuthGuard.tsx
 "use client";
 
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { isBaseHost } from "@/src/utils/tenant";
 
 export default function AuthGuard({
   tenant,
@@ -13,6 +15,7 @@ export default function AuthGuard({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const status = useSelector((s: any) => s.auth.authStatus) as
     | "idle"
@@ -28,12 +31,26 @@ export default function AuthGuard({
   useEffect(() => {
     if (isChecking) return;
 
-    if (isUnauthed && pathname.toLowerCase() !== "/signin") {
-      router.replace(`/SignIn?next=${encodeURIComponent(`/${tenant}`)}`);
+    const isTenantSubdomain = typeof window !== "undefined" && !isBaseHost();
+
+    // allow unauthenticated tenant homepage
+    if (isUnauthed && isTenantSubdomain && pathname === "/") {
+      return;
     }
-  }, [isChecking, isUnauthed, pathname, router, tenant]);
+
+    if (isUnauthed && pathname.toLowerCase() !== "/signin") {
+      const qs = searchParams?.toString();
+      const next = qs ? `${pathname}?${qs}` : pathname;
+      router.replace(`/SignIn?next=${encodeURIComponent(next)}`);
+    }
+  }, [isChecking, isUnauthed, pathname, router, searchParams, tenant]);
 
   if (isChecking) return null;
+
+  if (isUnauthed && typeof window !== "undefined" && !isBaseHost() && pathname === "/") {
+    return <>{children}</>;
+  }
+
   if (!isAuthenticated) return null;
 
   return <>{children}</>;

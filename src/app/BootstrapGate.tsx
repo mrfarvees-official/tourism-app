@@ -1,3 +1,4 @@
+// BootstrapGate.tsx
 "use client";
 
 import React, { createContext, useContext, useMemo, useState } from "react";
@@ -20,7 +21,7 @@ function FullscreenLoader() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-bg">
       <div className="flex flex-col items-center gap-3">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        <p className="text-sm opacity-70">Loading…</p>
+        <p className="text-sm opacity-70">Loading...</p>
       </div>
     </div>
   );
@@ -30,8 +31,8 @@ export function BootstrapGate({
   bootstrappers,
   children,
 }: {
-  bootstrappers: React.ReactNode; // always mounted
-  children: React.ReactNode; // gated UI
+  bootstrappers: React.ReactNode;
+  children: React.ReactNode;
 }) {
   const [authReady, setAuthReady] = useState(false);
   const [tenantReady, setTenantReady] = useState(false);
@@ -42,13 +43,8 @@ export function BootstrapGate({
   return (
     <Ctx.Provider value={value}>
       {bootstrappers}
-
       {!ready && <FullscreenLoader />}
-
-      {/* Keep mounted if you want, or conditionally mount. */}
-      <div style={{ visibility: ready ? "visible" : "hidden" }}>
-        {children}
-      </div>
+      <div style={{ visibility: ready ? "visible" : "hidden" }}>{children}</div>
     </Ctx.Provider>
   );
 }

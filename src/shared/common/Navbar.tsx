@@ -64,7 +64,7 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="w-full bg-nav text-fg">
+    <header className="w-full bg-nav text-fg boder border-b">
       <Container>
         <div className="mx-auto flex h-14 items-center justify-between max-sm:px-4 sm:h-16">
           {/* Brand */}

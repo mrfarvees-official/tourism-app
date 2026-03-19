@@ -1,3 +1,4 @@
+// AuthBootstrapper.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -21,14 +22,12 @@ export function AuthBootstrapper() {
   const redirected = useRef(false);
   const markedReady = useRef(false);
 
-  // 1) Run authMe once
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
     dispatch(authMe());
   }, [dispatch]);
 
-  // Mark auth ready when ME check completes (success or fail)
   useEffect(() => {
     if (!meChecked) return;
     if (markedReady.current) return;
@@ -36,25 +35,27 @@ export function AuthBootstrapper() {
     setAuthReady(true);
   }, [meChecked, setAuthReady]);
 
-  // 2) Redirect after ME check completes
   useEffect(() => {
     if (!meChecked) return;
     if (redirected.current) return;
 
-    // If logged out -> go to SignIn (but don't loop if already there)
-    if (authStatus !== "authenticated" || !user) {
-      if (pathname !== "/SignIn") {
+    const isTenantSubdomain = typeof window !== "undefined" && !isBaseHost();
+
+    // allow tenant root to stay unauthenticated
+    if ((authStatus !== "authenticated" || !user)) {
+      if (isTenantSubdomain && pathname === "/") return;
+
+      if (pathname.toLowerCase() !== "/signin") {
         redirected.current = true;
         router.replace("/SignIn");
       }
       return;
     }
 
-    // If logged in on base host -> tenant redirect
     if (!isBaseHost()) return;
 
     redirected.current = true;
-    redirectToTenantIfNeeded(user, "/");
+    redirectToTenantIfNeeded(user, pathname || "/");
   }, [meChecked, authStatus, user, pathname, router]);
 
   return null;

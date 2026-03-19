@@ -1,3 +1,4 @@
+// TenantBootstrapper.tsx
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
@@ -15,9 +16,7 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
   const status = useAppSelector((s) => s.tenantBootstrap.status);
   const appearance = useAppSelector((s) => s.tenantBootstrap.appearance);
 
-  // auth state
   const { authStatus, meChecked } = useAppSelector((s) => s.auth);
-
   const isAuthed = meChecked && authStatus === "authenticated";
 
   const activeTheme = useMemo(() => {
@@ -25,25 +24,28 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
   }, [appearance.themes, appearance.activeThemeId]);
 
   const resolvedTenantKey = useMemo(() => {
-    if (tenantKey && tenantKey.trim()) return tenantKey.trim();
+    if (tenantKey?.trim()) return tenantKey.trim();
     if (typeof window === "undefined") return "";
-    // your getTenantKeyFromRequest()
+
     const host = window.location.hostname.split(":")[0].toLowerCase();
     const parts = host.split(".");
+
     if (parts.length >= 3) return parts[0];
     if (parts.length === 2 && parts[1] === "localhost") return parts[0];
+
     const pathParts = window.location.pathname.split("/").filter(Boolean);
+
+    if (pathParts[0] === "_sites" && pathParts[1]) return pathParts[1];
     if (pathParts[0] === "admin" && pathParts[1]) return pathParts[1];
+
     return "";
   }, [tenantKey]);
 
-  // If logged out, force global theme and don't apply tenant theme
   useEffect(() => {
     if (!meChecked) return;
     if (!isAuthed) resetToGlobalTheme();
   }, [meChecked, isAuthed]);
 
-  // If no tenant key, tenant bootstrap is "done"
   useEffect(() => {
     if (resolvedTenantKey) return;
     if (markedReady.current) return;
@@ -51,19 +53,17 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
     setTenantReady(true);
   }, [resolvedTenantKey, setTenantReady]);
 
-  // Only fetch tenant bootstrap when authenticated
   useEffect(() => {
     if (!resolvedTenantKey) return;
     if (!isAuthed) return;
     dispatch(fetchTenantBootstrap(resolvedTenantKey));
   }, [resolvedTenantKey, isAuthed, dispatch]);
 
-  // Mark tenant ready when request finishes (success OR failure)
   useEffect(() => {
     if (!resolvedTenantKey) return;
 
-    // If logged out, don't block the app on tenant bootstrap
     if (!meChecked) return;
+
     if (!isAuthed) {
       if (!markedReady.current) {
         markedReady.current = true;
@@ -79,7 +79,6 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
     setTenantReady(true);
   }, [status, resolvedTenantKey, meChecked, isAuthed, setTenantReady]);
 
-  // Apply theme only when authenticated
   useEffect(() => {
     if (!isAuthed) return;
     if (!activeTheme?.colors) return;
@@ -100,13 +99,11 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
       }
       style.textContent = activeTheme.custom_css;
     } else {
-      // If theme changed and custom_css removed, clean up
       const existing = document.getElementById("tenant-custom-css");
       if (existing) existing.remove();
     }
   }, [isAuthed, activeTheme, appearance.mode_default]);
 
-  // Reapply event only when authenticated
   useEffect(() => {
     if (!isAuthed) return;
     if (!activeTheme?.colors) return;
