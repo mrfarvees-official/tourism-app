@@ -4,43 +4,82 @@ import { useEffect, useState } from "react";
 import ContentPanel from "./ContentPanel";
 import SideNav from "./SideNav";
 import { ComponentNode, DesignerState } from "./palette/types";
-import { componentTree } from "./palette/data";
+import { header, template, footer } from "./palette/data";
 import { initializeDesignStates } from "./componentService";
+import ComponentModal from "./componentService";
 
 export default function MainPanel() {
   const [open, setOpen] = useState(true);
-  const [nodes, setNodes] =
-    useState<Record<string, ComponentNode>>(componentTree);
+
+  const [headerNode, setHeaderNode] = useState<ComponentNode>(header);
+  const [templateNode, setTemplateNode] = useState<ComponentNode>(template);
+  const [footerNode, setFooterNode] = useState<ComponentNode>(footer);
+
   const [designerState, setDesignerState] = useState<DesignerState>({
+  header: {
     nodes: {},
     rootIds: [],
-    selectedId: null,
-    hoveredId: null,
-    history: [],
-    future: [],
-  });
+  },
+  template: {
+    nodes: {},
+    rootIds: [],
+  },
+  footer: {
+    nodes: {},
+    rootIds: [],
+  },
+  selectedSection: null,
+  selectedId: null,
+  hoveredSection: null,
+  hoveredId: null,
+  history: [],
+  future: [],
+});
+
+  const [showComponentModel, setShowComponentModal] = useState(false);
 
   useEffect(() => {
-    initializeDesignStates(nodes.root, setDesignerState);
-  }, []);
+    initializeDesignStates(templateNode, setDesignerState);
+  }, [templateNode]);
 
-  // TODO: remove this debugger log later on.
-  useEffect(() => { console.log(designerState)}, [designerState]);
+  useEffect(() => {
+    console.log(designerState);
+  }, [designerState]);
 
   return (
-    <div className="w-full min-h-screen bg-bg flex">
+    <div className="w-full h-screen bg-bg flex">
       <SideNav
         open={open}
         setOpen={setOpen}
-        nodes={nodes}
-        setNodes={setNodes}
+        headerNode={headerNode}
+        setHeaderNode={setHeaderNode}
+        templateNode={templateNode}
+        setTemplateNode={setTemplateNode}
+        footerNode={footerNode}
+        setFooterNode={setFooterNode}
         designerState={designerState}
         setDesignerState={setDesignerState}
+        setShowComponentModal={setShowComponentModal}
       />
-      <div className="flex-1 min-w-0 overflow-y-auto">
-        <ContentPanel
-          nodes={nodes}
-          setNodes={setNodes}
+
+      <div className="relative flex-1 min-w-0 h-full overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          <ContentPanel
+            headerNode={headerNode}
+            templateNode={templateNode}
+            footerNode={footerNode}
+            setHeaderNode={setHeaderNode}
+            setTemplateNode={setTemplateNode}
+            setFooterNode={setFooterNode}
+            setDesignerState={setDesignerState}
+            setShowComponentModal={setShowComponentModal}
+          />
+        </div>
+
+        <ComponentModal
+          open={showComponentModel}
+          onOpenChange={setShowComponentModal}
+          designerState={designerState}
           setDesignerState={setDesignerState}
         />
       </div>

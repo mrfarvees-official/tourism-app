@@ -5,17 +5,52 @@ import { ComponentNode, DesignerState } from "./palette/types";
 import RenderComponent from "./palette/RenderComponent";
 
 export default function ContentPanel({
-  nodes,
-  setNodes,
-  setDesignerState
+  headerNode,
+  templateNode,
+  footerNode,
+  setHeaderNode,
+  setTemplateNode,
+  setFooterNode,
+  setDesignerState,
+  setShowComponentModal,
 }: {
-  nodes: Record<string, ComponentNode>;
-  setNodes: Dispatch<SetStateAction<Record<string, ComponentNode>>>;
+  headerNode: ComponentNode;
+  templateNode: ComponentNode;
+  footerNode: ComponentNode;
+  setHeaderNode: Dispatch<SetStateAction<ComponentNode>>;
+  setTemplateNode: Dispatch<SetStateAction<ComponentNode>>;
+  setFooterNode: Dispatch<SetStateAction<ComponentNode>>;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
+  setShowComponentModal: Dispatch<SetStateAction<boolean>>;
 }) {
   return (
-  <div className="min-h-screen min-w-0 border border-border">
-    <RenderComponent component={nodes.root} isDesigner={true} isRoot={true} />
-  </div>
-);
+    <div className="min-h-screen min-w-0 border border-border">
+      <RenderComponent
+        component={headerNode}
+        isDesigner={true}
+        isRoot={true}
+        section="header"
+        setDesignerState={setDesignerState}
+        setShowComponentModal={setShowComponentModal}
+      />
+
+      <RenderComponent
+        component={templateNode}
+        isDesigner={true}
+        isRoot={true}
+        section="template"
+        setDesignerState={setDesignerState}
+        setShowComponentModal={setShowComponentModal}
+      />
+
+      <RenderComponent
+        component={footerNode}
+        isDesigner={true}
+        isRoot={true}
+        section="footer"
+        setDesignerState={setDesignerState}
+        setShowComponentModal={setShowComponentModal}
+      />
+    </div>
+  );
 }

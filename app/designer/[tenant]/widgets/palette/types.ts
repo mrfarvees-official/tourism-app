@@ -27,7 +27,7 @@ export type LayoutProps = {
   alignItems?: "start" | "center" | "end" | "stretch";
   gap?: number;
   wrap?: boolean;
-  position?: "static" | "relative" | "absolute" | "sticky";
+  position?: "static" | "relative" | "absolute" | "sticky" | "fixed";
   top?: number;
   right?: number;
   bottom?: number;
@@ -218,11 +218,27 @@ export type VariantState = "default" | "hover" | "active" | "disabled";
 
 export type VariantStyles = Partial<Record<VariantState, StyleProps>>;
 
-export type DesignerState = {
+export type DesignSection = {
   nodes: Record<string, ComponentNode>;
   rootIds: string[];
+};
+
+export type DesignerSnapshot = {
+  header: DesignSection;
+  template: DesignSection;
+  footer: DesignSection;
+};
+
+export type DesignerState = {
+  header: DesignSection;
+  template: DesignSection;
+  footer: DesignSection;
+
+  selectedSection: "header" | "template" | "footer" | null;
   selectedId: string | null;
+  hoveredSection: "header" | "template" | "footer" | null;
   hoveredId: string | null;
-  history: Record<string, ComponentNode>[];
-  future: Record<string, ComponentNode>[];
+
+  history: DesignerSnapshot[];
+  future: DesignerSnapshot[];
 };
