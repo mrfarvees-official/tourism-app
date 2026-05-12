@@ -11,19 +11,24 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Component,
+  ComponentList,
   ComponentNode,
   componentRegistry,
   DesignerState,
 } from "./palette/types";
 import { LuFrame, LuTextCursorInput } from "react-icons/lu";
-import { MdTextFields, MdOutlineDataObject } from "react-icons/md";
-import { FaLink, FaImage, FaList } from "react-icons/fa";
+import {
+  MdTextFields,
+  MdOutlineDataObject,
+  MdOutlineCompare,
+} from "react-icons/md";
+import { FaLink, FaVideo, FaImage, FaList } from "react-icons/fa";
 import { TbCircuitPushbutton } from "react-icons/tb";
 import { GoPackage } from "react-icons/go";
 import { PiSlidersHorizontalBold } from "react-icons/pi";
 import { IoText } from "react-icons/io5";
 import { IoIosAddCircleOutline } from "react-icons/io";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import {
   Dialog,
   DialogBody,
@@ -38,14 +43,52 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@radix-ui/react-dialog";
+import { components } from "./palette/data";
+import RenderComponent from "./palette/RenderComponent";
 
 const iSize = 12;
 const ROW_HEIGHT = 24;
+
+const isHeroSection = (label?: string) => {
+  if (!label) return false;
+
+  const l = label.toLowerCase();
+
+  return l.includes("hero") || l.includes("banner") || l.includes("slideshow");
+};
+
+const getPreviewHeight = (label: string, isHero: boolean) => {
+  const l = label.toLowerCase();
+
+  if (isHero) return PREVIEW_HEIGHT; // 810
+  if (l.includes("featured collection: grid")) return 720;
+  if (l.includes("featured product")) return 460;
+  if (l.includes("product highlight")) return 580;
+  if (l.includes("product hotspots")) return 580;
+  if (l.includes("recommended products")) return 460;
+  if (l.includes("blog posts: carousel")) return 420;
+  if (l.includes("blog posts: editorial")) return 580;
+  if (l.includes("blog posts: grid")) return 420;
+  if (l.includes("carousel")) return 420;
+  if (l.includes("video")) return PREVIEW_HEIGHT;
+  if (l.includes("editorial: jumbo text")) return 480;
+  if (l === "editorial") return 480;
+  if (l.includes("image compare")) return 480;
+  if (l.includes("image with text")) return 530;
+  if (l.includes("marquee")) return 120;
+  if (l.includes("multicolumn")) return 220;
+  if (l.includes("rich text")) return 270;
+  if (l.includes("pull quote")) return 270;
+
+  return 270;
+};
 
 export const typeIcons: Record<Exclude<Component, "Model">, ReactNode> = {
   Frame: <LuFrame size={iSize} />,
   Text: <MdTextFields size={iSize} />,
   Link: <FaLink size={iSize} />,
+  Video: <FaVideo size={iSize} />,
+  ImageCompare: <MdOutlineCompare size={iSize} />,
   Image: <FaImage size={iSize} />,
   Button: <TbCircuitPushbutton size={iSize} />,
   List: <FaList size={iSize} />,
@@ -54,6 +97,7 @@ export const typeIcons: Record<Exclude<Component, "Model">, ReactNode> = {
   Form: <MdOutlineDataObject size={iSize} />,
   Input: <LuTextCursorInput size={iSize} />,
   Label: <IoText size={iSize} />,
+  Icon: <FaImage size={iSize} />,
 };
 
 const traverse = (node: ComponentNode, rootIds: string[]) => {
@@ -289,52 +333,241 @@ type ComponentModalProps = {
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
 };
 
+const PREVIEW_WIDTH = 1440;
+const PREVIEW_HEIGHT = 810; // 16:9
+const PREVIEW_SCALE = 0.48;
+
 export default function ComponentModal({
   open,
   onOpenChange,
   designerState,
 }: ComponentModalProps) {
+  const [selected, setSelected] = useState<string>("");
+  const [selectedNode, setSelectedNode] = useState<ComponentNode | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState<string>("");
+  const [compMenu] = useState<ComponentList[]>(components);
+  const [sortedComponents, setSortedComponents] =
+    useState<ComponentList[]>(components);
+
+  useEffect(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      setSortedComponents(compMenu);
+      return;
+    }
+
+    const filtered = compMenu
+      .map((category) => ({
+        ...category,
+        list: category.list.filter((item) => {
+          return (
+            item.label.toLowerCase().includes(query) ||
+            item.node.type.toLowerCase().includes(query)
+          );
+        }),
+      }))
+      .filter((category) => category.list.length > 0);
+
+    setSortedComponents(filtered);
+  }, [search, compMenu]);
+
+  const reset = () => {
+    setSearch("");
+    setSelected("");
+    setSelectedNode(null);
+  };
+
+  // const isHero = Boolean(
+  //   selectedNode?.layout?.height ||
+  //   (typeof selectedNode?.layout?.minHeight?.value === "number" &&
+  //     selectedNode.layout.minHeight.value >= 500) ||
+  //   isHeroSection(selected),
+  // );
+
+  const isHero = isHeroSection(selected);
+
+  const previewHeight = getPreviewHeight(selected, isHero);
+
   if (!open) return null;
 
   return (
     <div
-      style={{
-        zIndex: 99999
-      }}
+      style={{ zIndex: 99999 }}
       className="
         absolute left-0 top-0
-        h-[80%] w-[60%]
+        h-[80%] w-[85%]
         min-w-[320px]
-        rounded-tr-lg border bg-white p-6 shadow-2xl
+        rounded-lg border bg-white p-0 shadow-2xl
+        overflow-hidden
       "
     >
       <button
         type="button"
-        onClick={() => onOpenChange(false)}
+        onClick={() => {
+          onOpenChange(false);
+          reset();
+        }}
         className="absolute right-4 top-4 rounded-sm opacity-70 transition hover:opacity-100"
       >
         ✕
       </button>
 
-      <div className="flex flex-col space-y-2 text-left">
-        <h2 className="text-lg font-semibold leading-none tracking-tight">
-          {designerState.selectedSection} ({designerState.selectedId})
-        </h2>
-        <p className="text-sm text-gray-500">Description</p>
-      </div>
+      <div className="flex h-full min-h-0 items-stretch">
+        {/* Components */}
+        <div className="flex h-full min-h-0 w-[25%] flex-col">
+          <div className="p-2">
+            <div className="relative w-full">
+              <Search
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                size={16}
+              />
 
-      <div className="py-4">
-        <p>Something</p>
-      </div>
+              <input
+                type="text"
+                placeholder="Search"
+                value={search}
+                onChange={(e: any) => setSearch(e.target.value)}
+                className="
+                  w-full pl-8 pr-2 py-1
+                  rounded-md border-2 border-black
+                  bg-neutral-100 outline-none
+                  placeholder-neutral-500
+                "
+              />
+            </div>
+          </div>
 
-      <div className="mt-6 flex justify-end">
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="rounded-md bg-black px-4 py-2 text-white"
-        >
-          Save
-        </button>
+          <div className="w-full h-[1px] mt-2 bg-gray-200" />
+
+          {/* Scrollable list */}
+          <div className="mt-2 flex-1 min-h-0 overflow-y-auto pr-0 custom-scrollbar">
+            {sortedComponents.map((category) => {
+              const isOpen = expanded[category.label] ?? true;
+
+              return (
+                <div key={category.label} className="mb-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpanded((prev) => ({
+                        ...prev,
+                        [category.label]: !isOpen,
+                      }))
+                    }
+                    className="flex w-full items-center justify-between rounded-md px-2 py-1"
+                  >
+                    <span className="font-semibold text-sm text-gray-600">
+                      {category.label}
+                    </span>
+
+                    <motion.span
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown size={16} />
+                    </motion.span>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{
+                          duration: 0.22,
+                          ease: "easeInOut",
+                        }}
+                        className="overflow-hidden"
+                      >
+                        <div className="mt-1 space-y-1 pl-2">
+                          {category.list.map((item) => {
+                            return (
+                              <button
+                                key={item.label}
+                                onMouseEnter={() => {
+                                  setSelected(item.label);
+                                  setSelectedNode(item.node);
+                                }}
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-gray-100"
+                              >
+                                {item.icon && (
+                                  <span className="flex h-5 w-5 items-center justify-center text-sm">
+                                    {item.icon}
+                                  </span>
+                                )}
+
+                                <span>{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <div className="w-full h-[1px] bg-gray-200"></div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Preview */}
+        <div className="flex-1 min-h-0 flex items-center justify-center overflow-auto p-4 bg-gray-200">
+          {!selectedNode ? (
+            <div className="flex flex-col items-center">
+              <p className="text-md font-semibold">No preview available</p>
+              <p className="text-sm">select any component</p>
+            </div>
+          ) : (
+            <div
+              className="w-full rounded-md max-w-6xl overflow-hidden flex items-center justify-center"
+              style={{
+                height: previewHeight * PREVIEW_SCALE,
+              }}
+            >
+              <div
+                style={{
+                  width: PREVIEW_WIDTH * PREVIEW_SCALE,
+                  height: previewHeight * PREVIEW_SCALE,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: PREVIEW_WIDTH,
+                    height: previewHeight,
+                    transform: `scale(${PREVIEW_SCALE})`,
+                    transformOrigin: "top left",
+                  }}
+                >
+                  <RenderComponent
+                    component={{
+                      ...selectedNode,
+                      layout: {
+                        ...selectedNode.layout,
+                        width: { value: 100, unit: "%" },
+                        height: {
+                          value: previewHeight,
+                          unit: "px",
+                        },
+                        minHeight: undefined,
+                      },
+                    }}
+                    isDesigner={false}
+                    isRoot={false}
+                    section={selected}
+                    setShowComponentModal={() => {}}
+                    setDesignerState={() => {}}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

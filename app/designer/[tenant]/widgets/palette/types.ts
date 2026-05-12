@@ -113,9 +113,44 @@ export type InputProps = {
   required?: boolean;
 };
 
+export type IconProps = {
+  library: "fa" | "md" | "io" | "bs" | "hi" | "lu";
+  name: string;
+};
+
+export type VideoProvider =
+  | "youtube"
+  | "vimeo"
+  | "facebook"
+  | "tiktok"
+  | "instagram"
+  | "file"
+  | "custom";
+
+export type VideoProps = {
+  href: string;
+  provider?: VideoProvider;
+  video?: boolean;
+  controls?: boolean;
+  autoplay?: boolean;
+  muted?: boolean;
+  loop?: boolean;
+  poster?: string;
+};
+
+export type ImageCompareProps = {
+  beforeSrc: string;
+  afterSrc: string;
+  beforeAlt?: string;
+  afterAlt?: string;
+  value?: number; // 0-100 default 50
+};
+
 export type NodePropsMap = {
   Frame: {};
   Link: LinkProps;
+  Video: VideoProps;
+  ImageCompare: ImageCompareProps;
   Text: TextProps;
   Image: ImageProps;
   Button: ButtonProps;
@@ -125,6 +160,7 @@ export type NodePropsMap = {
   Model: {};
   Form: {};
   Input: InputProps;
+  Icon: IconProps;
   Label: { text: string; htmlFor?: string };
 };
 
@@ -140,14 +176,12 @@ export type Component =
   | "Model"
   | "Form"
   | "Input"
-  | "Label";
+  | "Label"
+  | "Icon"
+  | "Video"
+  | "ImageCompare";
 
-export type ChildrenPosition =
-  | "Left"
-  | "Right"
-  | "Top"
-  | "Bottom"
-  | "Center";
+export type ChildrenPosition = "Left" | "Right" | "Top" | "Bottom" | "Center";
 
 export type Scroll =
   | "Scrollable"
@@ -182,6 +216,8 @@ export type ComponentRules = {
 export const componentRegistry: Record<Component, ComponentRules> = {
   Frame: { canHaveChildren: true },
   Link: { canHaveChildren: true },
+  Video: { canHaveChildren: false },
+  ImageCompare: { canHaveChildren: false },
   Text: { canHaveChildren: false },
   Image: { canHaveChildren: false },
   Button: { canHaveChildren: false },
@@ -189,6 +225,9 @@ export const componentRegistry: Record<Component, ComponentRules> = {
   Card: { canHaveChildren: true },
   Slider: { canHaveChildren: true },
   Model: { canHaveChildren: false },
+  Icon: {
+    canHaveChildren: false,
+  },
   Form: {
     canHaveChildren: true,
     allowedChildren: ["Input", "Label", "Button", "Frame", "Text"],
@@ -241,4 +280,15 @@ export type DesignerState = {
 
   history: DesignerSnapshot[];
   future: DesignerSnapshot[];
+};
+
+export type ComponentListItem = {
+  label: string;
+  icon?: React.ReactNode; // ← supports anything
+  node: ComponentNode;
+};
+
+export type ComponentList = {
+  label: string;
+  list: ComponentListItem[];
 };

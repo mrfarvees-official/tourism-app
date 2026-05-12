@@ -1,6 +1,12 @@
 import React, { Dispatch, SetStateAction } from "react";
 import { ComponentNode, Dimension, Component, DesignerState } from "./types";
 import { componentRegistry } from "./types";
+import * as FaIcons from "react-icons/fa";
+import * as MdIcons from "react-icons/md";
+import * as IoIcons from "react-icons/io5";
+import * as BsIcons from "react-icons/bs";
+import * as HiIcons from "react-icons/hi2";
+import * as LuIcons from "lucide-react";
 
 function getSize(size?: Dimension): string | undefined {
   if (!size) return undefined;
@@ -18,6 +24,31 @@ function hasSrc(props: ComponentNode["props"]): props is { src?: string } {
 
 function hasText(props: ComponentNode["props"]): props is { text?: string } {
   return !!props && typeof props === "object" && "text" in props;
+}
+
+function resolveIcon(library: string, name: string) {
+  switch (library) {
+    case "fa":
+      return FaIcons[name as keyof typeof FaIcons];
+
+    case "md":
+      return MdIcons[name as keyof typeof MdIcons];
+
+    case "io":
+      return IoIcons[name as keyof typeof IoIcons];
+
+    case "bs":
+      return BsIcons[name as keyof typeof BsIcons];
+
+    case "hi":
+      return HiIcons[name as keyof typeof HiIcons];
+
+    case "lu":
+      return LuIcons[name as keyof typeof LuIcons];
+
+    default:
+      return null;
+  }
 }
 
 function hasObjectFit(
@@ -91,10 +122,7 @@ function RenderComponentInner({
     left: component.layout?.left,
     zIndex: component.layout?.zIndex,
 
-    overflow:
-      component.layout?.overflow === "hidden"
-        ? "visible"
-        : component.layout?.overflow,
+    overflow: component.layout?.overflow,
 
     backgroundColor: component.style?.backgroundColor ?? "transparent",
     backgroundImage: component.style?.backgroundImage
@@ -104,7 +132,7 @@ function RenderComponentInner({
     backgroundRepeat: component.style?.backgroundRepeat ?? "no-repeat",
     backgroundPosition: component.style?.backgroundPosition ?? "center center",
 
-    display: hasChildren ? (component.layout?.display ?? "block") : "block",
+    display: component.layout?.display ?? (hasChildren ? "block" : "block"),
     gap: hasChildren ? (component.layout?.gap ?? 0) : undefined,
     flexDirection: component.layout?.flexDirection,
     justifyContent: component.layout?.justifyContent,
@@ -132,6 +160,17 @@ function RenderComponentInner({
     textDecoration: "none",
   };
 
+  const isMarquee = component.props && "marquee" in component.props;
+
+  const marqueeStyle: React.CSSProperties = isMarquee
+    ? {
+        display: "flex",
+        width: "max-content",
+        whiteSpace: "nowrap",
+        animation: "marquee 18s linear infinite",
+      }
+    : {};
+
   const showAddChildControl =
     isDesigner && !isRoot && canHaveChildren && hoveredId === component.id;
 
@@ -153,11 +192,11 @@ function RenderComponentInner({
     },
   };
 
-  const renderChildren = () =>
+  const renderChildren = (suffix = "") =>
     hasChildren
       ? component.children!.map((child) => (
           <RenderComponentInner
-            key={child.id}
+            key={`${child.id}${suffix}`}
             component={child}
             isDesigner={isDesigner}
             isRoot={false}
@@ -207,7 +246,11 @@ function RenderComponentInner({
             setDesignerState((prev) => ({
               ...prev,
               selectedId: component.id,
-              selectedSection: section as "header" | "template" | "footer" | null,
+              selectedSection: section as
+                | "header"
+                | "template"
+                | "footer"
+                | null,
             }));
 
             setShowComponentModal(true);
@@ -242,18 +285,274 @@ function RenderComponentInner({
     );
   };
 
+  const iconLibraries = {
+    fa: FaIcons,
+    md: MdIcons,
+    io: IoIcons,
+    bs: BsIcons,
+    hi: HiIcons,
+    lu: LuIcons,
+  };
+
   switch (component.type) {
+    case "ImageCompare": {
+      const props = component.props as {
+        beforeSrc: string;
+        afterSrc: string;
+        beforeAlt?: string;
+        afterAlt?: string;
+        value?: number;
+      };
+
+      const [position, setPosition] = React.useState(props.value ?? 50);
+      const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+      const updatePosition = (clientX: number) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const next = ((clientX - rect.left) / rect.width) * 100;
+        setPosition(Math.max(0, Math.min(100, next)));
+      };
+
+      const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.buttons !== 1) return;
+        updatePosition(e.clientX);
+      };
+
+      return (
+        <div
+          ref={containerRef}
+          style={{
+            ...wrapperStyle,
+            position: "relative",
+            userSelect: "none",
+            cursor: "ew-resize",
+          }}
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            updatePosition(e.clientX);
+          }}
+          onPointerMove={onPointerMove}
+          {...commonHoverProps}
+        >
+          <img
+            src={props.afterSrc}
+            alt={props.afterAlt ?? "After"}
+            draggable={false}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: `${position}%`,
+              overflow: "hidden",
+            }}
+          >
+            <img
+              src={props.beforeSrc}
+              alt={props.beforeAlt ?? "Before"}
+              draggable={false}
+              style={{
+                width: containerRef.current?.offsetWidth ?? "100%",
+                height: "100%",
+                objectFit: "cover",
+                maxWidth: "none",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: `${position}%`,
+              width: 2,
+              backgroundColor: "#ffffff",
+              transform: "translateX(-50%)",
+              zIndex: 2,
+            }}
+          />
+
+          <div
+            style={{
+              position: "absolute",
+              left: `${position}%`,
+              top: "50%",
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              backgroundColor: "#ffffff",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+              transform: "translate(-50%, -50%)",
+              zIndex: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 12,
+              color: "#111111",
+            }}
+          >
+            ↔
+          </div>
+
+          {renderAddChildControl()}
+        </div>
+      );
+    }
+
+    case "Video": {
+      const props = component.props as {
+        href: string;
+        provider?: string;
+        controls?: boolean;
+        autoplay?: boolean;
+        muted?: boolean;
+        loop?: boolean;
+        poster?: string;
+      };
+
+      const getEmbedUrl = () => {
+        if (!props.href) return "";
+
+        if (props.provider === "youtube") {
+          const match = props.href.match(
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/,
+          );
+          const id = match?.[1];
+
+          if (!id) return props.href;
+
+          const params = new URLSearchParams({
+            controls: props.controls ? "1" : "0",
+            autoplay: props.autoplay ? "1" : "0",
+            mute: props.muted ? "1" : "0",
+            loop: props.loop ? "1" : "0",
+          });
+
+          return `https://www.youtube.com/embed/${id}?${params.toString()}`;
+        }
+
+        if (props.provider === "vimeo") {
+          const id = props.href.split("/").filter(Boolean).pop();
+
+          return `https://player.vimeo.com/video/${id}`;
+        }
+
+        if (props.provider === "facebook") {
+          return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+            props.href,
+          )}&show_text=false&controls=${props.controls ? "true" : "false"}`;
+        }
+
+        return props.href;
+      };
+
+      const isFile = props.provider === "file";
+
+      return (
+        <div style={wrapperStyle} {...commonHoverProps}>
+          {isFile ? (
+            <video
+              src={props.href}
+              poster={props.poster}
+              controls={props.controls}
+              autoPlay={props.autoplay}
+              muted={props.muted}
+              loop={props.loop}
+              playsInline
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <iframe
+              src={getEmbedUrl()}
+              title={component.name ?? "Video"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                border: 0,
+              }}
+            />
+          )}
+
+          {renderAddChildControl()}
+        </div>
+      );
+    }
+
+    case "Icon": {
+      const props = component.props as {
+        library?: string;
+        name?: string;
+      };
+
+      if (!props.library || !props.name) return null;
+
+      const Icon = resolveIcon(props.library, props.name) as
+        | React.ComponentType<any>
+        | undefined;
+
+      if (!Icon) return null;
+
+      return (
+        <span
+          style={{
+            ...wrapperStyle,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            lineHeight: 1,
+          }}
+          {...commonHoverProps}
+        >
+          <Icon
+            size={component.style?.fontSize || 20}
+            color={component.style?.textColor || "#111"}
+          />
+        </span>
+      );
+    }
+
     case "Text": {
       const text = hasText(component.props)
         ? component.props.text
         : (component.name ?? "");
 
-      return (
-        <div style={wrapperStyle} {...commonHoverProps}>
-          <div>{text}</div>
-          {renderChildren()}
-          {renderAddChildControl()}
-        </div>
+      const tag =
+        component.props &&
+        typeof component.props === "object" &&
+        "tag" in component.props
+          ? String(component.props.tag)
+          : "p";
+
+      return React.createElement(
+        tag,
+        {
+          style: {
+            ...wrapperStyle,
+            margin: 0,
+            whiteSpace: "pre-line",
+          },
+          ...commonHoverProps,
+        },
+        text,
       );
     }
 
@@ -328,8 +627,55 @@ function RenderComponentInner({
 
     default:
       return (
-        <div style={wrapperStyle} {...commonHoverProps}>
-          {renderChildren()}
+        <div
+          style={{
+            ...wrapperStyle,
+            display: isMarquee ? "block" : wrapperStyle.display,
+            overflow: isMarquee ? "hidden" : wrapperStyle.overflow,
+          }}
+          {...commonHoverProps}
+        >
+          {isMarquee && (
+            <style>
+              {`
+            @keyframes marquee {
+              from {
+                transform: translateX(0);
+              }
+              to {
+                transform: translateX(-25%);
+              }
+            }
+          `}
+            </style>
+          )}
+
+          {isMarquee ? (
+            <div
+              style={{
+                display: "flex",
+                width: "max-content",
+                animation: "marquee 40s linear infinite",
+              }}
+            >
+              {[0, 1, 2, 3].map((copyIndex) => (
+                <div
+                  key={copyIndex}
+                  style={{
+                    display: "flex",
+                    gap: component.layout?.gap ?? 0,
+                    flexShrink: 0,
+                    paddingRight: component.layout?.gap ?? 0,
+                  }}
+                >
+                  {renderChildren(`-${copyIndex}`)}
+                </div>
+              ))}
+            </div>
+          ) : (
+            renderChildren()
+          )}
+
           {renderAddChildControl()}
         </div>
       );

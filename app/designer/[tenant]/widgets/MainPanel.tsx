@@ -36,7 +36,7 @@ export default function MainPanel() {
   future: [],
 });
 
-  const [showComponentModel, setShowComponentModal] = useState(false);
+  const [showComponentModel, setShowComponentModal] = useState(true);
 
   useEffect(() => {
     initializeDesignStates(templateNode, setDesignerState);
