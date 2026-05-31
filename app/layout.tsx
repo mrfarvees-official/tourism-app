@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/src/shared/common/Navbar";
 import Providers from "@/src/app/providers";
 import { AuthBootstrapper } from "@/src/app/AuthBootstrapper";
 import TenantBootstrapper from "@/src/app/TenantBootstrapper";
 import { BootstrapGate } from "@/src/app/BootstrapGate";
 import { QueryParamProvider } from "@/src/utils/queryParamProvider";
+import { RootNavbar } from "@/src/shared/common/RootNavbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +43,7 @@ export default function RootLayout({
             }
           >
             <div className="flex flex-col min-h-full">
-              <Navbar />
+              <RootNavbar />
               <QueryParamProvider>
                 {children}
               </QueryParamProvider>

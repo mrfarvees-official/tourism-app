@@ -1,7 +1,14 @@
 // proxy.ts
 import { NextRequest, NextResponse } from "next/server";
 
-const ROOT_DOMAIN = (process.env.ROOT_DOMAIN || "").toLowerCase().trim();
+const ROOT_DOMAIN = (
+  process.env.ROOT_DOMAIN ||
+  process.env.NEXT_PUBLIC_ROOT_DOMAIN ||
+  process.env.PLATFORM_ROOT_DOMAIN ||
+  ""
+)
+  .toLowerCase()
+  .trim();
 const RESERVED = new Set(
   (process.env.RESERVED_SUBDOMAINS || "www,api")
     .split(",")

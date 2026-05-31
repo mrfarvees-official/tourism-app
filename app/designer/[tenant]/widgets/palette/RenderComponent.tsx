@@ -64,6 +64,161 @@ type HoverContextType = {
 
 const HoverContext = React.createContext<HoverContextType | null>(null);
 
+function readPath(obj: unknown, path?: string): unknown {
+  if (!obj || !path) return undefined;
+  return path
+    .split(".")
+    .filter(Boolean)
+    .reduce<unknown>((acc, key) => {
+      if (acc && typeof acc === "object" && key in (acc as Record<string, unknown>)) {
+        return (acc as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, obj);
+}
+
+function getTenantKeyFromLocation(): string | null {
+  if (typeof window === "undefined") return null;
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  if (parts[0] === "admin" || parts[0] === "designer") return parts[1] ?? null;
+  if (parts[0] === "_sites") return parts[1] ?? null;
+  return null;
+}
+
+function buildTargetEndpoint({
+  targetResource,
+  endpoint,
+  menu,
+  limit,
+  tenantKey,
+}: {
+  targetResource?: string;
+  endpoint?: string;
+  menu?: string;
+  limit?: number;
+  tenantKey?: string | null;
+}): string {
+  if (endpoint) {
+    const compiled = endpoint.replaceAll(":tenantKey", tenantKey ?? "");
+    return compiled;
+  }
+
+  const baseMap: Record<string, string> = {
+    product: "/api/content",
+    collection: "/api/content",
+    customer: "/api/content",
+    cart: "/api/content",
+    form: "/api/content",
+    custom: "/api/content",
+  };
+
+  const base = baseMap[targetResource ?? ""] ?? "/api/content";
+  const params = new URLSearchParams();
+  if (tenantKey) params.set("tenantKey", tenantKey);
+  if (menu) params.set("menu", menu);
+  if (targetResource && targetResource !== "custom") params.set("resource", targetResource);
+  if (typeof limit === "number" && Number.isFinite(limit)) params.set("limit", String(limit));
+
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+function useRepeatableData({
+  isDesigner,
+  component,
+}: {
+  isDesigner: boolean;
+  component: ComponentNode;
+}) {
+  const [items, setItems] = React.useState<unknown[] | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [policy, setPolicy] = React.useState<{
+    version: number;
+    columnVisibility: Record<string, boolean>;
+  }>({ version: 1, columnVisibility: {} });
+
+  const runtime = component.runtime;
+  const repeat = runtime?.repeat;
+  const propsRepeat =
+    component.props && typeof component.props === "object"
+      ? (component.props as Record<string, unknown>).repeat
+      : undefined;
+
+  const cfg = (repeat ??
+    (typeof propsRepeat === "object" && propsRepeat
+      ? (propsRepeat as { enabled?: boolean; endpoint?: string; dataPath?: string })
+      : undefined)) as { enabled?: boolean; endpoint?: string; dataPath?: string } | undefined;
+  const cfgWithTarget = cfg as {
+    enabled?: boolean;
+    endpoint?: string;
+    dataPath?: string;
+    targetResource?: string;
+    menu?: string;
+    limit?: number;
+    policyPath?: string;
+  } | undefined;
+  const sourceFallback = component.dataBinding?.source;
+  const tenantKey = getTenantKeyFromLocation();
+  const resolvedEndpoint = buildTargetEndpoint({
+    targetResource: cfgWithTarget?.targetResource ?? sourceFallback,
+    endpoint: cfgWithTarget?.endpoint,
+    menu: cfgWithTarget?.menu,
+    limit: cfgWithTarget?.limit,
+    tenantKey,
+  });
+
+  const enabled = !isDesigner && !!cfg?.enabled && !!resolvedEndpoint;
+  const endpoint = resolvedEndpoint;
+  const dataPath = cfg?.dataPath;
+  const policyPath = cfgWithTarget?.policyPath;
+
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!enabled) {
+      setItems(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    fetch(endpoint)
+      .then((res) => res.json())
+      .then((payload: unknown) => {
+        if (cancelled) return;
+        const scoped = dataPath ? readPath(payload, dataPath) : payload;
+        const policyCandidate = policyPath ? readPath(payload, policyPath) : readPath(payload, "meta.resourcePolicy");
+        if (policyCandidate && typeof policyCandidate === "object") {
+          const next = policyCandidate as { version?: unknown; columnVisibility?: unknown };
+          setPolicy({
+            version: typeof next.version === "number" ? next.version : 1,
+            columnVisibility:
+              next.columnVisibility && typeof next.columnVisibility === "object"
+                ? (next.columnVisibility as Record<string, boolean>)
+                : {},
+          });
+        } else {
+          setPolicy({ version: 1, columnVisibility: {} });
+        }
+        if (Array.isArray(scoped)) setItems(scoped);
+        else setItems([]);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setItems([]);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, endpoint, dataPath, policyPath]);
+
+  return { enabled, items, loading, policy };
+}
+
 function RenderComponentInner({
   component,
   isDesigner,
@@ -72,6 +227,7 @@ function RenderComponentInner({
   section,
   setShowComponentModal,
   setDesignerState,
+  runtimeItem,
 }: {
   component: ComponentNode;
   isDesigner: boolean;
@@ -80,15 +236,50 @@ function RenderComponentInner({
   section: string;
   setShowComponentModal: Dispatch<SetStateAction<boolean>>;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
+  runtimeItem?: unknown;
 }) {
+  const repeatable = useRepeatableData({ isDesigner, component });
   const hoverContext = React.useContext(HoverContext);
   if (!hoverContext) return null;
 
   const { hoveredId, setHoveredId } = hoverContext;
-  const hasChildren = (component.children?.length ?? 0) > 0;
+  const effectiveChildren =
+    component.runtime?.repeat && (component.children?.length ?? 0) > 0
+      ? [component.children![0]]
+      : (component.children ?? []);
+  const hasChildren = effectiveChildren.length > 0;
+  const runtimeProps = React.useMemo(() => {
+    const runtime = component.runtime;
+    const map = runtime?.columnMap;
+    const props = (component.props ?? {}) as Record<string, unknown>;
+    const propMap =
+      typeof props.columnMap === "object" && props.columnMap
+        ? (props.columnMap as Record<string, string>)
+        : undefined;
 
-  const rules = componentRegistry[component.type as Component];
-  const canHaveChildren = rules?.canHaveChildren ?? false;
+    const finalMap = {
+      text: map?.text ?? propMap?.text,
+      label: map?.label ?? propMap?.label,
+      src: map?.src ?? propMap?.src,
+      href: map?.href ?? propMap?.href,
+      alt: map?.alt ?? propMap?.alt,
+      htmlFor: map?.htmlFor ?? propMap?.htmlFor,
+    };
+
+    const getBound = (key: keyof typeof finalMap, fallback?: string) => {
+      if (isDesigner) return fallback;
+      const path = finalMap[key];
+      if (!path) return fallback;
+      const isVisible = repeatable.policy.columnVisibility[path];
+      if (isVisible === false) return undefined;
+      const value = readPath(runtimeItem, path);
+      return value == null ? fallback : String(value);
+    };
+
+    return { getBound };
+  }, [component.runtime, component.props, runtimeItem, isDesigner, repeatable.policy]);
+
+  const isExactHovered = isDesigner && hoveredId === component.id;
 
   const width = getSize(component.layout?.width);
   const height = getSize(component.layout?.height);
@@ -150,7 +341,12 @@ function RenderComponentInner({
     borderColor: component.style?.borderColor,
     borderRadius: component.style?.borderRadius,
     opacity: component.style?.opacity,
-    boxShadow: component.style?.boxShadow,
+    boxShadow: isExactHovered
+      ? `${component.style?.boxShadow ? `${component.style.boxShadow}, ` : ""}0 0 0 2px rgba(3, 102, 252, 0.6)`
+      : component.style?.boxShadow,
+    outline: isExactHovered ? "1px solid #0366fc" : undefined,
+    outlineOffset: isExactHovered ? 0 : undefined,
+    transition: isDesigner ? "box-shadow 120ms ease, outline-color 120ms ease" : undefined,
     color: component.style?.textColor,
     fontSize: component.style?.fontSize,
     fontWeight: component.style?.fontWeight,
@@ -171,117 +367,86 @@ function RenderComponentInner({
       }
     : {};
 
-  const showAddChildControl =
-    isDesigner && !isRoot && canHaveChildren && hoveredId === component.id;
-
   const commonHoverProps = {
     onMouseEnter: (e: React.MouseEvent) => {
       e.stopPropagation();
       setHoveredId(component.id);
     },
+    onMouseMove: (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setHoveredId(component.id);
+    },
     onMouseLeave: (e: React.MouseEvent) => {
       e.stopPropagation();
-      setHoveredId(parentId);
+      setHoveredId((prev) => (prev === component.id ? null : prev));
     },
     onMouseDown: (e: React.MouseEvent) => {
       e.stopPropagation();
       setDesignerState((prev) => ({
         ...prev,
         selectedId: component.id,
+        selectedSection: section as "header" | "template" | "footer" | null,
+        insertIndex: null,
       }));
     },
   };
 
-  const renderChildren = (suffix = "") =>
+  const resolveExposed = (fallback: string | undefined) => {
+    if (isDesigner) return fallback;
+    const fromRuntime = component.runtime?.exposedLabel;
+    const fromProps =
+      component.props && typeof component.props === "object"
+        ? ((component.props as Record<string, unknown>).exposedLabel as string | undefined)
+        : undefined;
+    const exposedPath = fromRuntime ?? fromProps;
+    const bound = readPath(runtimeItem, exposedPath);
+    if (bound == null) return fallback;
+    return String(bound);
+  };
+  const resolveValue = (
+    key: "text" | "label" | "src" | "href" | "alt" | "htmlFor",
+    fallback?: string,
+  ) => resolveExposed(runtimeProps.getBound(key, fallback));
+  const isResourceContainer = !!(
+    component.runtime?.resourceContainer ||
+    ((component.props as Record<string, unknown> | undefined)?.resourceContainer as boolean | undefined)
+  );
+  const resolvedRepeatDisplay =
+    component.layout?.display ??
+    ((repeatable.items?.length ?? 0) > 1 ? "flex" : "block");
+  const repeatLayoutStyle: React.CSSProperties = {
+    display: resolvedRepeatDisplay,
+    flexDirection:
+      component.layout?.flexDirection ??
+      (resolvedRepeatDisplay === "flex" ? "row" : undefined),
+    justifyContent: component.layout?.justifyContent,
+    alignItems: component.layout?.alignItems,
+    flexWrap: component.layout?.wrap ? "wrap" : undefined,
+    gap: component.layout?.gap ?? 0,
+    width: "100%",
+  };
+
+  const renderChildren = (suffix = "", item?: unknown) =>
     hasChildren
-      ? component.children!.map((child) => (
-          <RenderComponentInner
-            key={`${child.id}${suffix}`}
-            component={child}
-            isDesigner={isDesigner}
-            isRoot={false}
-            parentId={component.id}
-            section={section}
-            setShowComponentModal={setShowComponentModal}
-            setDesignerState={setDesignerState}
-          />
+      ? effectiveChildren.map((child) => (
+          <React.Fragment key={`${child.id}${suffix}`}>
+            <RenderComponentInner
+              component={child}
+              isDesigner={isDesigner}
+              isRoot={false}
+              parentId={component.id}
+              section={section}
+              setShowComponentModal={setShowComponentModal}
+              setDesignerState={setDesignerState}
+              runtimeItem={item}
+            />
+          </React.Fragment>
         ))
       : null;
 
   const renderAddChildControl = () => {
-    if (!showAddChildControl) return null;
-
     return (
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          transform: "translateY(50%)",
-          height: 16,
-          pointerEvents: "none",
-          zIndex: 99999,
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: "50%",
-            transform: "translateY(-50%)",
-            height: 3,
-            backgroundColor: "#0366fc",
-            zIndex: 550,
-          }}
-        />
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!canHaveChildren) return;
-
-            setDesignerState((prev) => ({
-              ...prev,
-              selectedId: component.id,
-              selectedSection: section as
-                | "header"
-                | "template"
-                | "footer"
-                | null,
-            }));
-
-            setShowComponentModal(true);
-          }}
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 16,
-            height: 16,
-            borderRadius: "50%",
-            border: "1px solid #0366fc",
-            background: "#0366fc",
-            padding: 0,
-            margin: 0,
-            outline: "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 12,
-            lineHeight: 1,
-            cursor: "pointer",
-            pointerEvents: "auto",
-            color: "#fff",
-            zIndex: 550,
-          }}
-        >
-          +
-        </button>
-      </div>
+      null
     );
   };
 
@@ -534,6 +699,7 @@ function RenderComponentInner({
       const text = hasText(component.props)
         ? component.props.text
         : (component.name ?? "");
+      const resolvedText = resolveValue("text", text);
 
       const tag =
         component.props &&
@@ -552,7 +718,7 @@ function RenderComponentInner({
           },
           ...commonHoverProps,
         },
-        text,
+        resolvedText,
       );
     }
 
@@ -565,11 +731,15 @@ function RenderComponentInner({
       const href = hasHref(component.props)
         ? (component.props.href ?? "#")
         : "#";
+      const resolvedText = resolveValue("text", text);
+      const resolvedSrc = resolveValue("src", src);
+      const resolvedHref = resolveValue("href", href);
+      const resolvedAlt = resolveValue("alt", component.name ?? "image");
 
       return (
         <div style={wrapperStyle} {...commonHoverProps}>
           <a
-            href={href}
+            href={resolvedHref ?? "#"}
             style={{
               color: "inherit",
               textDecoration: "none",
@@ -578,12 +748,12 @@ function RenderComponentInner({
               height: "100%",
             }}
           >
-            {text ? (
-              text
-            ) : src ? (
+            {resolvedText ? (
+              resolvedText
+            ) : resolvedSrc ? (
               <img
-                src={src}
-                alt={component.name ?? "image"}
+                src={resolvedSrc}
+                alt={resolvedAlt ?? "image"}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -603,13 +773,15 @@ function RenderComponentInner({
 
     case "Image": {
       const src = hasSrc(component.props) ? component.props.src : undefined;
-      if (!src) return null;
+      const resolvedSrc = resolveValue("src", src);
+      const resolvedAlt = resolveValue("alt", component.name ?? "image");
+      if (!resolvedSrc) return null;
 
       return (
         <div style={wrapperStyle} {...commonHoverProps}>
           <img
-            src={src}
-            alt={component.name ?? "image"}
+            src={resolvedSrc}
+            alt={resolvedAlt ?? "image"}
             style={{
               width: "100%",
               height: "100%",
@@ -622,6 +794,77 @@ function RenderComponentInner({
           {renderChildren()}
           {renderAddChildControl()}
         </div>
+      );
+    }
+
+    case "Input": {
+      const props = component.props as {
+        name: string;
+        placeholder?: string;
+        inputType?: string;
+      };
+
+      return (
+        <input
+          name={props.name}
+          placeholder={props.placeholder}
+          type={props.inputType ?? "text"}
+          style={{
+            ...wrapperStyle,
+            outline: isExactHovered ? "1px solid #0366fc" : "none",
+            fontFamily: "inherit",
+            fontSize: 14,
+            backgroundColor: component.style?.backgroundColor ?? "#f3f3f3",
+            border:
+              typeof component.layout?.border === "number"
+                ? `${component.layout.border}px solid ${
+                    component.style?.borderColor ?? "#ddd"
+                  }`
+                : "none",
+            borderRadius: component.style?.borderRadius ?? 6,
+            padding: "0 14px",
+            boxSizing: "border-box",
+          }}
+          {...commonHoverProps}
+        />
+      );
+    }
+
+    case "Button": {
+      const props = component.props as {
+        label: string;
+      };
+      const resolvedLabel = resolveValue("label", props.label);
+
+      return (
+        <button
+          style={{
+            ...wrapperStyle,
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            fontWeight: 600,
+            backgroundColor: component.style?.backgroundColor ?? "#111",
+            color: component.style?.textColor ?? "#fff",
+          }}
+          {...commonHoverProps}
+        >
+          {resolvedLabel}
+        </button>
+      );
+    }
+
+    case "Label": {
+      const props = component.props as {
+        text?: string;
+        htmlFor?: string;
+      };
+      const text = resolveValue("text", props.text ?? component.name ?? "");
+      const htmlFor = resolveValue("htmlFor", props.htmlFor);
+      return (
+        <label style={wrapperStyle} htmlFor={htmlFor} {...commonHoverProps}>
+          {text}
+        </label>
       );
     }
 
@@ -650,7 +893,17 @@ function RenderComponentInner({
             </style>
           )}
 
-          {isMarquee ? (
+          {repeatable.enabled && isResourceContainer ? (
+            repeatable.loading ? null : (
+              <div style={repeatLayoutStyle}>
+                {(repeatable.items ?? []).map((item, index) => (
+                  <React.Fragment key={`${component.id}-repeat-${index}`}>
+                    {renderChildren(`-repeat-${index}`, item)}
+                  </React.Fragment>
+                ))}
+              </div>
+            )
+          ) : repeatable.enabled && !isResourceContainer ? null : isMarquee ? (
             <div
               style={{
                 display: "flex",
@@ -673,7 +926,7 @@ function RenderComponentInner({
               ))}
             </div>
           ) : (
-            renderChildren()
+            renderChildren("", runtimeItem)
           )}
 
           {renderAddChildControl()}

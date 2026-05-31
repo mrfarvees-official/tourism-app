@@ -4,16 +4,16 @@ import { useEffect, useState } from "react";
 import ContentPanel from "./ContentPanel";
 import SideNav from "./SideNav";
 import { ComponentNode, DesignerState } from "./palette/types";
-import { header, template, footer } from "./palette/data";
+import { sitePage } from "./palette/data";
 import { initializeDesignStates } from "./componentService";
 import ComponentModal from "./componentService";
 
 export default function MainPanel() {
   const [open, setOpen] = useState(true);
 
-  const [headerNode, setHeaderNode] = useState<ComponentNode>(header);
-  const [templateNode, setTemplateNode] = useState<ComponentNode>(template);
-  const [footerNode, setFooterNode] = useState<ComponentNode>(footer);
+  const [headerNode, setHeaderNode] = useState<ComponentNode>(sitePage.header);
+  const [templateNode, setTemplateNode] = useState<ComponentNode>(sitePage.template);
+  const [footerNode, setFooterNode] = useState<ComponentNode>(sitePage.footer);
 
   const [designerState, setDesignerState] = useState<DesignerState>({
   header: {
@@ -30,13 +30,14 @@ export default function MainPanel() {
   },
   selectedSection: null,
   selectedId: null,
+  insertIndex: null,
   hoveredSection: null,
   hoveredId: null,
   history: [],
   future: [],
 });
 
-  const [showComponentModel, setShowComponentModal] = useState(true);
+  const [showComponentModel, setShowComponentModal] = useState(false);
 
   useEffect(() => {
     initializeDesignStates(templateNode, setDesignerState);
@@ -51,6 +52,7 @@ export default function MainPanel() {
       <SideNav
         open={open}
         setOpen={setOpen}
+        showComponentModel={showComponentModel}
         headerNode={headerNode}
         setHeaderNode={setHeaderNode}
         templateNode={templateNode}
@@ -79,6 +81,12 @@ export default function MainPanel() {
         <ComponentModal
           open={showComponentModel}
           onOpenChange={setShowComponentModal}
+          headerNode={headerNode}
+          templateNode={templateNode}
+          footerNode={footerNode}
+          setHeaderNode={setHeaderNode}
+          setTemplateNode={setTemplateNode}
+          setFooterNode={setFooterNode}
           designerState={designerState}
           setDesignerState={setDesignerState}
         />

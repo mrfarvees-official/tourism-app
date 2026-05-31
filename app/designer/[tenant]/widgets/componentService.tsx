@@ -61,6 +61,11 @@ const getPreviewHeight = (label: string, isHero: boolean) => {
   const l = label.toLowerCase();
 
   if (isHero) return PREVIEW_HEIGHT; // 810
+  if (l.includes("collection list: carousel")) return 270;
+  if (l.includes("collection list: bento")) return 580;
+  if (l.includes("contact form")) return 580;
+  if (l.includes("divider")) return 40;
+  if (l.includes("featured collection: editorial")) return 480;
   if (l.includes("featured collection: grid")) return 720;
   if (l.includes("featured product")) return 460;
   if (l.includes("product highlight")) return 580;
@@ -121,8 +126,10 @@ export const initializeDesignStates = (
     ...prev,
     nodes: { root: nodes },
     rootIds,
-    selectedId: null,
-    hoveredId: null,
+    selectedId: prev.selectedId,
+    selectedSection: prev.selectedSection,
+    insertIndex: prev.insertIndex ?? null,
+    hoveredId: prev.hoveredId,
     history: [],
     future: [],
   }));
@@ -151,7 +158,11 @@ export const DesignerTree = ({
 }: DesignerTreeProps) => {
   const rules = componentRegistry[component.type as Component];
   const canHaveChildren = rules?.canHaveChildren ?? false;
-  const hasChildren = !!component.children?.length;
+  const visibleChildren =
+    component.runtime?.repeat && (component.children?.length ?? 0) > 0
+      ? [component.children![0]]
+      : (component.children ?? []);
+  const hasChildren = visibleChildren.length > 0;
   const [open, setOpen] = useState(hasChildren);
 
   const icon = typeIcons[component.type as Exclude<Component, "Model">];
@@ -163,6 +174,7 @@ export const DesignerTree = ({
       ...prev,
       selectedId: component.id,
       selectedSection: section as "header" | "template" | "footer" | null,
+      insertIndex: null,
     }));
 
     setShowComponentModal(true);
@@ -193,10 +205,6 @@ export const DesignerTree = ({
           onMouseEnter={() =>
             setDesignerState((prev) => ({ ...prev, hoveredId: component.id }))
           }
-          onMouseDown={() =>
-            setDesignerState((prev) => ({ ...prev, selectedId: component.id }))
-          }
-          onClick={() => setOpen((prev) => !prev)}
           style={{
             height: ROW_HEIGHT,
             display: "inline-flex",
@@ -211,12 +219,17 @@ export const DesignerTree = ({
         >
           {canHaveChildren && (
             <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen((prev) => !prev);
+              }}
               style={{
                 width: 14,
                 minWidth: 14,
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
+                cursor: "pointer",
               }}
             >
               <motion.span
@@ -245,6 +258,15 @@ export const DesignerTree = ({
           </span>
 
           <span
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              setDesignerState((prev) => ({
+                ...prev,
+                selectedId: component.id,
+                selectedSection: section as "header" | "template" | "footer" | null,
+                insertIndex: null,
+              }));
+            }}
             style={{
               fontSize: 15,
               lineHeight: 1,
@@ -252,6 +274,7 @@ export const DesignerTree = ({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              cursor: "pointer",
             }}
           >
             {component.id}
@@ -275,7 +298,7 @@ export const DesignerTree = ({
             }}
           >
             {hasChildren &&
-              component.children!.map((child) => (
+              visibleChildren.map((child) => (
                 <DesignerTree
                   key={child.id}
                   component={child}
@@ -329,6 +352,12 @@ export const DesignerTree = ({
 type ComponentModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  headerNode: ComponentNode;
+  templateNode: ComponentNode;
+  footerNode: ComponentNode;
+  setHeaderNode: Dispatch<SetStateAction<ComponentNode>>;
+  setTemplateNode: Dispatch<SetStateAction<ComponentNode>>;
+  setFooterNode: Dispatch<SetStateAction<ComponentNode>>;
   designerState: DesignerState;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
 };
@@ -340,7 +369,14 @@ const PREVIEW_SCALE = 0.48;
 export default function ComponentModal({
   open,
   onOpenChange,
+  headerNode,
+  templateNode,
+  footerNode,
+  setHeaderNode,
+  setTemplateNode,
+  setFooterNode,
   designerState,
+  setDesignerState,
 }: ComponentModalProps) {
   const [selected, setSelected] = useState<string>("");
   const [selectedNode, setSelectedNode] = useState<ComponentNode | null>(null);
@@ -349,6 +385,148 @@ export default function ComponentModal({
   const [compMenu] = useState<ComponentList[]>(components);
   const [sortedComponents, setSortedComponents] =
     useState<ComponentList[]>(components);
+
+  const getSectionRoot = (section: "header" | "template" | "footer") => {
+    if (section === "header") return headerNode;
+    if (section === "template") return templateNode;
+    return footerNode;
+  };
+
+  const setSectionRoot = (
+    section: "header" | "template" | "footer",
+    next: ComponentNode,
+  ) => {
+    if (section === "header") {
+      setHeaderNode(next);
+      return;
+    }
+    if (section === "template") {
+      setTemplateNode(next);
+      return;
+    }
+    setFooterNode(next);
+  };
+
+  const findNodeById = (node: ComponentNode, id: string): ComponentNode | null => {
+    if (node.id === id) return node;
+    for (const child of node.children ?? []) {
+      const found = findNodeById(child, id);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const cloneNodeForInsert = (
+    node: ComponentNode,
+    parentId: string | null,
+    suffix: string,
+  ): ComponentNode => {
+    const nextId = `${node.id || "node"}_${suffix}`;
+    const clonedChildren = (node.children ?? []).map((child, idx) =>
+      cloneNodeForInsert(child, nextId, `${suffix}_${idx + 1}`),
+    );
+
+    return {
+      ...node,
+      id: nextId,
+      parentId,
+      children: clonedChildren,
+    };
+  };
+
+  const addChildToParent = (
+    node: ComponentNode,
+    parentId: string,
+    childToAdd: ComponentNode,
+    prototypeOnly: boolean,
+    insertIndex: number | null,
+  ): ComponentNode => {
+    if (node.id === parentId) {
+      const children = node.children ?? [];
+      const nextChildren = prototypeOnly
+        ? [childToAdd]
+        : insertIndex == null || insertIndex < 0 || insertIndex > children.length
+          ? [...children, childToAdd]
+          : [...children.slice(0, insertIndex), childToAdd, ...children.slice(insertIndex)];
+      return {
+        ...node,
+        children: nextChildren,
+      };
+    }
+    return {
+      ...node,
+      children: (node.children ?? []).map((child) =>
+        addChildToParent(child, parentId, childToAdd, prototypeOnly, insertIndex),
+      ),
+    };
+  };
+
+  const getMaxNodeIndex = (node: ComponentNode): number => {
+    let max = 0;
+    const walk = (n: ComponentNode) => {
+      const m = /^node_(\d+)$/.exec(n.id);
+      if (m) max = Math.max(max, Number(m[1]));
+      for (const c of n.children ?? []) walk(c);
+    };
+    walk(node);
+    return max;
+  };
+
+  const renumberSubtreeDepthFirst = (
+    node: ComponentNode,
+    state: { count: number },
+    parentId: string | null,
+  ): ComponentNode => {
+    state.count += 1;
+    const newId = `node_${state.count}`;
+    return {
+      ...node,
+      id: newId,
+      parentId,
+      children: (node.children ?? []).map((child) =>
+        renumberSubtreeDepthFirst(child, state, newId),
+      ),
+    };
+  };
+
+  const handleInsertComponent = (itemNode: ComponentNode) => {
+    const section = designerState.selectedSection;
+    const parentId = designerState.selectedId;
+    const insertIndex = designerState.insertIndex;
+    if (!section || !parentId) return;
+
+    const root = getSectionRoot(section);
+    const parentNode = findNodeById(root, parentId);
+    if (!parentNode) return;
+
+    const parentRules = componentRegistry[parentNode.type as Component];
+    if (!parentRules?.canHaveChildren) return;
+
+    const seed = `${parentId}_new_${(parentNode.children?.length ?? 0) + 1}`;
+    const insertedDraft = cloneNodeForInsert(itemNode, parentId, seed);
+    const counter = { count: getMaxNodeIndex(root) };
+    const insertedNode = renumberSubtreeDepthFirst(insertedDraft, counter, parentId);
+    const prototypeOnly = !!parentNode.runtime?.repeat;
+    const updated = addChildToParent(
+      root,
+      parentId,
+      insertedNode,
+      prototypeOnly,
+      prototypeOnly ? null : insertIndex,
+    );
+    setSectionRoot(section, updated);
+
+    const nextSelectedId = insertedNode.id;
+    setDesignerState((prev) => ({
+      ...prev,
+      selectedId: nextSelectedId,
+      selectedSection: section,
+      insertIndex: null,
+    }));
+
+    onOpenChange(false);
+    reset();
+  };
 
   useEffect(() => {
     const query = search.trim().toLowerCase();
@@ -428,7 +606,9 @@ export default function ComponentModal({
                 type="text"
                 placeholder="Search"
                 value={search}
-                onChange={(e: any) => setSearch(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearch(e.target.value)
+                }
                 className="
                   w-full pl-8 pr-2 py-1
                   rounded-md border-2 border-black
@@ -491,6 +671,7 @@ export default function ComponentModal({
                                   setSelected(item.label);
                                   setSelectedNode(item.node);
                                 }}
+                                onClick={() => handleInsertComponent(item.node)}
                                 type="button"
                                 className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-gray-100"
                               >

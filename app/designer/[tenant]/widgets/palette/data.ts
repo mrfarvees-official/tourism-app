@@ -1,80 +1,145 @@
 import { ComponentList, ComponentNode } from "./types";
 import { FaBullseye, FaHeart, FaChessPawn } from "react-icons/fa";
 
-/* =========================
-   HEADER
-========================= */
+/* 
+=========================
+  HEADER
+========================= 
+*/
 export const header: ComponentNode = {
-  id: "frame2",
+  id: "site_header",
   type: "Frame",
   parentId: "root",
   props: {},
   layout: {
+    width: { value: 100, unit: "%" },
     display: "flex",
-    border: 2,
     justifyContent: "space-between",
     alignItems: "center",
-    padding: { top: 12, right: 20, bottom: 12, left: 20 },
+    padding: { top: 16, right: 28, bottom: 16, left: 28 },
+    position: "sticky",
+    top: 0,
+    zIndex: 40,
+    border: 1,
   },
-  style: {},
+  style: {
+    backgroundColor: "#0b1220",
+    borderColor: "#1e293b",
+  },
   children: [
     {
-      id: "link1",
+      id: "site_brand_link",
       type: "Link",
-      parentId: "frame2",
-      props: { href: "?page=home" },
-      layout: {},
-      style: {},
+      parentId: "site_header",
+      props: { href: "#home" },
+      layout: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+      },
+      style: { textColor: "#f8fafc", fontWeight: 700, fontSize: 18 },
       children: [
         {
-          id: "image1",
+          id: "site_brand_icon",
           type: "Image",
-          parentId: "link1",
+          parentId: "site_brand_link",
           props: {
-            src: "https://cdn-icons-png.flaticon.com/128/15465/15465604.png",
+            src: "https://cdn-icons-png.flaticon.com/512/201/201623.png",
+            alt: "logo",
           },
           layout: {
-            width: { value: 35 },
-            height: { value: 35 },
+            width: { value: 28, unit: "px" },
+            height: { value: 28, unit: "px" },
           },
           style: {},
+          children: [],
+        },
+        {
+          id: "site_brand_text",
+          type: "Text",
+          parentId: "site_brand_link",
+          props: {
+            text: "TrailNest",
+            tag: "span",
+          },
+          layout: {},
+          style: {
+            textColor: "#f8fafc",
+            fontSize: 18,
+            fontWeight: 700,
+            lineHeight: 1.1,
+          },
           children: [],
         },
       ],
     },
     {
-      id: "frame3",
+      id: "site_nav",
       type: "Frame",
-      parentId: "frame2",
+      parentId: "site_header",
       props: {},
       layout: {
         display: "flex",
-        gap: 16,
+        alignItems: "center",
+        gap: 18,
       },
       style: {},
       children: [
         {
-          id: "link2",
+          id: "site_nav_home",
           type: "Link",
-          parentId: "frame3",
+          parentId: "site_nav",
           props: {
             text: "Home",
-            href: "?page=home",
+            href: "#home",
           },
           layout: {},
-          style: {},
+          style: { textColor: "#cbd5e1", fontSize: 14 },
           children: [],
         },
         {
-          id: "link3",
+          id: "site_nav_destinations",
           type: "Link",
-          parentId: "frame3",
+          parentId: "site_nav",
           props: {
-            text: "About",
-            href: "?page=about",
+            text: "Destinations",
+            href: "#destinations",
           },
           layout: {},
-          style: {},
+          style: { textColor: "#cbd5e1", fontSize: 14 },
+          children: [],
+        },
+        {
+          id: "site_nav_stories",
+          type: "Link",
+          parentId: "site_nav",
+          props: {
+            text: "Stories",
+            href: "#stories",
+          },
+          layout: {},
+          style: { textColor: "#cbd5e1", fontSize: 14 },
+          children: [],
+        },
+        {
+          id: "site_nav_cta",
+          type: "Link",
+          parentId: "site_nav",
+          props: {
+            text: "Start Planning",
+            href: "#plan",
+          },
+          layout: {
+            padding: { top: 10, right: 14, bottom: 10, left: 14 },
+          },
+          style: {
+            backgroundColor: "#22c55e",
+            textColor: "#052e16",
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textAlign: "center",
+          },
           children: [],
         },
       ],
@@ -82,151 +147,667 @@ export const header: ComponentNode = {
   ],
 };
 
-/* =========================
-   TEMPLATE / BODY
+/* 
+=========================
+  TEMPLATE / BODY
 ========================= */
 export const template: ComponentNode = {
-  id: "frame4",
+  id: "site_template",
   type: "Frame",
   parentId: "root",
   props: {},
   layout: {
     width: { value: 100, unit: "%" },
-    minHeight: { value: 600, unit: "px" },
+    minHeight: { value: 1200, unit: "px" },
     display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 20,
-    padding: { top: 40, right: 40, bottom: 40, left: 40 },
+    flexDirection: "column",
+    gap: 0,
     overflow: "hidden",
   },
   style: {
-    backgroundImage:
-      "https://media.istockphoto.com/id/178642135/photo/mountains-of-snow.jpg?s=1024x1024&w=is&k=20&c=Izd2BMtYNtkBbueLwgGOW_z0mk1my5vZxve2-Ukbyjw=",
-    backgroundSize: "cover",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "center center",
+    backgroundColor: "#f8fafc",
   },
   children: [
     {
-      id: "frame5",
+      id: "hero_section",
       type: "Frame",
-      parentId: "frame4",
+      parentId: "site_template",
       props: {},
       layout: {
-        width: { value: 50, unit: "%" },
+        width: { value: 100, unit: "%" },
+        minHeight: { value: 620, unit: "px" },
         display: "flex",
-        flexDirection: "column",
-        gap: 16,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: { top: 70, right: 24, bottom: 70, left: 24 },
       },
-      style: {},
+      style: {
+        backgroundImage:
+          "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=80",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center center",
+      },
       children: [
         {
-          id: "text3",
-          type: "Text",
-          parentId: "frame5",
-          props: {
-            text: "Welcome to Our Website",
-            tag: "h1",
-          },
-          layout: {},
-          style: {
-            textColor: "#ffffff",
-            fontSize: 48,
-            fontWeight: 700,
-            lineHeight: 1.2,
-          },
-          children: [],
-        },
-        {
-          id: "text4",
-          type: "Text",
-          parentId: "frame5",
-          props: {
-            text: "Build modern layouts with reusable components and beautiful images.",
-            tag: "p",
-          },
-          layout: {},
-          style: {
-            textColor: "#ffffff",
-            fontSize: 18,
-            lineHeight: 1.6,
-          },
-          children: [],
-        },
-        {
-          id: "cta",
-          type: "Link",
-          parentId: "frame5",
-          props: {
-            text: "Get Started",
-            href: "?page=getStarted",
-          },
+          id: "hero_overlay",
+          type: "Frame",
+          parentId: "hero_section",
+          props: {},
           layout: {
-            width: { value: 140, unit: "px" },
-            padding: { top: 12, right: 16, bottom: 12, left: 16 },
+            width: { value: 1100, unit: "px" },
+            maxWidth: { value: 100, unit: "%" },
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+            padding: { top: 34, right: 34, bottom: 34, left: 34 },
           },
           style: {
-            backgroundColor: "#ffffff",
-            textColor: "#111111",
-            borderRadius: 8,
-            textAlign: "center",
-            fontWeight: 600,
+            backgroundColor: "#0f172ab8",
+            borderRadius: 16,
           },
-          children: [],
+          children: [
+            {
+              id: "hero_title",
+              type: "Text",
+              parentId: "hero_overlay",
+              props: {
+                text: "Discover Sri Lanka, One Unforgettable Journey at a Time",
+                tag: "h1",
+              },
+              layout: {},
+              style: {
+                textColor: "#f8fafc",
+                fontSize: 54,
+                fontWeight: 800,
+                lineHeight: 1.06,
+              },
+              children: [],
+            },
+            {
+              id: "hero_subtitle",
+              type: "Text",
+              parentId: "hero_overlay",
+              props: {
+                text: "Curated destinations, local experiences, and practical planning tools in one complete travel workspace.",
+                tag: "p",
+              },
+              layout: {
+                maxWidth: { value: 760, unit: "px" },
+              },
+              style: {
+                textColor: "#dbeafe",
+                fontSize: 18,
+                lineHeight: 1.6,
+              },
+              children: [],
+            },
+            {
+              id: "hero_actions",
+              type: "Frame",
+              parentId: "hero_overlay",
+              props: {},
+              layout: {
+                display: "flex",
+                gap: 14,
+                wrap: true,
+              },
+              style: {},
+              children: [
+                {
+                  id: "hero_primary_cta",
+                  type: "Link",
+                  parentId: "hero_actions",
+                  props: {
+                    text: "Explore Destinations",
+                    href: "#destinations",
+                  },
+                  layout: {
+                    padding: { top: 13, right: 18, bottom: 13, left: 18 },
+                  },
+                  style: {
+                    backgroundColor: "#22c55e",
+                    textColor: "#052e16",
+                    borderRadius: 10,
+                    fontWeight: 700,
+                    textAlign: "center",
+                  },
+                  children: [],
+                },
+                {
+                  id: "hero_secondary_cta",
+                  type: "Link",
+                  parentId: "hero_actions",
+                  props: {
+                    text: "Read Traveler Stories",
+                    href: "#stories",
+                  },
+                  layout: {
+                    padding: { top: 13, right: 18, bottom: 13, left: 18 },
+                    border: 1,
+                  },
+                  style: {
+                    borderColor: "#bae6fd",
+                    textColor: "#e0f2fe",
+                    borderRadius: 10,
+                    fontWeight: 700,
+                    textAlign: "center",
+                  },
+                  children: [],
+                },
+              ],
+            },
+          ],
         },
       ],
     },
     {
-      id: "frame6",
+      id: "destinations_section",
       type: "Frame",
-      parentId: "frame4",
+      parentId: "site_template",
       props: {},
       layout: {
-        width: { value: 50, unit: "%" },
-        padding: { top: 10, right: 10, bottom: 10, left: 10 },
+        width: { value: 100, unit: "%" },
+        display: "flex",
+        justifyContent: "center",
+        padding: { top: 56, right: 24, bottom: 56, left: 24 },
       },
-      style: { backgroundColor: "#000" },
-      children: [],
+      style: {
+        backgroundColor: "#f8fafc",
+      },
+      children: [
+        {
+          id: "destinations_inner",
+          type: "Frame",
+          parentId: "destinations_section",
+          props: {},
+          layout: {
+            width: { value: 1120, unit: "px" },
+            maxWidth: { value: 100, unit: "%" },
+            display: "flex",
+            flexDirection: "column",
+            gap: 24,
+          },
+          style: {},
+          children: [
+            {
+              id: "destinations_heading",
+              type: "Text",
+              parentId: "destinations_inner",
+              props: {
+                text: "Popular Destinations",
+                tag: "h2",
+              },
+              layout: {},
+              style: {
+                textColor: "#0f172a",
+                fontSize: 34,
+                fontWeight: 800,
+                lineHeight: 1.1,
+              },
+              children: [],
+            },
+            {
+              id: "destinations_grid",
+              type: "Frame",
+              parentId: "destinations_inner",
+              props: {},
+              layout: {
+                width: { value: 100, unit: "%" },
+                display: "flex",
+                gap: 20,
+                wrap: true,
+              },
+              style: {},
+              children: [
+                {
+                  id: "destination_card_ella",
+                  type: "Frame",
+                  parentId: "destinations_grid",
+                  props: {},
+                  layout: {
+                    width: { value: 360, unit: "px" },
+                    maxWidth: { value: 100, unit: "%" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                    padding: { top: 14, right: 14, bottom: 14, left: 14 },
+                  },
+                  style: {
+                    backgroundColor: "#ffffff",
+                    borderRadius: 14,
+                    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+                  },
+                  children: [
+                    {
+                      id: "destination_card_ella_image",
+                      type: "Image",
+                      parentId: "destination_card_ella",
+                      props: {
+                        src: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1000&q=80",
+                        alt: "Ella",
+                        objectFit: "cover",
+                      },
+                      layout: {
+                        width: { value: 100, unit: "%" },
+                        height: { value: 200, unit: "px" },
+                      },
+                      style: {
+                        borderRadius: 10,
+                      },
+                      children: [],
+                    },
+                    {
+                      id: "destination_card_ella_title",
+                      type: "Text",
+                      parentId: "destination_card_ella",
+                      props: { text: "Ella", tag: "h3" },
+                      layout: {},
+                      style: {
+                        textColor: "#0f172a",
+                        fontSize: 22,
+                        fontWeight: 700,
+                      },
+                      children: [],
+                    },
+                    {
+                      id: "destination_card_ella_copy",
+                      type: "Text",
+                      parentId: "destination_card_ella",
+                      props: {
+                        text: "Mist-covered ridges, tea trails, and sunrise hikes through mountain country.",
+                        tag: "p",
+                      },
+                      layout: {},
+                      style: {
+                        textColor: "#475569",
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                      },
+                      children: [],
+                    },
+                  ],
+                },
+                {
+                  id: "destination_card_galle",
+                  type: "Frame",
+                  parentId: "destinations_grid",
+                  props: {},
+                  layout: {
+                    width: { value: 360, unit: "px" },
+                    maxWidth: { value: 100, unit: "%" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                    padding: { top: 14, right: 14, bottom: 14, left: 14 },
+                  },
+                  style: {
+                    backgroundColor: "#ffffff",
+                    borderRadius: 14,
+                    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+                  },
+                  children: [
+                    {
+                      id: "destination_card_galle_image",
+                      type: "Image",
+                      parentId: "destination_card_galle",
+                      props: {
+                        src: "https://images.unsplash.com/photo-1586328621134-2f2f6cb3b55d?auto=format&fit=crop&w=1000&q=80",
+                        alt: "Galle",
+                        objectFit: "cover",
+                      },
+                      layout: {
+                        width: { value: 100, unit: "%" },
+                        height: { value: 200, unit: "px" },
+                      },
+                      style: {
+                        borderRadius: 10,
+                      },
+                      children: [],
+                    },
+                    {
+                      id: "destination_card_galle_title",
+                      type: "Text",
+                      parentId: "destination_card_galle",
+                      props: { text: "Galle", tag: "h3" },
+                      layout: {},
+                      style: {
+                        textColor: "#0f172a",
+                        fontSize: 22,
+                        fontWeight: 700,
+                      },
+                      children: [],
+                    },
+                    {
+                      id: "destination_card_galle_copy",
+                      type: "Text",
+                      parentId: "destination_card_galle",
+                      props: {
+                        text: "Historic fort streets, ocean sunsets, and coastal cafes with local flavor.",
+                        tag: "p",
+                      },
+                      layout: {},
+                      style: {
+                        textColor: "#475569",
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                      },
+                      children: [],
+                    },
+                  ],
+                },
+                {
+                  id: "destination_card_sigiriya",
+                  type: "Frame",
+                  parentId: "destinations_grid",
+                  props: {},
+                  layout: {
+                    width: { value: 360, unit: "px" },
+                    maxWidth: { value: 100, unit: "%" },
+                    display: "flex",
+                    padding: { top: 14, right: 14, bottom: 14, left: 14 },
+                    flexDirection: "column",
+                    gap: 12,
+                  },
+                  style: {
+                    backgroundColor: "#ffffff",
+                    borderRadius: 14,
+                    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
+                  },
+                  children: [
+                    {
+                      id: "destination_card_sigiriya_image",
+                      type: "Image",
+                      parentId: "destination_card_sigiriya",
+                      props: {
+                        src: "https://images.unsplash.com/photo-1626947346165-4c2288dadf57?auto=format&fit=crop&w=1000&q=80",
+                        alt: "Sigiriya",
+                        objectFit: "cover",
+                      },
+                      layout: {
+                        width: { value: 100, unit: "%" },
+                        height: { value: 200, unit: "px" },
+                      },
+                      style: {
+                        borderRadius: 10,
+                      },
+                      children: [],
+                    },
+                    {
+                      id: "destination_card_sigiriya_title",
+                      type: "Text",
+                      parentId: "destination_card_sigiriya",
+                      props: { text: "Sigiriya", tag: "h3" },
+                      layout: {},
+                      style: {
+                        textColor: "#0f172a",
+                        fontSize: 22,
+                        fontWeight: 700,
+                      },
+                      children: [],
+                    },
+                    {
+                      id: "destination_card_sigiriya_copy",
+                      type: "Text",
+                      parentId: "destination_card_sigiriya",
+                      props: {
+                        text: "Ancient rock fortress, murals, and panoramic views over cultural heartlands.",
+                        tag: "p",
+                      },
+                      layout: {},
+                      style: {
+                        textColor: "#475569",
+                        fontSize: 14,
+                        lineHeight: 1.5,
+                      },
+                      children: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "plan_cta_band",
+      type: "Frame",
+      parentId: "site_template",
+      props: {},
+      layout: {
+        width: { value: 100, unit: "%" },
+        display: "flex",
+        justifyContent: "center",
+        padding: { top: 56, right: 24, bottom: 56, left: 24 },
+      },
+      style: {
+        backgroundColor: "#0f172a",
+      },
+      children: [
+        {
+          id: "plan_cta_inner",
+          type: "Frame",
+          parentId: "plan_cta_band",
+          props: {},
+          layout: {
+            width: { value: 980, unit: "px" },
+            maxWidth: { value: 100, unit: "%" },
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 20,
+            wrap: true,
+          },
+          style: {},
+          children: [
+            {
+              id: "plan_cta_text",
+              type: "Text",
+              parentId: "plan_cta_inner",
+              props: {
+                text: "Ready to build your trip plan in minutes?",
+                tag: "h3",
+              },
+              layout: {},
+              style: {
+                textColor: "#e2e8f0",
+                fontSize: 30,
+                fontWeight: 700,
+                lineHeight: 1.2,
+              },
+              children: [],
+            },
+            {
+              id: "plan_cta_button",
+              type: "Link",
+              parentId: "plan_cta_inner",
+              props: {
+                text: "Create My Itinerary",
+                href: "#plan",
+              },
+              layout: {
+                padding: { top: 14, right: 20, bottom: 14, left: 20 },
+              },
+              style: {
+                backgroundColor: "#22c55e",
+                textColor: "#052e16",
+                borderRadius: 10,
+                fontWeight: 700,
+                textAlign: "center",
+              },
+              children: [],
+            },
+          ],
+        },
+      ],
     },
   ],
 };
 
-/* =========================
-   FOOTER (TEMP)
+/* 
+=========================
+  FOOTER
 ========================= */
 export const footer: ComponentNode = {
-  id: "footer",
+  id: "site_footer",
   type: "Frame",
   parentId: "root",
   props: {},
   layout: {
     width: { value: 100, unit: "%" },
-    padding: { top: 20, right: 20, bottom: 20, left: 20 },
     display: "flex",
     justifyContent: "center",
-    alignItems: "center",
+    padding: { top: 44, right: 24, bottom: 44, left: 24 },
   },
   style: {
-    backgroundColor: "#111111",
+    backgroundColor: "#020617",
   },
   children: [
     {
-      id: "footerText",
-      type: "Text",
-      parentId: "footer",
-      props: {
-        text: "© 2026 Your Company. All rights reserved.",
-        tag: "p",
+      id: "site_footer_inner",
+      type: "Frame",
+      parentId: "site_footer",
+      props: {},
+      layout: {
+        width: { value: 1120, unit: "px" },
+        maxWidth: { value: 100, unit: "%" },
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "start",
+        gap: 24,
+        wrap: true,
       },
-      layout: {},
-      style: {
-        textColor: "#ffffff",
-        fontSize: 14,
-      },
-      children: [],
+      style: {},
+      children: [
+        {
+          id: "site_footer_brand",
+          type: "Frame",
+          parentId: "site_footer_inner",
+          props: {},
+          layout: {
+            width: { value: 320, unit: "px" },
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          },
+          style: {},
+          children: [
+            {
+              id: "site_footer_brand_name",
+              type: "Text",
+              parentId: "site_footer_brand",
+              props: {
+                text: "TrailNest",
+                tag: "h3",
+              },
+              layout: {},
+              style: {
+                textColor: "#f8fafc",
+                fontSize: 24,
+                fontWeight: 800,
+              },
+              children: [],
+            },
+            {
+              id: "site_footer_brand_copy",
+              type: "Text",
+              parentId: "site_footer_brand",
+              props: {
+                text: "Practical tools and curated inspiration for smarter travel across Sri Lanka.",
+                tag: "p",
+              },
+              layout: {},
+              style: {
+                textColor: "#94a3b8",
+                fontSize: 14,
+                lineHeight: 1.6,
+              },
+              children: [],
+            },
+          ],
+        },
+        {
+          id: "site_footer_links",
+          type: "Frame",
+          parentId: "site_footer_inner",
+          props: {},
+          layout: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          },
+          style: {},
+          children: [
+            {
+              id: "site_footer_links_title",
+              type: "Text",
+              parentId: "site_footer_links",
+              props: { text: "Explore", tag: "h4" },
+              layout: {},
+              style: {
+                textColor: "#e2e8f0",
+                fontSize: 15,
+                fontWeight: 700,
+              },
+              children: [],
+            },
+            {
+              id: "site_footer_link_1",
+              type: "Link",
+              parentId: "site_footer_links",
+              props: { text: "Destinations", href: "#destinations" },
+              layout: {},
+              style: { textColor: "#94a3b8", fontSize: 14 },
+              children: [],
+            },
+            {
+              id: "site_footer_link_2",
+              type: "Link",
+              parentId: "site_footer_links",
+              props: { text: "Traveler Stories", href: "#stories" },
+              layout: {},
+              style: { textColor: "#94a3b8", fontSize: 14 },
+              children: [],
+            },
+            {
+              id: "site_footer_link_3",
+              type: "Link",
+              parentId: "site_footer_links",
+              props: { text: "Plan Builder", href: "#plan" },
+              layout: {},
+              style: { textColor: "#94a3b8", fontSize: 14 },
+              children: [],
+            },
+          ],
+        },
+        {
+          id: "site_footer_copyright",
+          type: "Text",
+          parentId: "site_footer_inner",
+          props: {
+            text: "© 2026 TrailNest. All rights reserved.",
+            tag: "p",
+          },
+          layout: {
+            margin: { top: 6 },
+          },
+          style: {
+            textColor: "#ffffff",
+            fontSize: 13,
+            lineHeight: 1.5,
+          },
+          children: [],
+        },
+      ],
     },
   ],
+};
+
+export const sitePage = {
+  header,
+  template,
+  footer,
 };
 
 export const components: ComponentList[] = [
@@ -236,42 +817,570 @@ export const components: ComponentList[] = [
       {
         label: "Hero",
         icon: "🏞️",
-        node: template, //{ id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_hero_primary",
+          type: "Frame",
+          parentId: null,
+          name: "Hero Banner",
+          props: {},
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 600, unit: "px" },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 20,
+            padding: { top: 40, right: 40, bottom: 40, left: 40 },
+            overflow: "hidden",
+          },
+          style: {
+            backgroundImage:
+              "https://media.istockphoto.com/id/178642135/photo/mountains-of-snow.jpg?s=1024x1024&w=is&k=20&c=Izd2BMtYNtkBbueLwgGOW_z0mk1my5vZxve2-Ukbyjw=",
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center center",
+          },
+          children: [
+            {
+              id: "banner_hero_primary_left",
+              type: "Frame",
+              parentId: "banner_hero_primary",
+              props: {},
+              layout: {
+                width: { value: 50, unit: "%" },
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              },
+              style: {},
+              children: [
+                {
+                  id: "banner_hero_primary_title",
+                  type: "Text",
+                  parentId: "banner_hero_primary_left",
+                  props: {
+                    text: "Welcome to Our Website",
+                    tag: "h1",
+                  },
+                  layout: {},
+                  style: {
+                    textColor: "#ffffff",
+                    fontSize: 48,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                  },
+                  children: [],
+                },
+                {
+                  id: "banner_hero_primary_copy",
+                  type: "Text",
+                  parentId: "banner_hero_primary_left",
+                  props: {
+                    text: "Build modern layouts with reusable components and beautiful images.",
+                    tag: "p",
+                  },
+                  layout: {},
+                  style: {
+                    textColor: "#ffffff",
+                    fontSize: 18,
+                    lineHeight: 1.6,
+                  },
+                  children: [],
+                },
+                {
+                  id: "banner_hero_primary_cta",
+                  type: "Link",
+                  parentId: "banner_hero_primary_left",
+                  props: {
+                    text: "Get Started",
+                    href: "?page=getStarted",
+                  },
+                  layout: {
+                    width: { value: 140, unit: "px" },
+                    padding: { top: 12, right: 16, bottom: 12, left: 16 },
+                  },
+                  style: {
+                    backgroundColor: "#ffffff",
+                    textColor: "#111111",
+                    borderRadius: 8,
+                    textAlign: "center",
+                    fontWeight: 600,
+                  },
+                  children: [],
+                },
+              ],
+            },
+            {
+              id: "banner_hero_primary_right",
+              type: "Frame",
+              parentId: "banner_hero_primary",
+              props: {},
+              layout: {
+                width: { value: 50, unit: "%" },
+                padding: { top: 10, right: 10, bottom: 10, left: 10 },
+              },
+              style: { backgroundColor: "#000" },
+              children: [],
+            },
+          ],
+        },
       },
       {
         label: "Hero: Bottom aligned",
         icon: "⬇️",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_hero_bottom_aligned",
+          parentId: null,
+          type: "Frame",
+          name: "Hero Bottom Aligned",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 560, unit: "px" },
+            display: "flex",
+            alignItems: "end",
+            padding: { top: 32, right: 32, bottom: 32, left: 32 },
+          },
+          style: {
+            backgroundImage:
+              "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center center",
+            borderRadius: 10,
+          },
+          props: {},
+          children: [
+            {
+              id: "banner_hero_bottom_panel",
+              parentId: "banner_hero_bottom_aligned",
+              type: "Frame",
+              layout: {
+                width: { value: 680, unit: "px" },
+                maxWidth: { value: 100, unit: "%" },
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                padding: { top: 20, right: 20, bottom: 20, left: 20 },
+              },
+              style: {
+                backgroundColor: "#0f172ac7",
+                borderRadius: 10,
+              },
+              props: {},
+              children: [
+                {
+                  id: "banner_hero_bottom_title",
+                  parentId: "banner_hero_bottom_panel",
+                  type: "Text",
+                  props: { text: "Oceanfront escapes for every season", tag: "h2" },
+                  layout: {},
+                  style: {
+                    fontSize: 34,
+                    fontWeight: 700,
+                    lineHeight: 1.15,
+                    textColor: "#f8fafc",
+                  },
+                  children: [],
+                },
+                {
+                  id: "banner_hero_bottom_copy",
+                  parentId: "banner_hero_bottom_panel",
+                  type: "Text",
+                  props: {
+                    text: "Book curated coastal tours with flexible dates and local guides.",
+                    tag: "p",
+                  },
+                  layout: {},
+                  style: { fontSize: 15, lineHeight: 1.5, textColor: "#dbeafe" },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Hero: Marquee",
         icon: "➿",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_hero_marquee",
+          parentId: null,
+          type: "Frame",
+          name: "Hero Marquee",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 460, unit: "px" },
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: { top: 24, right: 24, bottom: 24, left: 24 },
+            gap: 18,
+            overflow: "hidden",
+          },
+          style: {
+            backgroundColor: "#0b1220",
+            borderRadius: 10,
+          },
+          props: {},
+          children: [
+            {
+              id: "banner_hero_marquee_headline",
+              parentId: "banner_hero_marquee",
+              type: "Text",
+              props: { text: "Adventure starts with one good decision", tag: "h2" },
+              layout: {},
+              style: {
+                fontSize: 44,
+                fontWeight: 800,
+                lineHeight: 1.05,
+                textColor: "#f8fafc",
+              },
+              children: [],
+            },
+            {
+              id: "banner_hero_marquee_track",
+              parentId: "banner_hero_marquee",
+              type: "Frame",
+              layout: { display: "flex", gap: 18, overflow: "hidden" },
+              style: {},
+              props: {},
+              children: [
+                {
+                  id: "banner_hero_marquee_t1",
+                  parentId: "banner_hero_marquee_track",
+                  type: "Text",
+                  props: { text: "MOUNTAINS", tag: "span" },
+                  layout: {},
+                  style: { fontSize: 48, fontWeight: 700, textColor: "#22c55e" },
+                  children: [],
+                },
+                {
+                  id: "banner_hero_marquee_t2",
+                  parentId: "banner_hero_marquee_track",
+                  type: "Text",
+                  props: { text: "•", tag: "span" },
+                  layout: {},
+                  style: { fontSize: 48, fontWeight: 700, textColor: "#38bdf8" },
+                  children: [],
+                },
+                {
+                  id: "banner_hero_marquee_t3",
+                  parentId: "banner_hero_marquee_track",
+                  type: "Text",
+                  props: { text: "RAINFORESTS", tag: "span" },
+                  layout: {},
+                  style: { fontSize: 48, fontWeight: 700, textColor: "#f59e0b" },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Large logo",
         icon: "🔰",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_large_logo",
+          parentId: null,
+          type: "Frame",
+          name: "Large Logo Banner",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 360, unit: "px" },
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: { top: 28, right: 28, bottom: 28, left: 28 },
+          },
+          style: { backgroundColor: "#f8fafc", borderRadius: 10 },
+          props: {},
+          children: [
+            {
+              id: "banner_large_logo_wrap",
+              parentId: "banner_large_logo",
+              type: "Frame",
+              layout: {
+                width: { value: 540, unit: "px" },
+                maxWidth: { value: 100, unit: "%" },
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 10,
+              },
+              style: {},
+              props: {},
+              children: [
+                {
+                  id: "banner_large_logo_img",
+                  parentId: "banner_large_logo_wrap",
+                  type: "Image",
+                  props: {
+                    src: "https://cdn-icons-png.flaticon.com/512/854/854929.png",
+                    alt: "logo",
+                    objectFit: "contain",
+                  },
+                  layout: { width: { value: 130, unit: "px" }, height: { value: 130, unit: "px" } },
+                  style: {},
+                  children: [],
+                },
+                {
+                  id: "banner_large_logo_text",
+                  parentId: "banner_large_logo_wrap",
+                  type: "Text",
+                  props: { text: "TrailNest Expeditions", tag: "h2" },
+                  layout: {},
+                  style: { fontSize: 34, fontWeight: 800, textColor: "#0f172a" },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Layered slideshow",
         icon: "🖼️",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_layered_slideshow",
+          parentId: null,
+          type: "Frame",
+          name: "Layered Slideshow",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 520, unit: "px" },
+            position: "relative",
+            overflow: "hidden",
+            padding: { top: 24, right: 24, bottom: 24, left: 24 },
+          },
+          style: { backgroundColor: "#0f172a", borderRadius: 10 },
+          props: {},
+          children: [
+            {
+              id: "banner_layered_img_back",
+              parentId: "banner_layered_slideshow",
+              type: "Image",
+              props: {
+                src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e",
+                alt: "slide",
+                objectFit: "cover",
+              },
+              layout: { width: { value: 100, unit: "%" }, height: { value: 100, unit: "%" } },
+              style: { opacity: 0.35, borderRadius: 8 },
+              children: [],
+            },
+            {
+              id: "banner_layered_img_mid",
+              parentId: "banner_layered_slideshow",
+              type: "Image",
+              props: {
+                src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+                alt: "slide",
+                objectFit: "cover",
+              },
+              layout: {
+                position: "absolute",
+                top: 38,
+                right: 46,
+                width: { value: 340, unit: "px" },
+                height: { value: 220, unit: "px" },
+              },
+              style: { borderRadius: 8, boxShadow: "0 12px 24px rgba(0,0,0,0.3)" },
+              children: [],
+            },
+            {
+              id: "banner_layered_img_front",
+              parentId: "banner_layered_slideshow",
+              type: "Image",
+              props: {
+                src: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1",
+                alt: "slide",
+                objectFit: "cover",
+              },
+              layout: {
+                position: "absolute",
+                bottom: 36,
+                left: 44,
+                width: { value: 380, unit: "px" },
+                height: { value: 250, unit: "px" },
+              },
+              style: { borderRadius: 8, boxShadow: "0 12px 24px rgba(0,0,0,0.3)" },
+              children: [],
+            },
+          ],
+        },
       },
       {
         label: "Slideshow: Full frame",
         icon: "🎞️",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_slideshow_full",
+          parentId: null,
+          type: "Frame",
+          name: "Slideshow Full Frame",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 500, unit: "px" },
+            position: "relative",
+            overflow: "hidden",
+          },
+          style: { borderRadius: 10 },
+          props: {},
+          children: [
+            {
+              id: "banner_slideshow_full_img",
+              parentId: "banner_slideshow_full",
+              type: "Image",
+              props: {
+                src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+                alt: "hero",
+                objectFit: "cover",
+              },
+              layout: { width: { value: 100, unit: "%" }, height: { value: 100, unit: "%" } },
+              style: {},
+              children: [],
+            },
+            {
+              id: "banner_slideshow_full_caption",
+              parentId: "banner_slideshow_full",
+              type: "Text",
+              props: { text: "Northern lights. Desert dunes. Alpine lakes.", tag: "h3" },
+              layout: { position: "absolute", left: 28, bottom: 28 },
+              style: { fontSize: 30, fontWeight: 700, textColor: "#ffffff" },
+              children: [],
+            },
+          ],
+        },
       },
       {
         label: "Slideshow: Inset",
         icon: "🖼️",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_slideshow_inset",
+          parentId: null,
+          type: "Frame",
+          name: "Slideshow Inset",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 460, unit: "px" },
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: { top: 24, right: 24, bottom: 24, left: 24 },
+          },
+          style: { backgroundColor: "#e2e8f0", borderRadius: 10 },
+          props: {},
+          children: [
+            {
+              id: "banner_slideshow_inset_card",
+              parentId: "banner_slideshow_inset",
+              type: "Frame",
+              layout: {
+                width: { value: 900, unit: "px" },
+                maxWidth: { value: 100, unit: "%" },
+                height: { value: 360, unit: "px" },
+                overflow: "hidden",
+                padding: { top: 10, right: 10, bottom: 10, left: 10 },
+              },
+              style: { backgroundColor: "#ffffff", borderRadius: 10 },
+              props: {},
+              children: [
+                {
+                  id: "banner_slideshow_inset_img",
+                  parentId: "banner_slideshow_inset_card",
+                  type: "Image",
+                  props: {
+                    src: "https://images.unsplash.com/photo-1482192505345-5655af888cc4",
+                    alt: "inset",
+                    objectFit: "cover",
+                  },
+                  layout: { width: { value: 100, unit: "%" }, height: { value: 100, unit: "%" } },
+                  style: { borderRadius: 8 },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Split showcase",
         icon: "▣",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "banner_split_showcase",
+          parentId: null,
+          type: "Frame",
+          name: "Split Showcase",
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 460, unit: "px" },
+            display: "flex",
+            flexDirection: "row",
+            gap: 16,
+            overflow: "hidden",
+          },
+          style: {},
+          props: {},
+          children: [
+            {
+              id: "banner_split_left",
+              parentId: "banner_split_showcase",
+              type: "Image",
+              props: {
+                src: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e",
+                alt: "left",
+                objectFit: "cover",
+              },
+              layout: { width: { value: 50, unit: "%" }, height: { value: 460, unit: "px" } },
+              style: { borderRadius: 8 },
+              children: [],
+            },
+            {
+              id: "banner_split_right_wrap",
+              parentId: "banner_split_showcase",
+              type: "Frame",
+              layout: {
+                width: { value: 50, unit: "%" },
+                height: { value: 460, unit: "px" },
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: 12,
+                padding: { top: 24, right: 24, bottom: 24, left: 24 },
+              },
+              style: { backgroundColor: "#0f172a", borderRadius: 8 },
+              props: {},
+              children: [
+                {
+                  id: "banner_split_title",
+                  parentId: "banner_split_right_wrap",
+                  type: "Text",
+                  props: { text: "Find your next signature journey", tag: "h2" },
+                  layout: {},
+                  style: {
+                    fontSize: 34,
+                    fontWeight: 800,
+                    lineHeight: 1.1,
+                    textColor: "#f8fafc",
+                  },
+                  children: [],
+                },
+                {
+                  id: "banner_split_copy",
+                  parentId: "banner_split_right_wrap",
+                  type: "Text",
+                  props: {
+                    text: "Compare routes, plan better stops, and book trusted local experiences.",
+                    tag: "p",
+                  },
+                  layout: {},
+                  style: { fontSize: 15, lineHeight: 1.6, textColor: "#cbd5e1" },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
       },
     ],
   },
@@ -279,24 +1388,821 @@ export const components: ComponentList[] = [
     label: "Collections",
     list: [
       {
-        label: "Collection links: Spotlight",
-        icon: "🔦",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
-      },
-      {
-        label: "Collection links: Text",
-        icon: "🔗",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
-      },
-      {
         label: "Collection list: Bento",
-        icon: "▦",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        icon: "🧩",
+        node: {
+          id: "collection_list_bento",
+          parentId: null,
+          type: "Frame",
+          name: "Collection List Bento",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            height: { value: 460, unit: "px" },
+            display: "flex",
+            flexDirection: "column",
+            padding: { top: 20, right: 20, bottom: 20, left: 20 },
+            gap: 16,
+            overflow: "hidden",
+          },
+
+          style: {
+            backgroundColor: "#ffffff",
+            borderRadius: 10,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          },
+
+          props: {},
+          dataBinding: { source: "collection" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "collection",
+              menu: "collections",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 5,
+            },
+          },
+
+          children: [
+            {
+              id: "collection_list_bento_heading",
+              parentId: "collection_list_bento",
+              type: "Text",
+              name: "Bento Heading",
+              layout: {},
+              style: {
+                fontSize: 22,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                textColor: "#111111",
+                textAlign: "left",
+              },
+              props: {
+                text: "Shop by collection",
+                tag: "h2",
+              },
+              children: [],
+            },
+
+            {
+              id: "collection_list_bento_grid",
+              parentId: "collection_list_bento",
+              type: "Frame",
+              name: "Bento Grid",
+
+              layout: {
+                width: { value: 100, unit: "%" },
+                height: { value: 620, unit: "px" },
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                overflow: "hidden",
+              },
+
+              style: {},
+              props: {},
+
+              children: [
+                {
+                  id: "collection_bento_top_row",
+                  parentId: "collection_list_bento_grid",
+                  type: "Frame",
+                  name: "Top Row",
+
+                  layout: {
+                    width: { value: 100, unit: "%" },
+                    height: { value: 360, unit: "px" },
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: 10,
+                    overflow: "hidden",
+                  },
+
+                  style: {},
+                  props: {},
+
+                  children: [
+                    {
+                      id: "collection_bento_card_1",
+                      parentId: "collection_bento_top_row",
+                      type: "Frame",
+                      name: "Collection Card 1",
+
+                      layout: {
+                        width: { value: 32, unit: "%" },
+                        height: { value: 360, unit: "px" },
+                        overflow: "hidden",
+                      },
+
+                      style: {
+                        borderRadius: 8,
+                      },
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "collection_bento_card_1_image",
+                          parentId: "collection_bento_card_1",
+                          type: "Image",
+                          name: "Collection Image 1",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 100, unit: "%" },
+                          },
+
+                          props: {
+                            src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
+                            alt: "Collection image",
+                            objectFit: "cover",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "collection_bento_card_1_text",
+                          parentId: "collection_bento_card_1",
+                          type: "Text",
+                          name: "Collection Label 1",
+
+                          layout: {
+                            position: "absolute",
+                            left: 10,
+                            bottom: 10,
+                          },
+
+                          style: {
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textColor: "#ffffff",
+                            textAlign: "left",
+                          },
+
+                          props: {
+                            text: "Collection title",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+
+                    {
+                      id: "collection_bento_card_2",
+                      parentId: "collection_bento_top_row",
+                      type: "Frame",
+                      name: "Collection Card 2",
+
+                      layout: {
+                        width: { value: 32, unit: "%" },
+                        height: { value: 360, unit: "px" },
+                        overflow: "hidden",
+                      },
+
+                      style: {
+                        borderRadius: 8,
+                      },
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "collection_bento_card_2_image",
+                          parentId: "collection_bento_card_2",
+                          type: "Image",
+                          name: "Collection Image 2",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 100, unit: "%" },
+                          },
+
+                          props: {
+                            src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                            alt: "Collection image",
+                            objectFit: "cover",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "collection_bento_card_2_text",
+                          parentId: "collection_bento_card_2",
+                          type: "Text",
+                          name: "Collection Label 2",
+
+                          layout: {
+                            position: "absolute",
+                            left: 10,
+                            bottom: 10,
+                          },
+
+                          style: {
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textColor: "#ffffff",
+                            textAlign: "left",
+                          },
+
+                          props: {
+                            text: "Collection title",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+
+                    {
+                      id: "collection_bento_card_3",
+                      parentId: "collection_bento_top_row",
+                      type: "Frame",
+                      name: "Collection Card 3",
+
+                      layout: {
+                        width: { value: 32, unit: "%" },
+                        height: { value: 360, unit: "px" },
+                        overflow: "hidden",
+                      },
+
+                      style: {
+                        borderRadius: 8,
+                      },
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "collection_bento_card_3_image",
+                          parentId: "collection_bento_card_3",
+                          type: "Image",
+                          name: "Collection Image 3",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 100, unit: "%" },
+                          },
+
+                          props: {
+                            src: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b",
+                            alt: "Collection image",
+                            objectFit: "cover",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "collection_bento_card_3_text",
+                          parentId: "collection_bento_card_3",
+                          type: "Text",
+                          name: "Collection Label 3",
+
+                          layout: {
+                            position: "absolute",
+                            left: 10,
+                            bottom: 10,
+                          },
+
+                          style: {
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textColor: "#ffffff",
+                            textAlign: "left",
+                          },
+
+                          props: {
+                            text: "Collection title",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+
+                {
+                  id: "collection_bento_bottom_row",
+                  parentId: "collection_list_bento_grid",
+                  type: "Frame",
+                  name: "Bottom Row",
+
+                  layout: {
+                    width: { value: 100, unit: "%" },
+                    height: { value: 360, unit: "px" },
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: 10,
+                    overflow: "hidden",
+                  },
+
+                  style: {},
+                  props: {},
+
+                  children: [
+                    {
+                      id: "collection_bento_card_4",
+                      parentId: "collection_bento_bottom_row",
+                      type: "Frame",
+                      name: "Collection Card 4",
+
+                      layout: {
+                        width: { value: 65, unit: "%" },
+                        height: { value: 360, unit: "px" },
+                        overflow: "hidden",
+                      },
+
+                      style: {
+                        borderRadius: 8,
+                      },
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "collection_bento_card_4_image",
+                          parentId: "collection_bento_card_4",
+                          type: "Image",
+                          name: "Collection Image 4",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 100, unit: "%" },
+                          },
+
+                          props: {
+                            src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
+                            alt: "Collection image",
+                            objectFit: "cover",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "collection_bento_card_4_text",
+                          parentId: "collection_bento_card_4",
+                          type: "Text",
+                          name: "Collection Label 4",
+
+                          layout: {
+                            position: "absolute",
+                            left: 10,
+                            bottom: 10,
+                          },
+
+                          style: {
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textColor: "#ffffff",
+                            textAlign: "left",
+                          },
+
+                          props: {
+                            text: "Collection title",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+
+                    {
+                      id: "collection_bento_card_5",
+                      parentId: "collection_bento_bottom_row",
+                      type: "Frame",
+                      name: "Collection Card 5",
+
+                      layout: {
+                        width: { value: 32, unit: "%" },
+                        height: { value: 360, unit: "px" },
+                        overflow: "hidden",
+                      },
+
+                      style: {
+                        borderRadius: 8,
+                      },
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "collection_bento_card_5_image",
+                          parentId: "collection_bento_card_5",
+                          type: "Image",
+                          name: "Collection Image 5",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 100, unit: "%" },
+                          },
+
+                          props: {
+                            src: "https://images.unsplash.com/photo-1445205170230-053b83016050",
+                            alt: "Collection image",
+                            objectFit: "cover",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "collection_bento_card_5_text",
+                          parentId: "collection_bento_card_5",
+                          type: "Text",
+                          name: "Collection Label 5",
+
+                          layout: {
+                            position: "absolute",
+                            left: 10,
+                            bottom: 10,
+                          },
+
+                          style: {
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textColor: "#ffffff",
+                            textAlign: "left",
+                          },
+
+                          props: {
+                            text: "Collection title",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Collection list: Carousel",
         icon: "🎠",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "collection_list_carousel",
+          parentId: null,
+          type: "Frame",
+          name: "Collection List Carousel",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            height: { value: 300, unit: "px" },
+            display: "flex",
+            flexDirection: "column",
+            padding: { top: 20, right: 20, bottom: 20, left: 20 },
+            gap: 16,
+            overflow: "hidden",
+          },
+
+          style: {
+            backgroundColor: "#ffffff",
+            borderRadius: 10,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
+          },
+
+          props: {},
+          dataBinding: { source: "collection" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "collection",
+              menu: "collections",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 8,
+            },
+          },
+
+          children: [
+            {
+              id: "collection_list_carousel_heading",
+              parentId: "collection_list_carousel",
+              type: "Text",
+              name: "Carousel Heading",
+
+              layout: {},
+
+              style: {
+                fontSize: 20,
+                fontWeight: 700,
+                lineHeight: 1.1,
+                textColor: "#111111",
+                textAlign: "left",
+              },
+
+              props: {
+                text: "Shop by collection",
+                tag: "h2",
+              },
+
+              children: [],
+            },
+
+            {
+              id: "collection_list_carousel_track",
+              parentId: "collection_list_carousel",
+              type: "Frame",
+              name: "Collection Carousel Track",
+
+              props: {
+                marquee: true,
+              } as any,
+
+              layout: {
+                width: { value: 100, unit: "%" },
+                height: { value: 210, unit: "px" },
+                display: "flex",
+                flexDirection: "row",
+                gap: 12,
+                overflow: "hidden",
+              },
+
+              style: {},
+
+              children: [
+                {
+                  id: "collection_carousel_item_1",
+                  parentId: "collection_list_carousel_track",
+                  type: "Frame",
+                  name: "Collection Item 1",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    overflow: "hidden",
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "collection_carousel_item_1_image",
+                      parentId: "collection_carousel_item_1",
+                      type: "Image",
+                      name: "Collection Image 1",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 170, unit: "px" },
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
+                        alt: "Collection image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "collection_carousel_item_1_title",
+                      parentId: "collection_carousel_item_1",
+                      type: "Text",
+                      name: "Collection Title 1",
+
+                      layout: {},
+
+                      style: {
+                        fontSize: 10,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        textColor: "#111111",
+                        textAlign: "left",
+                      },
+
+                      props: {
+                        text: "Collection title",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "collection_carousel_item_2",
+                  parentId: "collection_list_carousel_track",
+                  type: "Frame",
+                  name: "Collection Item 2",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    overflow: "hidden",
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "collection_carousel_item_2_image",
+                      parentId: "collection_carousel_item_2",
+                      type: "Image",
+                      name: "Collection Image 2",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 170, unit: "px" },
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                        alt: "Collection image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "collection_carousel_item_2_title",
+                      parentId: "collection_carousel_item_2",
+                      type: "Text",
+                      name: "Collection Title 2",
+
+                      layout: {},
+
+                      style: {
+                        fontSize: 10,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        textColor: "#111111",
+                        textAlign: "left",
+                      },
+
+                      props: {
+                        text: "Collection title",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "collection_carousel_item_3",
+                  parentId: "collection_list_carousel_track",
+                  type: "Frame",
+                  name: "Collection Item 3",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    overflow: "hidden",
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "collection_carousel_item_3_image",
+                      parentId: "collection_carousel_item_3",
+                      type: "Image",
+                      name: "Collection Image 3",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 170, unit: "px" },
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b",
+                        alt: "Collection image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "collection_carousel_item_3_title",
+                      parentId: "collection_carousel_item_3",
+                      type: "Text",
+                      name: "Collection Title 3",
+
+                      layout: {},
+
+                      style: {
+                        fontSize: 10,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        textColor: "#111111",
+                        textAlign: "left",
+                      },
+
+                      props: {
+                        text: "Collection title",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "collection_carousel_item_4",
+                  parentId: "collection_list_carousel_track",
+                  type: "Frame",
+                  name: "Collection Item 4",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    overflow: "hidden",
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "collection_carousel_item_4_image",
+                      parentId: "collection_carousel_item_4",
+                      type: "Image",
+                      name: "Collection Image 4",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 170, unit: "px" },
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1445205170230-053b83016050",
+                        alt: "Collection image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "collection_carousel_item_4_title",
+                      parentId: "collection_carousel_item_4",
+                      type: "Text",
+                      name: "Collection Title 4",
+
+                      layout: {},
+
+                      style: {
+                        fontSize: 10,
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        textColor: "#111111",
+                        textAlign: "left",
+                      },
+
+                      props: {
+                        text: "Collection title",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Collection list: Editorial",
@@ -315,13 +2221,589 @@ export const components: ComponentList[] = [
     list: [
       {
         label: "Contact form",
-        icon: "✉️",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        icon: "📝",
+        node: {
+          id: "contact_form_section",
+          parentId: null,
+          type: "Frame",
+          name: "Contact Form Section",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            height: { value: 560, unit: "px" },
+
+            display: "flex",
+            flexDirection: "column",
+
+            justifyContent: "center",
+            alignItems: "center",
+
+            padding: {
+              top: 32,
+              right: 32,
+              bottom: 32,
+              left: 32,
+            },
+          },
+
+          style: {
+            backgroundColor: "#ffffff",
+            borderRadius: 10,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          },
+
+          props: {},
+
+          children: [
+            {
+              id: "contact_form_container",
+              parentId: "contact_form_section",
+              type: "Form",
+              name: "Contact Form Container",
+
+              layout: {
+                width: { value: 100, unit: "%" },
+                maxWidth: { value: 520, unit: "px" },
+
+                display: "flex",
+                flexDirection: "column",
+
+                gap: 16,
+              },
+
+              style: {},
+
+              props: {},
+
+              children: [
+                {
+                  id: "contact_form_heading",
+                  parentId: "contact_form_container",
+                  type: "Text",
+                  name: "Contact Heading",
+
+                  layout: {},
+
+                  style: {
+                    fontSize: 38,
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                    textColor: "#111111",
+                    textAlign: "center",
+                  },
+
+                  props: {
+                    text: "Contact us",
+                    tag: "h2",
+                  },
+
+                  children: [],
+                },
+
+                {
+                  id: "contact_form_name_email_row",
+                  parentId: "contact_form_container",
+                  type: "Frame",
+                  name: "Name Email Row",
+
+                  layout: {
+                    width: { value: 100, unit: "%" },
+
+                    display: "flex",
+                    flexDirection: "row",
+
+                    gap: 12,
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "contact_form_name_wrapper",
+                      parentId: "contact_form_name_email_row",
+                      type: "Frame",
+
+                      layout: {
+                        width: { value: 50, unit: "%" },
+
+                        display: "flex",
+                        flexDirection: "column",
+
+                        gap: 6,
+                      },
+
+                      style: {},
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "contact_form_name_label",
+                          parentId: "contact_form_name_wrapper",
+                          type: "Text",
+
+                          style: {
+                            fontSize: 13,
+                            fontWeight: 600,
+                            textColor: "#111111",
+                          },
+
+                          props: {
+                            text: "Name",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "contact_form_name_input",
+                          parentId: "contact_form_name_wrapper",
+                          type: "Input",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 46, unit: "px" },
+                            border: 1,
+                            padding: {
+                              left: 14,
+                              right: 14,
+                            },
+                          },
+
+                          style: {
+                            backgroundColor: "#f3f3f3",
+                            borderColor: "#dcdcdc",
+                            borderRadius: 6,
+                          },
+
+                          props: {
+                            name: "name",
+                            placeholder: "Enter your name",
+                            inputType: "text",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+
+                    {
+                      id: "contact_form_email_wrapper",
+                      parentId: "contact_form_name_email_row",
+                      type: "Frame",
+
+                      layout: {
+                        width: { value: 50, unit: "%" },
+
+                        display: "flex",
+                        flexDirection: "column",
+
+                        gap: 6,
+                      },
+
+                      style: {},
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "contact_form_email_label",
+                          parentId: "contact_form_email_wrapper",
+                          type: "Text",
+
+                          style: {
+                            fontSize: 13,
+                            fontWeight: 600,
+                            textColor: "#111111",
+                          },
+
+                          props: {
+                            text: "Email",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+
+                        {
+                          id: "contact_form_email_input",
+                          parentId: "contact_form_email_wrapper",
+                          type: "Input",
+
+                          layout: {
+                            width: { value: 100, unit: "%" },
+                            height: { value: 46, unit: "px" },
+                            border: 1,
+                            padding: {
+                              left: 14,
+                              right: 14,
+                            },
+                          },
+
+                          style: {
+                            backgroundColor: "#f3f3f3",
+                            borderColor: "#dcdcdc",
+                            borderRadius: 6,
+                          },
+
+                          props: {
+                            name: "email",
+                            placeholder: "Enter your email",
+                            inputType: "email",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+
+                {
+                  id: "contact_form_phone_wrapper",
+                  parentId: "contact_form_container",
+                  type: "Frame",
+
+                  layout: {
+                    width: { value: 100, unit: "%" },
+
+                    display: "flex",
+                    flexDirection: "column",
+
+                    gap: 6,
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "contact_form_phone_label",
+                      parentId: "contact_form_phone_wrapper",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 13,
+                        fontWeight: 600,
+                        textColor: "#111111",
+                      },
+
+                      props: {
+                        text: "Phone",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "contact_form_phone_input",
+                      parentId: "contact_form_phone_wrapper",
+                      type: "Input",
+
+                      layout: {
+                        width: { value: 100, unit: "%" },
+                        height: { value: 46, unit: "px" },
+                        border: 1,
+                        padding: {
+                          left: 14,
+                          right: 14,
+                        },
+                      },
+
+                      style: {
+                        backgroundColor: "#f3f3f3",
+                        borderColor: "#dcdcdc",
+                        borderRadius: 6,
+                      },
+
+                      props: {
+                        name: "phone",
+                        placeholder: "Enter your phone number",
+                        inputType: "text",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "contact_form_comment_wrapper",
+                  parentId: "contact_form_container",
+                  type: "Frame",
+
+                  layout: {
+                    width: { value: 100, unit: "%" },
+
+                    display: "flex",
+                    flexDirection: "column",
+
+                    gap: 6,
+                  },
+
+                  style: {},
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "contact_form_comment_label",
+                      parentId: "contact_form_comment_wrapper",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 13,
+                        fontWeight: 600,
+                        textColor: "#111111",
+                      },
+
+                      props: {
+                        text: "Comment",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "contact_form_comment_box",
+                      parentId: "contact_form_comment_wrapper",
+                      type: "Frame",
+
+                      layout: {
+                        width: { value: 100, unit: "%" },
+                        height: { value: 160, unit: "px" },
+                        border: 1,
+                        padding: {
+                          top: 14,
+                          left: 14,
+                          right: 14,
+                        },
+                      },
+
+                      style: {
+                        backgroundColor: "#f3f3f3",
+                        borderColor: "#dcdcdc",
+                        borderRadius: 6,
+                      },
+
+                      props: {},
+
+                      children: [
+                        {
+                          id: "contact_form_comment_placeholder",
+                          parentId: "contact_form_comment_box",
+                          type: "Text",
+
+                          style: {
+                            fontSize: 13,
+                            textColor: "#999999",
+                          },
+
+                          props: {
+                            text: "Write your message...",
+                            tag: "span",
+                          },
+
+                          children: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+
+                {
+                  id: "contact_form_submit_button",
+                  parentId: "contact_form_container",
+                  type: "Button",
+
+                  layout: {
+                    width: { value: 120, unit: "px" },
+                    height: { value: 44, unit: "px" },
+                  },
+
+                  style: {
+                    backgroundColor: "#111111",
+                    borderRadius: 6,
+                    textColor: "#ffffff",
+                  },
+
+                  props: {
+                    label: "Submit",
+                    variant: "primary",
+                  },
+
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
       },
       {
         label: "Email signup",
         icon: "📧",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        node: {
+          id: "email_signup_section",
+          parentId: null,
+          type: "Frame",
+          name: "Email Signup Section",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            height: { value: 220, unit: "px" },
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: { top: 24, right: 24, bottom: 24, left: 24 },
+          },
+
+          style: {
+            backgroundColor: "#ffffff",
+            borderRadius: 10,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          },
+
+          props: {},
+
+          children: [
+            {
+              id: "email_signup_inner_container",
+              parentId: "email_signup_section",
+              type: "Frame",
+              name: "Signup Inner Container",
+
+              layout: {
+                width: { value: 100, unit: "%" },
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 12,
+                padding: { top: 28, right: 28, bottom: 28, left: 28 },
+              },
+
+              style: {
+                backgroundColor: "#f5f5f5",
+                borderRadius: 6,
+              },
+
+              props: {},
+
+              children: [
+                {
+                  id: "email_signup_heading",
+                  parentId: "email_signup_inner_container",
+                  type: "Text",
+                  name: "Signup Heading",
+                  layout: {},
+                  style: {
+                    fontSize: 32,
+                    fontWeight: 700,
+                    lineHeight: 1.1,
+                    textColor: "#111111",
+                    textAlign: "center",
+                  },
+                  props: {
+                    text: "Subscribe to our emails",
+                    tag: "h2",
+                  },
+                  children: [],
+                },
+
+                {
+                  id: "email_signup_subheading",
+                  parentId: "email_signup_inner_container",
+                  type: "Text",
+                  name: "Signup Subheading",
+                  layout: {},
+                  style: {
+                    fontSize: 12,
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                    textColor: "#666666",
+                    textAlign: "center",
+                  },
+                  props: {
+                    text: "Be the first to know about new collections and special offers.",
+                    tag: "p",
+                  },
+                  children: [],
+                },
+
+                {
+                  id: "email_signup_input_wrapper",
+                  parentId: "email_signup_inner_container",
+                  type: "Frame",
+                  name: "Signup Input Wrapper",
+
+                  layout: {
+                    width: { value: 100, unit: "%" },
+                    maxWidth: { value: 420, unit: "px" },
+                    height: { value: 46, unit: "px" },
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: { top: 0, right: 16, bottom: 0, left: 16 },
+                    border: 1,
+                  },
+
+                  style: {
+                    backgroundColor: "#ffffff",
+                    borderColor: "#dddddd",
+                    borderRadius: 999,
+                  },
+
+                  props: {},
+
+                  children: [
+                    {
+                      id: "email_signup_placeholder",
+                      parentId: "email_signup_input_wrapper",
+                      type: "Text",
+                      name: "Email Placeholder",
+                      layout: {},
+                      style: {
+                        fontSize: 12,
+                        textColor: "#999999",
+                      },
+                      props: {
+                        text: "Email address",
+                        tag: "span",
+                      },
+                      children: [],
+                    },
+
+                    {
+                      id: "email_signup_arrow",
+                      parentId: "email_signup_input_wrapper",
+                      type: "Text",
+                      name: "Arrow Icon",
+                      layout: {},
+                      style: {
+                        fontSize: 18,
+                        fontWeight: 600,
+                        textColor: "#666666",
+                      },
+                      props: {
+                        text: "→",
+                        tag: "span",
+                      },
+                      children: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       },
     ],
   },
@@ -330,13 +2812,67 @@ export const components: ComponentList[] = [
     list: [
       {
         label: "Custom section",
-        icon: "⬚",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        icon: "🧩",
+        node: {
+          id: "custom_section_block",
+          parentId: null,
+          type: "Frame",
+          name: "Custom Section",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            height: { value: 420, unit: "px" },
+
+            display: "flex",
+            flexDirection: "column",
+
+            padding: {
+              top: 24,
+              right: 24,
+              bottom: 24,
+              left: 24,
+            },
+          },
+
+          style: {
+            backgroundColor: "#ffffff",
+            borderRadius: 10,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.12)",
+          },
+
+          props: {},
+
+          children: [],
+        },
       },
       {
         label: "Divider",
-        icon: "━",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
+        icon: "➖",
+
+        node: {
+          id: "layout_divider_block",
+          parentId: null,
+          type: "Frame",
+          name: "Divider Block",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            height: { value: 20, unit: "px" },
+
+            display: "flex",
+            flexDirection: "column",
+          },
+
+          style: {
+            backgroundColor: "#ffffff",
+            borderRadius: 8,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          },
+
+          props: {},
+
+          children: [],
+        },
       },
     ],
   },
@@ -345,35 +2881,25 @@ export const components: ComponentList[] = [
     list: [
       {
         label: "Featured collection: Carousel",
-        icon: "🛍️",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
-      },
-      {
-        label: "Featured collection: Editorial",
-        icon: "📰",
-        node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
-      },
-      {
-        label: "Featured collection: Grid",
-        icon: "▦",
+        icon: "🎠",
         node: {
-          id: "featured_collection_grid",
+          id: "featured_collection_carousel_large",
           parentId: null,
           type: "Frame",
-          name: "Featured Collection Grid",
+          name: "Featured Collection Carousel Large",
 
           layout: {
             width: { value: 100, unit: "%" },
-            height: { value: 760, unit: "px" },
+            height: { value: 420, unit: "px" },
 
             display: "flex",
             flexDirection: "column",
 
             padding: {
-              top: 20,
-              right: 20,
-              bottom: 20,
-              left: 20,
+              top: 24,
+              right: 24,
+              bottom: 24,
+              left: 24,
             },
 
             gap: 18,
@@ -382,23 +2908,34 @@ export const components: ComponentList[] = [
 
           style: {
             backgroundColor: "#ffffff",
-            borderRadius: 8,
+            borderRadius: 10,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
 
           props: {},
+          dataBinding: { source: "product" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "product",
+              menu: "featured-products",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 8,
+            },
+          },
 
           children: [
             {
-              id: "featured_collection_grid_title",
-              parentId: "featured_collection_grid",
+              id: "featured_collection_carousel_large_title",
+              parentId: "featured_collection_carousel_large",
               type: "Text",
-              name: "Title",
+              name: "Carousel Title",
 
               layout: {},
 
               style: {
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: 700,
                 lineHeight: 1.1,
                 textColor: "#111111",
@@ -414,10 +2951,435 @@ export const components: ComponentList[] = [
             },
 
             {
-              id: "featured_collection_grid_items",
-              parentId: "featured_collection_grid",
+              id: "featured_collection_carousel_large_track",
+              parentId: "featured_collection_carousel_large",
               type: "Frame",
-              name: "Product Grid",
+              name: "Carousel Track",
+
+              props: {
+                marquee: true,
+              } as any,
+
+              layout: {
+                width: { value: 100, unit: "%" },
+                height: { value: 320, unit: "px" },
+
+                display: "flex",
+                flexDirection: "row",
+
+                gap: 20,
+                overflow: "hidden",
+              },
+
+              style: {},
+
+              children: [
+                {
+                  id: "featured_collection_carousel_large_product_1",
+                  parentId: "featured_collection_carousel_large_track",
+                  type: "Frame",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+
+                    display: "flex",
+                    flexDirection: "column",
+
+                    gap: 8,
+                  },
+
+                  style: {},
+                  props: {},
+
+                  children: [
+                    {
+                      id: "featured_collection_carousel_large_product_1_image",
+                      parentId: "featured_collection_carousel_large_product_1",
+                      type: "Image",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 220, unit: "px" },
+                      },
+
+                      style: {
+                        borderRadius: 6,
+                        backgroundColor: "#f3f3f3",
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+                        alt: "Product image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_1_title",
+                      parentId: "featured_collection_carousel_large_product_1",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textColor: "#111111",
+                      },
+
+                      props: {
+                        text: "Classic White Tee",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_1_price",
+                      parentId: "featured_collection_carousel_large_product_1",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 10,
+                        textColor: "#777777",
+                      },
+
+                      props: {
+                        text: "Rs. 19.99",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "featured_collection_carousel_large_product_2",
+                  parentId: "featured_collection_carousel_large_track",
+                  type: "Frame",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+
+                    display: "flex",
+                    flexDirection: "column",
+
+                    gap: 8,
+                  },
+
+                  style: {},
+                  props: {},
+
+                  children: [
+                    {
+                      id: "featured_collection_carousel_large_product_2_image",
+                      parentId: "featured_collection_carousel_large_product_2",
+                      type: "Image",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 220, unit: "px" },
+                      },
+
+                      style: {
+                        borderRadius: 6,
+                        backgroundColor: "#f3f3f3",
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
+                        alt: "Product image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_2_title",
+                      parentId: "featured_collection_carousel_large_product_2",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textColor: "#111111",
+                      },
+
+                      props: {
+                        text: "Urban Green Shirt",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_2_price",
+                      parentId: "featured_collection_carousel_large_product_2",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 10,
+                        textColor: "#777777",
+                      },
+
+                      props: {
+                        text: "Rs. 24.99",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "featured_collection_carousel_large_product_3",
+                  parentId: "featured_collection_carousel_large_track",
+                  type: "Frame",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+
+                    display: "flex",
+                    flexDirection: "column",
+
+                    gap: 8,
+                  },
+
+                  style: {},
+                  props: {},
+
+                  children: [
+                    {
+                      id: "featured_collection_carousel_large_product_3_image",
+                      parentId: "featured_collection_carousel_large_product_3",
+                      type: "Image",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 220, unit: "px" },
+                      },
+
+                      style: {
+                        borderRadius: 6,
+                        backgroundColor: "#f3f3f3",
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                        alt: "Product image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_3_title",
+                      parentId: "featured_collection_carousel_large_product_3",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textColor: "#111111",
+                      },
+
+                      props: {
+                        text: "Minimal Graphic Tee",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_3_price",
+                      parentId: "featured_collection_carousel_large_product_3",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 10,
+                        textColor: "#777777",
+                      },
+
+                      props: {
+                        text: "Rs. 21.99",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+
+                {
+                  id: "featured_collection_carousel_large_product_4",
+                  parentId: "featured_collection_carousel_large_track",
+                  type: "Frame",
+
+                  layout: {
+                    width: { value: 220, unit: "px" },
+                    minWidth: { value: 220, unit: "px" },
+
+                    display: "flex",
+                    flexDirection: "column",
+
+                    gap: 8,
+                  },
+
+                  style: {},
+                  props: {},
+
+                  children: [
+                    {
+                      id: "featured_collection_carousel_large_product_4_image",
+                      parentId: "featured_collection_carousel_large_product_4",
+                      type: "Image",
+
+                      layout: {
+                        width: { value: 220, unit: "px" },
+                        height: { value: 220, unit: "px" },
+                      },
+
+                      style: {
+                        borderRadius: 6,
+                        backgroundColor: "#f3f3f3",
+                      },
+
+                      props: {
+                        src: "https://images.unsplash.com/photo-1523398002811-999ca8dec234",
+                        alt: "Product image",
+                        objectFit: "cover",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_4_title",
+                      parentId: "featured_collection_carousel_large_product_4",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 12,
+                        fontWeight: 700,
+                        textColor: "#111111",
+                      },
+
+                      props: {
+                        text: "Soft Cotton Shirt",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+
+                    {
+                      id: "featured_collection_carousel_large_product_4_price",
+                      parentId: "featured_collection_carousel_large_product_4",
+                      type: "Text",
+
+                      style: {
+                        fontSize: 10,
+                        textColor: "#777777",
+                      },
+
+                      props: {
+                        text: "Rs. 27.99",
+                        tag: "span",
+                      },
+
+                      children: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        label: "Featured collection: Editorial",
+        icon: "📰",
+        node: {
+          id: "featured_collection_editorial_v2",
+          parentId: null,
+          type: "Frame",
+          name: "Featured Collection Editorial V2",
+
+          layout: {
+            width: { value: 100, unit: "%" },
+            minHeight: { value: 900, unit: "px" },
+
+            display: "flex",
+            flexDirection: "column",
+
+            padding: {
+              top: 24,
+              right: 24,
+              bottom: 24,
+              left: 24,
+            },
+
+            gap: 24,
+            overflow: "scroll",
+          },
+
+          style: {
+            backgroundColor: "#f5f5f5",
+            borderRadius: 8,
+          },
+
+          props: {},
+          dataBinding: { source: "product" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "product",
+              menu: "featured-products",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 8,
+            },
+          },
+
+          children: [
+            {
+              id: "featured_collection_editorial_v2_title",
+              parentId: "featured_collection_editorial_v2",
+              type: "Text",
+              name: "Editorial Title",
+
+              layout: {},
+
+              style: {
+                fontSize: 18,
+                fontWeight: 700,
+                textColor: "#111111",
+                lineHeight: 1.2,
+              },
+
+              props: {
+                text: "Featured products",
+                tag: "h2",
+              },
+
+              children: [],
+            },
+
+            {
+              id: "featured_collection_editorial_v2_grid",
+              parentId: "featured_collection_editorial_v2",
+              type: "Frame",
+              name: "Editorial Grid",
 
               layout: {
                 width: { value: 100, unit: "%" },
@@ -426,9 +3388,7 @@ export const components: ComponentList[] = [
                 flexDirection: "row",
 
                 wrap: true,
-                gap: 12,
-
-                overflow: "hidden",
+                gap: 32,
               },
 
               style: {},
@@ -437,13 +3397,13 @@ export const components: ComponentList[] = [
 
               children: [
                 {
-                  id: "featured_collection_product_1",
-                  parentId: "featured_collection_grid_items",
+                  id: "featured_collection_editorial_v2_product_1",
+                  parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Product 1",
+                  name: "Editorial Product 1",
 
                   layout: {
-                    width: { value: 24, unit: "%" },
+                    width: { value: 280, unit: "px" },
 
                     display: "flex",
                     flexDirection: "column",
@@ -457,21 +3417,18 @@ export const components: ComponentList[] = [
 
                   children: [
                     {
-                      id: "featured_collection_product_image_1",
-                      parentId: "featured_collection_product_1",
+                      id: "featured_collection_editorial_v2_product_1_image",
+                      parentId: "featured_collection_editorial_v2_product_1",
                       type: "Image",
-                      name: "Product Image 1",
 
                       layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
+                        width: { value: 280, unit: "px" },
+                        height: { value: 280, unit: "px" },
                       },
-
-                      style: {},
 
                       props: {
                         src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
-                        alt: "Featured product",
+                        alt: "Product image",
                         objectFit: "cover",
                       },
 
@@ -479,43 +3436,32 @@ export const components: ComponentList[] = [
                     },
 
                     {
-                      id: "featured_collection_product_title_1",
-                      parentId: "featured_collection_product_1",
+                      id: "featured_collection_editorial_v2_product_1_title",
+                      parentId: "featured_collection_editorial_v2_product_1",
                       type: "Text",
-                      name: "Product Title 1",
-
-                      layout: {},
 
                       style: {
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: 700,
-                        lineHeight: 1.2,
                         textColor: "#111111",
-                        textAlign: "left",
                       },
 
                       props: {
                         text: "Product title",
-                        tag: "h3",
+                        tag: "span",
                       },
 
                       children: [],
                     },
 
                     {
-                      id: "featured_collection_product_price_1",
-                      parentId: "featured_collection_product_1",
+                      id: "featured_collection_editorial_v2_product_1_price",
+                      parentId: "featured_collection_editorial_v2_product_1",
                       type: "Text",
-                      name: "Product Price 1",
-
-                      layout: {},
 
                       style: {
-                        fontSize: 10,
-                        fontWeight: 600,
-                        lineHeight: 1.2,
+                        fontSize: 9,
                         textColor: "#666666",
-                        textAlign: "left",
                       },
 
                       props: {
@@ -529,35 +3475,41 @@ export const components: ComponentList[] = [
                 },
 
                 {
-                  id: "featured_collection_product_2",
-                  parentId: "featured_collection_grid_items",
+                  id: "featured_collection_editorial_v2_product_2",
+                  parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Product 2",
+                  name: "Editorial Product 2",
 
                   layout: {
-                    width: { value: 24, unit: "%" },
+                    width: { value: 180, unit: "px" },
+
                     display: "flex",
                     flexDirection: "column",
+
                     gap: 6,
+                    margin: {
+                      top: 120,
+                    },
                   },
 
                   style: {},
+
                   props: {},
 
                   children: [
                     {
-                      id: "featured_collection_product_image_2",
-                      parentId: "featured_collection_product_2",
+                      id: "featured_collection_editorial_v2_product_2_image",
+                      parentId: "featured_collection_editorial_v2_product_2",
                       type: "Image",
 
                       layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
+                        width: { value: 180, unit: "px" },
+                        height: { value: 180, unit: "px" },
                       },
 
                       props: {
                         src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
-                        alt: "Featured product",
+                        alt: "Product image",
                         objectFit: "cover",
                       },
 
@@ -565,32 +3517,31 @@ export const components: ComponentList[] = [
                     },
 
                     {
-                      id: "featured_collection_product_title_2",
-                      parentId: "featured_collection_product_2",
+                      id: "featured_collection_editorial_v2_product_2_title",
+                      parentId: "featured_collection_editorial_v2_product_2",
                       type: "Text",
 
                       style: {
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: 700,
                         textColor: "#111111",
                       },
 
                       props: {
                         text: "Product title",
-                        tag: "h3",
+                        tag: "span",
                       },
 
                       children: [],
                     },
 
                     {
-                      id: "featured_collection_product_price_2",
-                      parentId: "featured_collection_product_2",
+                      id: "featured_collection_editorial_v2_product_2_price",
+                      parentId: "featured_collection_editorial_v2_product_2",
                       type: "Text",
 
                       style: {
-                        fontSize: 10,
-                        fontWeight: 600,
+                        fontSize: 9,
                         textColor: "#666666",
                       },
 
@@ -605,35 +3556,38 @@ export const components: ComponentList[] = [
                 },
 
                 {
-                  id: "featured_collection_product_3",
-                  parentId: "featured_collection_grid_items",
+                  id: "featured_collection_editorial_v2_product_3",
+                  parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Product 3",
+                  name: "Editorial Product 3",
 
                   layout: {
-                    width: { value: 24, unit: "%" },
+                    width: { value: 220, unit: "px" },
+
                     display: "flex",
                     flexDirection: "column",
+
                     gap: 6,
                   },
 
-                  props: {},
                   style: {},
+
+                  props: {},
 
                   children: [
                     {
-                      id: "featured_collection_product_image_3",
-                      parentId: "featured_collection_product_3",
+                      id: "featured_collection_editorial_v2_product_3_image",
+                      parentId: "featured_collection_editorial_v2_product_3",
                       type: "Image",
 
                       layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
+                        width: { value: 220, unit: "px" },
+                        height: { value: 220, unit: "px" },
                       },
 
                       props: {
                         src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
-                        alt: "Featured product",
+                        alt: "Product image",
                         objectFit: "cover",
                       },
 
@@ -641,32 +3595,31 @@ export const components: ComponentList[] = [
                     },
 
                     {
-                      id: "featured_collection_product_title_3",
-                      parentId: "featured_collection_product_3",
+                      id: "featured_collection_editorial_v2_product_3_title",
+                      parentId: "featured_collection_editorial_v2_product_3",
                       type: "Text",
 
                       style: {
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: 700,
                         textColor: "#111111",
                       },
 
                       props: {
                         text: "Product title",
-                        tag: "h3",
+                        tag: "span",
                       },
 
                       children: [],
                     },
 
                     {
-                      id: "featured_collection_product_price_3",
-                      parentId: "featured_collection_product_3",
+                      id: "featured_collection_editorial_v2_product_3_price",
+                      parentId: "featured_collection_editorial_v2_product_3",
                       type: "Text",
 
                       style: {
-                        fontSize: 10,
-                        fontWeight: 600,
+                        fontSize: 9,
                         textColor: "#666666",
                       },
 
@@ -681,35 +3634,41 @@ export const components: ComponentList[] = [
                 },
 
                 {
-                  id: "featured_collection_product_4",
-                  parentId: "featured_collection_grid_items",
+                  id: "featured_collection_editorial_v2_product_4",
+                  parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Product 4",
+                  name: "Editorial Product 4",
 
                   layout: {
-                    width: { value: 24, unit: "%" },
+                    width: { value: 340, unit: "px" },
+
                     display: "flex",
                     flexDirection: "column",
+
                     gap: 6,
+                    margin: {
+                      left: 120,
+                    },
                   },
 
-                  props: {},
                   style: {},
+
+                  props: {},
 
                   children: [
                     {
-                      id: "featured_collection_product_image_4",
-                      parentId: "featured_collection_product_4",
+                      id: "featured_collection_editorial_v2_product_4_image",
+                      parentId: "featured_collection_editorial_v2_product_4",
                       type: "Image",
 
                       layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
+                        width: { value: 340, unit: "px" },
+                        height: { value: 340, unit: "px" },
                       },
 
                       props: {
                         src: "https://images.unsplash.com/photo-1523398002811-999ca8dec234",
-                        alt: "Featured product",
+                        alt: "Product image",
                         objectFit: "cover",
                       },
 
@@ -717,290 +3676,33 @@ export const components: ComponentList[] = [
                     },
 
                     {
-                      id: "featured_collection_product_title_4",
-                      parentId: "featured_collection_product_4",
+                      id: "featured_collection_editorial_v2_product_4_title",
+                      parentId: "featured_collection_editorial_v2_product_4",
                       type: "Text",
 
                       style: {
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: 700,
                         textColor: "#111111",
                       },
 
                       props: {
                         text: "Product title",
-                        tag: "h3",
+                        tag: "span",
                       },
 
                       children: [],
                     },
 
                     {
-                      id: "featured_collection_product_price_4",
-                      parentId: "featured_collection_product_4",
+                      id: "featured_collection_editorial_v2_product_4_price",
+                      parentId: "featured_collection_editorial_v2_product_4",
                       type: "Text",
 
                       style: {
-                        fontSize: 10,
-                        fontWeight: 600,
+                        fontSize: 9,
                         textColor: "#666666",
                       },
-
-                      props: {
-                        text: "Rs. 19.99",
-                        tag: "span",
-                      },
-
-                      children: [],
-                    },
-                  ],
-                },
-
-                {
-                  id: "featured_collection_product_5",
-                  parentId: "featured_collection_grid_items",
-                  type: "Frame",
-                  name: "Product 5",
-
-                  layout: {
-                    width: { value: 24, unit: "%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  },
-
-                  props: {},
-                  style: {},
-
-                  children: [
-                    {
-                      id: "featured_collection_product_image_5",
-                      parentId: "featured_collection_product_5",
-                      type: "Image",
-
-                      layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
-                      },
-
-                      props: {
-                        src: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
-                        alt: "Featured product",
-                        objectFit: "cover",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_title_5",
-                      parentId: "featured_collection_product_5",
-                      type: "Text",
-
-                      props: {
-                        text: "Product title",
-                        tag: "h3",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_price_5",
-                      parentId: "featured_collection_product_5",
-                      type: "Text",
-
-                      props: {
-                        text: "Rs. 19.99",
-                        tag: "span",
-                      },
-
-                      children: [],
-                    },
-                  ],
-                },
-
-                {
-                  id: "featured_collection_product_6",
-                  parentId: "featured_collection_grid_items",
-                  type: "Frame",
-                  name: "Product 6",
-
-                  layout: {
-                    width: { value: 24, unit: "%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  },
-
-                  props: {},
-                  style: {},
-
-                  children: [
-                    {
-                      id: "featured_collection_product_image_6",
-                      parentId: "featured_collection_product_6",
-                      type: "Image",
-
-                      layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
-                      },
-
-                      props: {
-                        src: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b",
-                        alt: "Featured product",
-                        objectFit: "cover",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_title_6",
-                      parentId: "featured_collection_product_6",
-                      type: "Text",
-
-                      props: {
-                        text: "Product title",
-                        tag: "h3",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_price_6",
-                      parentId: "featured_collection_product_6",
-                      type: "Text",
-
-                      props: {
-                        text: "Rs. 19.99",
-                        tag: "span",
-                      },
-
-                      children: [],
-                    },
-                  ],
-                },
-
-                {
-                  id: "featured_collection_product_7",
-                  parentId: "featured_collection_grid_items",
-                  type: "Frame",
-                  name: "Product 7",
-
-                  layout: {
-                    width: { value: 24, unit: "%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  },
-
-                  props: {},
-                  style: {},
-
-                  children: [
-                    {
-                      id: "featured_collection_product_image_7",
-                      parentId: "featured_collection_product_7",
-                      type: "Image",
-
-                      layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
-                      },
-
-                      props: {
-                        src: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f",
-                        alt: "Featured product",
-                        objectFit: "cover",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_title_7",
-                      parentId: "featured_collection_product_7",
-                      type: "Text",
-
-                      props: {
-                        text: "Product title",
-                        tag: "h3",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_price_7",
-                      parentId: "featured_collection_product_7",
-                      type: "Text",
-
-                      props: {
-                        text: "Rs. 19.99",
-                        tag: "span",
-                      },
-
-                      children: [],
-                    },
-                  ],
-                },
-
-                {
-                  id: "featured_collection_product_8",
-                  parentId: "featured_collection_grid_items",
-                  type: "Frame",
-                  name: "Product 8",
-
-                  layout: {
-                    width: { value: 24, unit: "%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  },
-
-                  props: {},
-                  style: {},
-
-                  children: [
-                    {
-                      id: "featured_collection_product_image_8",
-                      parentId: "featured_collection_product_8",
-                      type: "Image",
-
-                      layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 270, unit: "px" },
-                      },
-
-                      props: {
-                        src: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-                        alt: "Featured product",
-                        objectFit: "cover",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_title_8",
-                      parentId: "featured_collection_product_8",
-                      type: "Text",
-
-                      props: {
-                        text: "Product title",
-                        tag: "h3",
-                      },
-
-                      children: [],
-                    },
-
-                    {
-                      id: "featured_collection_product_price_8",
-                      parentId: "featured_collection_product_8",
-                      type: "Text",
 
                       props: {
                         text: "Rs. 19.99",
@@ -1685,6 +4387,17 @@ export const components: ComponentList[] = [
           },
 
           props: {},
+          dataBinding: { source: "product" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "product",
+              menu: "recommended-products",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 4,
+            },
+          },
 
           children: [
             {

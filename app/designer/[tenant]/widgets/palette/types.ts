@@ -202,6 +202,34 @@ export type ComponentNode<K extends Component = Component> = {
   layout?: LayoutProps;
   style?: StyleProps;
   props: NodePropsMap[K];
+  dataBinding?: DataBinding;
+  runtime?: {
+    resourceContainer?: boolean;
+    repeat?: {
+      enabled?: boolean;
+      targetResource?:
+        | "product"
+        | "collection"
+        | "customer"
+        | "cart"
+        | "form"
+        | "custom";
+      endpoint?: string;
+      menu?: string;
+      limit?: number;
+      dataPath?: string;
+      policyPath?: string;
+    };
+    exposedLabel?: string;
+    columnMap?: {
+      text?: string;
+      label?: string;
+      src?: string;
+      href?: string;
+      alt?: string;
+      htmlFor?: string;
+    };
+  };
 
   hidden?: boolean;
   locked?: boolean;
@@ -275,6 +303,7 @@ export type DesignerState = {
 
   selectedSection: "header" | "template" | "footer" | null;
   selectedId: string | null;
+  insertIndex: number | null;
   hoveredSection: "header" | "template" | "footer" | null;
   hoveredId: string | null;
 

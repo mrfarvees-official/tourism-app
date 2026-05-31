@@ -2,14 +2,7 @@ import React from "react";
 import { MenuKey } from "./SideNavbar";
 import { AnimatePresence, motion } from "framer-motion";
 import HomePanel from "./Panels/Home";
-import InboxPanel from "./Panels/Inbox";
-import ToursPanel from "./Panels/Tours";
-import CustomerPanel from "./Panels/Customer";
-import AnalyticsPanel from "./Panels/Analytics";
-import DiscountPanel from "./Panels/Discount";
 import ContentPanel from "./Panels/Content";
-import MarketingPanel from "./Panels/Marketing";
-import SettingsPanel from "./Panels/Settings";
 
 export default function TenantPanels({
   currentMenu,
@@ -29,38 +22,7 @@ export default function TenantPanels({
           {currentMenu === "home" && (
             <HomePanel />
           )}
-          
-          {currentMenu === "inbox" && (
-            <InboxPanel />
-          )}
-          
-          {currentMenu === "tours" && (
-            <ToursPanel />
-          )}
-          
-          {currentMenu === "customers" && (
-            <CustomerPanel />
-          )}
-          
-          {currentMenu === "analytics" && (
-            <AnalyticsPanel />
-          )}
-          
-          {currentMenu === "discounts" && (
-            <DiscountPanel />
-          )}
-          
-          {currentMenu === "content" && (
-            <ContentPanel />
-          )}
-          
-          {currentMenu === "marketing" && (
-            <MarketingPanel />
-          )}
-
-          {currentMenu === "settings" && (
-            <SettingsPanel />
-          )}
+          {currentMenu === "content" && <ContentPanel />}
         </motion.div>
       </AnimatePresence>
     </div>
