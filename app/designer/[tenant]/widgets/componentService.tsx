@@ -263,7 +263,11 @@ export const DesignerTree = ({
               setDesignerState((prev) => ({
                 ...prev,
                 selectedId: component.id,
-                selectedSection: section as "header" | "template" | "footer" | null,
+                selectedSection: section as
+                  | "header"
+                  | "template"
+                  | "footer"
+                  | null,
                 insertIndex: null,
               }));
             }}
@@ -407,7 +411,10 @@ export default function ComponentModal({
     setFooterNode(next);
   };
 
-  const findNodeById = (node: ComponentNode, id: string): ComponentNode | null => {
+  const findNodeById = (
+    node: ComponentNode,
+    id: string,
+  ): ComponentNode | null => {
     if (node.id === id) return node;
     for (const child of node.children ?? []) {
       const found = findNodeById(child, id);
@@ -445,9 +452,15 @@ export default function ComponentModal({
       const children = node.children ?? [];
       const nextChildren = prototypeOnly
         ? [childToAdd]
-        : insertIndex == null || insertIndex < 0 || insertIndex > children.length
+        : insertIndex == null ||
+            insertIndex < 0 ||
+            insertIndex > children.length
           ? [...children, childToAdd]
-          : [...children.slice(0, insertIndex), childToAdd, ...children.slice(insertIndex)];
+          : [
+              ...children.slice(0, insertIndex),
+              childToAdd,
+              ...children.slice(insertIndex),
+            ];
       return {
         ...node,
         children: nextChildren,
@@ -456,7 +469,13 @@ export default function ComponentModal({
     return {
       ...node,
       children: (node.children ?? []).map((child) =>
-        addChildToParent(child, parentId, childToAdd, prototypeOnly, insertIndex),
+        addChildToParent(
+          child,
+          parentId,
+          childToAdd,
+          prototypeOnly,
+          insertIndex,
+        ),
       ),
     };
   };
@@ -505,8 +524,12 @@ export default function ComponentModal({
     const seed = `${parentId}_new_${(parentNode.children?.length ?? 0) + 1}`;
     const insertedDraft = cloneNodeForInsert(itemNode, parentId, seed);
     const counter = { count: getMaxNodeIndex(root) };
-    const insertedNode = renumberSubtreeDepthFirst(insertedDraft, counter, parentId);
-    const prototypeOnly = !!parentNode.runtime?.repeat;
+    const insertedNode = renumberSubtreeDepthFirst(
+      insertedDraft,
+      counter,
+      parentId,
+    );
+    const prototypeOnly = parentNode.runtime?.repeat?.enabled === true;
     const updated = addChildToParent(
       root,
       parentId,
@@ -738,7 +761,7 @@ export default function ComponentModal({
                         minHeight: undefined,
                       },
                     }}
-                    isDesigner={false}
+                    isDesigner={true}
                     isRoot={false}
                     section={selected}
                     setShowComponentModal={() => {}}

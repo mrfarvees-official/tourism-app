@@ -359,6 +359,17 @@ export const template: ComponentNode = {
                 wrap: true,
               },
               style: {},
+              dataBinding: { source: "destination" },
+              runtime: {
+                repeat: {
+                  enabled: false,
+                  targetResource: "destination",
+                  menu: "destinations",
+                  dataPath: "data.items",
+                  policyPath: "meta.resourcePolicy",
+                  limit: 6,
+                },
+              },
               children: [
                 {
                   id: "destination_card_ella",
@@ -384,7 +395,7 @@ export const template: ComponentNode = {
                       type: "Image",
                       parentId: "destination_card_ella",
                       props: {
-                        src: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1000&q=80",
+                        src: "/no-image.jpg",
                         alt: "Ella",
                         objectFit: "cover",
                       },
@@ -395,18 +406,29 @@ export const template: ComponentNode = {
                       style: {
                         borderRadius: 10,
                       },
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|src",
+                          alt: "name|title|destination",
+                        },
+                      },
                       children: [],
                     },
                     {
                       id: "destination_card_ella_title",
                       type: "Text",
                       parentId: "destination_card_ella",
-                      props: { text: "Ella", tag: "h3" },
+                      props: { text: "Destination 1", tag: "h3" },
                       layout: {},
                       style: {
                         textColor: "#0f172a",
                         fontSize: 22,
                         fontWeight: 700,
+                      },
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|destination",
+                        },
                       },
                       children: [],
                     },
@@ -415,7 +437,7 @@ export const template: ComponentNode = {
                       type: "Text",
                       parentId: "destination_card_ella",
                       props: {
-                        text: "Mist-covered ridges, tea trails, and sunrise hikes through mountain country.",
+                        text: "Description 1",
                         tag: "p",
                       },
                       layout: {},
@@ -423,6 +445,11 @@ export const template: ComponentNode = {
                         textColor: "#475569",
                         fontSize: 14,
                         lineHeight: 1.5,
+                      },
+                      runtime: {
+                        columnMap: {
+                          text: "description|copy|summary",
+                        },
                       },
                       children: [],
                     },
@@ -452,7 +479,7 @@ export const template: ComponentNode = {
                       type: "Image",
                       parentId: "destination_card_galle",
                       props: {
-                        src: "https://images.unsplash.com/photo-1586328621134-2f2f6cb3b55d?auto=format&fit=crop&w=1000&q=80",
+                        src: "/no-image.jpg",
                         alt: "Galle",
                         objectFit: "cover",
                       },
@@ -469,7 +496,7 @@ export const template: ComponentNode = {
                       id: "destination_card_galle_title",
                       type: "Text",
                       parentId: "destination_card_galle",
-                      props: { text: "Galle", tag: "h3" },
+                      props: { text: "Destination 2", tag: "h3" },
                       layout: {},
                       style: {
                         textColor: "#0f172a",
@@ -483,7 +510,7 @@ export const template: ComponentNode = {
                       type: "Text",
                       parentId: "destination_card_galle",
                       props: {
-                        text: "Historic fort streets, ocean sunsets, and coastal cafes with local flavor.",
+                        text: "Description 2",
                         tag: "p",
                       },
                       layout: {},
@@ -520,7 +547,7 @@ export const template: ComponentNode = {
                       type: "Image",
                       parentId: "destination_card_sigiriya",
                       props: {
-                        src: "https://images.unsplash.com/photo-1626947346165-4c2288dadf57?auto=format&fit=crop&w=1000&q=80",
+                        src: "/no-image.jpg",
                         alt: "Sigiriya",
                         objectFit: "cover",
                       },
@@ -537,7 +564,7 @@ export const template: ComponentNode = {
                       id: "destination_card_sigiriya_title",
                       type: "Text",
                       parentId: "destination_card_sigiriya",
-                      props: { text: "Sigiriya", tag: "h3" },
+                      props: { text: "Destination 3", tag: "h3" },
                       layout: {},
                       style: {
                         textColor: "#0f172a",
@@ -551,7 +578,7 @@ export const template: ComponentNode = {
                       type: "Text",
                       parentId: "destination_card_sigiriya",
                       props: {
-                        text: "Ancient rock fortress, murals, and panoramic views over cultural heartlands.",
+                        text: "Description 3",
                         tag: "p",
                       },
                       layout: {},
@@ -1515,7 +1542,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
+                            src: "/no-image.jpg",
                             alt: "Collection image",
                             objectFit: "cover",
                           },
@@ -1583,7 +1610,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                            src: "/no-image.jpg",
                             alt: "Collection image",
                             objectFit: "cover",
                           },
@@ -1651,7 +1678,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b",
+                            src: "/no-image.jpg",
                             alt: "Collection image",
                             objectFit: "cover",
                           },
@@ -1740,7 +1767,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
+                            src: "/no-image.jpg",
                             alt: "Collection image",
                             objectFit: "cover",
                           },
@@ -1808,7 +1835,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1445205170230-053b83016050",
+                            src: "/no-image.jpg",
                             alt: "Collection image",
                             objectFit: "cover",
                           },
@@ -1968,7 +1995,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1441986300917-64674bd600d8",
+                        src: "/no-image.jpg",
                         alt: "Collection image",
                         objectFit: "cover",
                       },
@@ -2034,7 +2061,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                        src: "/no-image.jpg",
                         alt: "Collection image",
                         objectFit: "cover",
                       },
@@ -2100,7 +2127,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b",
+                        src: "/no-image.jpg",
                         alt: "Collection image",
                         objectFit: "cover",
                       },
@@ -2166,7 +2193,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1445205170230-053b83016050",
+                        src: "/no-image.jpg",
                         alt: "Collection image",
                         objectFit: "cover",
                       },
@@ -3009,7 +3036,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3091,7 +3118,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3173,7 +3200,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3255,7 +3282,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1523398002811-999ca8dec234",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3427,7 +3454,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3508,7 +3535,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3586,7 +3613,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3667,7 +3694,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1523398002811-999ca8dec234",
+                        src: "/no-image.jpg",
                         alt: "Product image",
                         objectFit: "cover",
                       },
@@ -3750,6 +3777,17 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
+          dataBinding: { source: "product" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "product",
+              menu: "featured-product",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 1,
+            },
+          },
 
           props: {},
 
@@ -3793,7 +3831,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+                    src: "/no-image.jpg",
                     alt: "Featured product",
                     objectFit: "cover",
                   },
@@ -3976,6 +4014,17 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
+          dataBinding: { source: "product" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "product",
+              menu: "product-highlight",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 1,
+            },
+          },
 
           props: {},
 
@@ -4017,7 +4066,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+                    src: "/no-image.jpg",
                     alt: "Featured product",
                     objectFit: "cover",
                   },
@@ -4060,7 +4109,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
+                    src: "/no-image.jpg",
                     alt: "Secondary product",
                     objectFit: "cover",
                   },
@@ -4189,6 +4238,17 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
+          dataBinding: { source: "product" },
+          runtime: {
+            repeat: {
+              enabled: false,
+              targetResource: "product",
+              menu: "product-hotspots",
+              dataPath: "data.items",
+              policyPath: "meta.resourcePolicy",
+              limit: 1,
+            },
+          },
 
           props: {},
 
@@ -4250,7 +4310,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+                    src: "/no-image.jpg",
                     alt: "Lifestyle scene",
                     objectFit: "cover",
                   },
@@ -4482,7 +4542,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab",
+                        src: "/no-image.jpg",
                         alt: "Recommended product",
                         objectFit: "cover",
                       },
@@ -4574,7 +4634,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
+                        src: "/no-image.jpg",
                         alt: "Recommended product",
                         objectFit: "cover",
                       },
@@ -4666,7 +4726,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1483985988355-763728e1935b",
+                        src: "/no-image.jpg",
                         alt: "Recommended product",
                         objectFit: "cover",
                       },
@@ -4758,7 +4818,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1523398002811-999ca8dec234",
+                        src: "/no-image.jpg",
                         alt: "Recommended product",
                         objectFit: "cover",
                       },
@@ -4849,7 +4909,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1496747611176-843222e1e57c",
+                        src: "/no-image.jpg",
                         alt: "Recommended product",
                         objectFit: "cover",
                       },
@@ -4940,7 +5000,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b",
+                        src: "/no-image.jpg",
                         alt: "Recommended product",
                         objectFit: "cover",
                       },

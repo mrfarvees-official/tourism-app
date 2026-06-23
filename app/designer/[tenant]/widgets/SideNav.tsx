@@ -220,7 +220,7 @@ export default function SideNav({
       initial={false}
       animate={{ width: open ? 320 : 56 }}
       transition={{ type: "spring", stiffness: 260, damping: 25 }}
-      className="relative h-screen bg-[#fff] shadow-xl border-r border-border overflow-hidden shrink-0"
+      className="relative h-full bg-[#fff] shadow-xl border-r border-border overflow-hidden shrink-0"
     >
       <div className="h-full p-2 overflow-y-auto">
         <div className={`flex items-center mb-6 ${open ? "justify-between" : "justify-center"}`}>

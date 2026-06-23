@@ -39,6 +39,30 @@ function extractSubdomain(hostname: string) {
   return sub;
 }
 
+function normalizeTenantScopedAppPath(pathname: string, tenant: string) {
+  const parts = pathname.split("/").filter(Boolean);
+  const first = parts[0]?.toLowerCase();
+  const second = parts[1]?.toLowerCase();
+
+  if (first === tenant && second === "designer") {
+    return `/designer/${tenant}`;
+  }
+
+  if (first === tenant && second === "admin") {
+    return `/admin/${tenant}`;
+  }
+
+  if (first === "designer") {
+    return `/designer/${tenant}`;
+  }
+
+  if (first === "admin") {
+    return `/admin/${tenant}`;
+  }
+
+  return null;
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -62,7 +86,15 @@ export function proxy(req: NextRequest) {
   }
 
   const rewriteUrl = req.nextUrl.clone();
-  rewriteUrl.pathname = `/_sites/${tenant}${pathname === "/" ? "" : pathname}`;
+  const appPath = normalizeTenantScopedAppPath(pathname, tenant);
+
+  if (appPath) {
+    rewriteUrl.pathname = appPath;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  rewriteUrl.pathname = `/_sites/${tenant}`;
+  rewriteUrl.searchParams.set("path", pathname);
 
   return NextResponse.rewrite(rewriteUrl);
 }

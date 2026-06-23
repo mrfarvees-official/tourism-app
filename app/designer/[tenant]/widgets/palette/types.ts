@@ -210,6 +210,7 @@ export type ComponentNode<K extends Component = Component> = {
       targetResource?:
         | "product"
         | "collection"
+        | "destination"
         | "customer"
         | "cart"
         | "form"
@@ -271,7 +272,7 @@ export type ResponsiveValue<T> = {
 };
 
 export type DataBinding = {
-  source: "static" | "product" | "collection" | "customer" | "cart" | "form";
+  source: "static" | "product" | "collection" | "destination" | "customer" | "cart" | "form";
   path?: string;
 };
 

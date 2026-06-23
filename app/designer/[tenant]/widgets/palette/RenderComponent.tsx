@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction } from "react";
 import { ComponentNode, Dimension, Component, DesignerState } from "./types";
 import { componentRegistry } from "./types";
+import { http } from "@/src/api/config/http";
 import * as FaIcons from "react-icons/fa";
 import * as MdIcons from "react-icons/md";
 import * as IoIcons from "react-icons/io5";
@@ -63,6 +64,23 @@ type HoverContextType = {
 };
 
 const HoverContext = React.createContext<HoverContextType | null>(null);
+const DESIGNER_IMAGE_SRC = "/no-image.jpg";
+const RESOURCE_SOURCES = new Set([
+  "product",
+  "collection",
+  "destination",
+  "customer",
+  "cart",
+  "form",
+  "custom",
+]);
+const RESOURCE_HINTS = ["product", "collection", "destination"];
+const DESIGNER_REPEAT_PREVIEW_COUNT = 3;
+
+function hasResourceHint(component: ComponentNode) {
+  const haystack = `${component.id} ${component.name ?? ""}`.toLowerCase();
+  return RESOURCE_HINTS.some((hint) => haystack.includes(hint));
+}
 
 function readPath(obj: unknown, path?: string): unknown {
   if (!obj || !path) return undefined;
@@ -75,6 +93,31 @@ function readPath(obj: unknown, path?: string): unknown {
       }
       return undefined;
     }, obj);
+}
+
+function unwrapArray(payload: unknown): unknown[] | null {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return null;
+
+  const record = payload as Record<string, unknown>;
+  const candidates = [record.data, record.items, record.results, record.rows];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+    if (candidate && typeof candidate === "object") {
+      const nested = candidate as Record<string, unknown>;
+      if (Array.isArray(nested.data)) return nested.data;
+      if (Array.isArray(nested.items)) return nested.items;
+      if (Array.isArray(nested.results)) return nested.results;
+      if (Array.isArray(nested.rows)) return nested.rows;
+    }
+  }
+
+  return null;
+}
+
+function hasDataBinding(component: ComponentNode) {
+  return !!component.dataBinding?.source && component.dataBinding.source !== "static";
 }
 
 function getTenantKeyFromLocation(): string | null {
@@ -106,6 +149,7 @@ function buildTargetEndpoint({
   const baseMap: Record<string, string> = {
     product: "/api/content",
     collection: "/api/content",
+    destination: "/api/content",
     customer: "/api/content",
     cart: "/api/content",
     form: "/api/content",
@@ -157,7 +201,7 @@ function useRepeatableData({
     limit?: number;
     policyPath?: string;
   } | undefined;
-  const sourceFallback = component.dataBinding?.source;
+  const sourceFallback = component.dataBinding?.source ?? component.runtime?.repeat?.targetResource;
   const tenantKey = getTenantKeyFromLocation();
   const resolvedEndpoint = buildTargetEndpoint({
     targetResource: cfgWithTarget?.targetResource ?? sourceFallback,
@@ -167,7 +211,9 @@ function useRepeatableData({
     tenantKey,
   });
 
-  const enabled = !isDesigner && !!cfg?.enabled && !!resolvedEndpoint;
+  const hasRuntimeDataBinding = !!sourceFallback && sourceFallback !== "static";
+  const enabled =
+    !isDesigner && !!resolvedEndpoint && (!!cfg?.enabled || hasRuntimeDataBinding);
   const endpoint = resolvedEndpoint;
   const dataPath = cfg?.dataPath;
   const policyPath = cfgWithTarget?.policyPath;
@@ -181,12 +227,26 @@ function useRepeatableData({
     }
 
     setLoading(true);
-    fetch(endpoint)
-      .then((res) => res.json())
+    http
+      .get(endpoint)
+      .then((res) => {
+        const payload: unknown = res.data;
+        return payload;
+      })
       .then((payload: unknown) => {
         if (cancelled) return;
-        const scoped = dataPath ? readPath(payload, dataPath) : payload;
-        const policyCandidate = policyPath ? readPath(payload, policyPath) : readPath(payload, "meta.resourcePolicy");
+        const basePayload =
+          payload && typeof payload === "object" && !Array.isArray(payload)
+            ? ((payload as Record<string, unknown>).data ??
+                (payload as Record<string, unknown>).page ??
+                (payload as Record<string, unknown>).item ??
+                payload)
+            : payload;
+        const scoped = dataPath
+          ? (readPath(basePayload, dataPath) ?? readPath(payload, dataPath))
+          : basePayload;
+        const policyCandidate =
+          policyPath ? readPath(basePayload, policyPath) : readPath(basePayload, "meta.resourcePolicy");
         if (policyCandidate && typeof policyCandidate === "object") {
           const next = policyCandidate as { version?: unknown; columnVisibility?: unknown };
           setPolicy({
@@ -199,8 +259,8 @@ function useRepeatableData({
         } else {
           setPolicy({ version: 1, columnVisibility: {} });
         }
-        if (Array.isArray(scoped)) setItems(scoped);
-        else setItems([]);
+        const nextItems = unwrapArray(scoped);
+        setItems(nextItems ?? []);
       })
       .catch(() => {
         if (cancelled) return;
@@ -219,6 +279,140 @@ function useRepeatableData({
   return { enabled, items, loading, policy };
 }
 
+type ImageCompareRendererProps = {
+  componentName?: string;
+  props: {
+    beforeSrc: string;
+    afterSrc: string;
+    beforeAlt?: string;
+    afterAlt?: string;
+    value?: number;
+  };
+  wrapperStyle: React.CSSProperties;
+  hoverProps: React.HTMLAttributes<HTMLDivElement>;
+  resolveImageSrc: (src?: string) => string | undefined;
+  onImageError: (e: React.SyntheticEvent<HTMLImageElement>) => void;
+  renderAddChildControl: () => React.ReactNode;
+};
+
+function ImageCompareRenderer({
+  componentName,
+  props,
+  wrapperStyle,
+  hoverProps,
+  resolveImageSrc,
+  onImageError,
+  renderAddChildControl,
+}: ImageCompareRendererProps) {
+  const [position, setPosition] = React.useState(props.value ?? 50);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+  const updatePosition = (clientX: number) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const next = ((clientX - rect.left) / rect.width) * 100;
+    setPosition(Math.max(0, Math.min(100, next)));
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.buttons !== 1) return;
+    updatePosition(e.clientX);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        ...wrapperStyle,
+        position: "relative",
+        userSelect: "none",
+        cursor: "ew-resize",
+      }}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        updatePosition(e.clientX);
+      }}
+      onPointerMove={onPointerMove}
+      {...hoverProps}
+    >
+      <img
+        src={resolveImageSrc(props.afterSrc)}
+        alt={props.afterAlt ?? "After"}
+        draggable={false}
+        onError={onImageError}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: `${position}%`,
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={resolveImageSrc(props.beforeSrc)}
+          alt={props.beforeAlt ?? "Before"}
+          draggable={false}
+          onError={onImageError}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            maxWidth: "none",
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: `${position}%`,
+          width: 2,
+          backgroundColor: "#ffffff",
+          transform: "translateX(-50%)",
+          zIndex: 2,
+        }}
+      />
+
+      <div
+        aria-label={componentName ?? "Image compare"}
+        style={{
+          position: "absolute",
+          left: `${position}%`,
+          top: "50%",
+          width: 24,
+          height: 24,
+          borderRadius: "50%",
+          backgroundColor: "#ffffff",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+          transform: "translate(-50%, -50%)",
+          zIndex: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 12,
+          color: "#111111",
+        }}
+      >
+        ↔
+      </div>
+
+      {renderAddChildControl()}
+    </div>
+  );
+}
+
 function RenderComponentInner({
   component,
   isDesigner,
@@ -228,6 +422,7 @@ function RenderComponentInner({
   setShowComponentModal,
   setDesignerState,
   runtimeItem,
+  resourceIntent,
 }: {
   component: ComponentNode;
   isDesigner: boolean;
@@ -237,16 +432,26 @@ function RenderComponentInner({
   setShowComponentModal: Dispatch<SetStateAction<boolean>>;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
   runtimeItem?: unknown;
+  resourceIntent?: boolean;
 }) {
   const repeatable = useRepeatableData({ isDesigner, component });
   const hoverContext = React.useContext(HoverContext);
-  if (!hoverContext) return null;
 
-  const { hoveredId, setHoveredId } = hoverContext;
-  const effectiveChildren =
-    component.runtime?.repeat && (component.children?.length ?? 0) > 0
+  const hoveredId = hoverContext?.hoveredId ?? null;
+  const setHoveredId = hoverContext?.setHoveredId ?? (() => {});
+  const isDataBindingContainer = hasDataBinding(component) || !!component.runtime?.repeat;
+  const templateChildren =
+    isDataBindingContainer && (component.children?.length ?? 0) > 0
       ? [component.children![0]]
       : (component.children ?? []);
+  const shouldUseRepeatTemplate =
+    !isDesigner && repeatable.enabled && templateChildren.length > 0;
+  const effectiveChildren =
+    shouldUseRepeatTemplate
+      ? templateChildren
+      : isDesigner && isDataBindingContainer
+        ? templateChildren
+        : (component.children ?? []);
   const hasChildren = effectiveChildren.length > 0;
   const runtimeProps = React.useMemo(() => {
     const runtime = component.runtime;
@@ -270,10 +475,14 @@ function RenderComponentInner({
       if (isDesigner) return fallback;
       const path = finalMap[key];
       if (!path) return fallback;
+      const paths = path.split("|").map((item) => item.trim()).filter(Boolean);
       const isVisible = repeatable.policy.columnVisibility[path];
       if (isVisible === false) return undefined;
-      const value = readPath(runtimeItem, path);
-      return value == null ? fallback : String(value);
+      for (const candidate of paths) {
+        const value = readPath(runtimeItem, candidate);
+        if (value != null && value !== "") return String(value);
+      }
+      return fallback;
     };
 
     return { getBound };
@@ -287,6 +496,18 @@ function RenderComponentInner({
   const minHeight = getSize(component.layout?.minHeight);
   const maxWidth = getSize(component.layout?.maxWidth);
   const maxHeight = getSize(component.layout?.maxHeight);
+  const componentTargetResource =
+    component.runtime?.repeat?.targetResource ?? component.dataBinding?.source;
+  const hasResourceIntent =
+    !!resourceIntent ||
+    (typeof componentTargetResource === "string" &&
+      RESOURCE_SOURCES.has(componentTargetResource) &&
+      componentTargetResource !== "static") ||
+    hasResourceHint(component);
+  const backgroundImageSrc =
+    isDesigner && hasResourceIntent && component.style?.backgroundImage
+      ? DESIGNER_IMAGE_SRC
+      : component.style?.backgroundImage;
 
   const wrapperStyle: React.CSSProperties = {
     marginTop: component.layout?.margin?.top ?? 0,
@@ -316,9 +537,7 @@ function RenderComponentInner({
     overflow: component.layout?.overflow,
 
     backgroundColor: component.style?.backgroundColor ?? "transparent",
-    backgroundImage: component.style?.backgroundImage
-      ? `url("${component.style.backgroundImage}")`
-      : undefined,
+    backgroundImage: backgroundImageSrc ? `url("${backgroundImageSrc}")` : undefined,
     backgroundSize: component.style?.backgroundSize ?? "cover",
     backgroundRepeat: component.style?.backgroundRepeat ?? "no-repeat",
     backgroundPosition: component.style?.backgroundPosition ?? "center center",
@@ -407,13 +626,24 @@ function RenderComponentInner({
     key: "text" | "label" | "src" | "href" | "alt" | "htmlFor",
     fallback?: string,
   ) => resolveExposed(runtimeProps.getBound(key, fallback));
+  const resolveImageSrc = (src?: string) =>
+    isDesigner && hasResourceIntent ? DESIGNER_IMAGE_SRC : src;
+  const handleDesignerImageFallback = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    if (!isDesigner) return;
+    const img = e.currentTarget;
+    if (img.src.endsWith(DESIGNER_IMAGE_SRC)) return;
+    img.src = DESIGNER_IMAGE_SRC;
+  };
   const isResourceContainer = !!(
     component.runtime?.resourceContainer ||
-    ((component.props as Record<string, unknown> | undefined)?.resourceContainer as boolean | undefined)
+    ((component.props as Record<string, unknown> | undefined)?.resourceContainer as boolean | undefined) ||
+    repeatable.enabled ||
+    (isDesigner && isDataBindingContainer)
   );
+  const designerPreviewItems = Array.from({ length: DESIGNER_REPEAT_PREVIEW_COUNT });
   const resolvedRepeatDisplay =
     component.layout?.display ??
-    ((repeatable.items?.length ?? 0) > 1 ? "flex" : "block");
+    ((isDesigner ? designerPreviewItems.length : (repeatable.items?.length ?? 0)) > 1 ? "flex" : "block");
   const repeatLayoutStyle: React.CSSProperties = {
     display: resolvedRepeatDisplay,
     flexDirection:
@@ -424,6 +654,21 @@ function RenderComponentInner({
     flexWrap: component.layout?.wrap ? "wrap" : undefined,
     gap: component.layout?.gap ?? 0,
     width: "100%",
+  };
+  const noDataStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: minHeight ?? height ?? 160,
+    width: "100%",
+    padding: 24,
+    color: "#64748b",
+    fontSize: 14,
+    fontWeight: 600,
+    textAlign: "center",
+    backgroundColor: "#f8fafc",
+    border: "1px dashed #cbd5e1",
+    borderRadius: component.style?.borderRadius ?? 8,
   };
 
   const renderChildren = (suffix = "", item?: unknown) =>
@@ -439,10 +684,21 @@ function RenderComponentInner({
               setShowComponentModal={setShowComponentModal}
               setDesignerState={setDesignerState}
               runtimeItem={item}
+              resourceIntent={hasResourceIntent}
             />
           </React.Fragment>
         ))
       : null;
+
+  const renderRepeatedChildren = (items: unknown[]) => (
+    <div style={repeatLayoutStyle}>
+      {items.map((item, index) => (
+        <React.Fragment key={`${component.id}-repeat-${index}`}>
+          {renderChildren(`-repeat-${index}`, item)}
+        </React.Fragment>
+      ))}
+    </div>
+  );
 
   const renderAddChildControl = () => {
     return (
@@ -469,109 +725,16 @@ function RenderComponentInner({
         value?: number;
       };
 
-      const [position, setPosition] = React.useState(props.value ?? 50);
-      const containerRef = React.useRef<HTMLDivElement | null>(null);
-
-      const updatePosition = (clientX: number) => {
-        const rect = containerRef.current?.getBoundingClientRect();
-        if (!rect) return;
-
-        const next = ((clientX - rect.left) / rect.width) * 100;
-        setPosition(Math.max(0, Math.min(100, next)));
-      };
-
-      const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.buttons !== 1) return;
-        updatePosition(e.clientX);
-      };
-
       return (
-        <div
-          ref={containerRef}
-          style={{
-            ...wrapperStyle,
-            position: "relative",
-            userSelect: "none",
-            cursor: "ew-resize",
-          }}
-          onPointerDown={(e) => {
-            e.currentTarget.setPointerCapture(e.pointerId);
-            updatePosition(e.clientX);
-          }}
-          onPointerMove={onPointerMove}
-          {...commonHoverProps}
-        >
-          <img
-            src={props.afterSrc}
-            alt={props.afterAlt ?? "After"}
-            draggable={false}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: `${position}%`,
-              overflow: "hidden",
-            }}
-          >
-            <img
-              src={props.beforeSrc}
-              alt={props.beforeAlt ?? "Before"}
-              draggable={false}
-              style={{
-                width: containerRef.current?.offsetWidth ?? "100%",
-                height: "100%",
-                objectFit: "cover",
-                maxWidth: "none",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: `${position}%`,
-              width: 2,
-              backgroundColor: "#ffffff",
-              transform: "translateX(-50%)",
-              zIndex: 2,
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              left: `${position}%`,
-              top: "50%",
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
-              backgroundColor: "#ffffff",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-              transform: "translate(-50%, -50%)",
-              zIndex: 3,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              color: "#111111",
-            }}
-          >
-            ↔
-          </div>
-
-          {renderAddChildControl()}
-        </div>
+        <ImageCompareRenderer
+          componentName={component.name}
+          props={props}
+          wrapperStyle={wrapperStyle}
+          hoverProps={commonHoverProps}
+          resolveImageSrc={resolveImageSrc}
+          onImageError={handleDesignerImageFallback}
+          renderAddChildControl={renderAddChildControl}
+        />
       );
     }
 
@@ -671,7 +834,7 @@ function RenderComponentInner({
       if (!props.library || !props.name) return null;
 
       const Icon = resolveIcon(props.library, props.name) as
-        | React.ComponentType<any>
+        | React.ComponentType<{ size?: number; color?: string }>
         | undefined;
 
       if (!Icon) return null;
@@ -733,6 +896,7 @@ function RenderComponentInner({
         : "#";
       const resolvedText = resolveValue("text", text);
       const resolvedSrc = resolveValue("src", src);
+      const resolvedImageSrc = resolveImageSrc(resolvedSrc);
       const resolvedHref = resolveValue("href", href);
       const resolvedAlt = resolveValue("alt", component.name ?? "image");
 
@@ -750,10 +914,11 @@ function RenderComponentInner({
           >
             {resolvedText ? (
               resolvedText
-            ) : resolvedSrc ? (
+            ) : resolvedImageSrc ? (
               <img
-                src={resolvedSrc}
+                src={resolvedImageSrc}
                 alt={resolvedAlt ?? "image"}
+                onError={handleDesignerImageFallback}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -774,14 +939,25 @@ function RenderComponentInner({
     case "Image": {
       const src = hasSrc(component.props) ? component.props.src : undefined;
       const resolvedSrc = resolveValue("src", src);
+      const resolvedImageSrc =
+        resolveImageSrc(resolvedSrc) ?? (hasResourceIntent ? DESIGNER_IMAGE_SRC : undefined);
       const resolvedAlt = resolveValue("alt", component.name ?? "image");
-      if (!resolvedSrc) return null;
+      if (!resolvedImageSrc) return null;
 
       return (
         <div style={wrapperStyle} {...commonHoverProps}>
           <img
-            src={resolvedSrc}
+            src={resolvedImageSrc}
             alt={resolvedAlt ?? "image"}
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.src.endsWith(DESIGNER_IMAGE_SRC)) return;
+              if (hasResourceIntent) {
+                img.src = DESIGNER_IMAGE_SRC;
+                return;
+              }
+              handleDesignerImageFallback(e);
+            }}
             style={{
               width: "100%",
               height: "100%",
@@ -893,15 +1069,13 @@ function RenderComponentInner({
             </style>
           )}
 
-          {repeatable.enabled && isResourceContainer ? (
-            repeatable.loading ? null : (
-              <div style={repeatLayoutStyle}>
-                {(repeatable.items ?? []).map((item, index) => (
-                  <React.Fragment key={`${component.id}-repeat-${index}`}>
-                    {renderChildren(`-repeat-${index}`, item)}
-                  </React.Fragment>
-                ))}
-              </div>
+          {isDesigner && isResourceContainer && isDataBindingContainer ? (
+            hasChildren ? renderRepeatedChildren(designerPreviewItems) : null
+          ) : repeatable.enabled && isResourceContainer ? (
+            repeatable.loading ? null : (repeatable.items?.length ?? 0) === 0 ? (
+              <div style={noDataStyle}>No data found</div>
+            ) : (
+              renderRepeatedChildren(repeatable.items ?? [])
             )
           ) : repeatable.enabled && !isResourceContainer ? null : isMarquee ? (
             <div
