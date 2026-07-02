@@ -208,10 +208,9 @@ export type ComponentNode<K extends Component = Component> = {
     repeat?: {
       enabled?: boolean;
       targetResource?:
-        | "product"
-        | "collection"
+        | "tour_package"
+        | "destination_collection"
         | "destination"
-        | "customer"
         | "cart"
         | "form"
         | "custom";
@@ -272,7 +271,7 @@ export type ResponsiveValue<T> = {
 };
 
 export type DataBinding = {
-  source: "static" | "product" | "collection" | "destination" | "customer" | "cart" | "form";
+  source: "static" | "tour_package" | "destination_collection" | "destination" | "cart" | "form";
   path?: string;
 };
 

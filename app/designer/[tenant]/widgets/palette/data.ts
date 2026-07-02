@@ -1,6 +1,9 @@
 import { ComponentList, ComponentNode } from "./types";
 import { FaBullseye, FaHeart, FaChessPawn } from "react-icons/fa";
 
+// Tourism-focused component data. Product-style blocks are modeled as tour packages,
+// and collection-style blocks are modeled as destination/travel-style collections.
+
 /* 
 =========================
   HEADER
@@ -362,7 +365,7 @@ export const template: ComponentNode = {
               dataBinding: { source: "destination" },
               runtime: {
                 repeat: {
-                  enabled: false,
+                  enabled: true,
                   targetResource: "destination",
                   menu: "destinations",
                   dataPath: "data.items",
@@ -862,7 +865,7 @@ export const components: ComponentList[] = [
           },
           style: {
             backgroundImage:
-              "https://media.istockphoto.com/id/178642135/photo/mountains-of-snow.jpg?s=1024x1024&w=is&k=20&c=Izd2BMtYNtkBbueLwgGOW_z0mk1my5vZxve2-Ukbyjw=",
+              "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=80",
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center center",
@@ -886,7 +889,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "banner_hero_primary_left",
                   props: {
-                    text: "Welcome to Our Website",
+                    text: "Plan Your Next Sri Lankan Escape",
                     tag: "h1",
                   },
                   layout: {},
@@ -903,7 +906,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "banner_hero_primary_left",
                   props: {
-                    text: "Build modern layouts with reusable components and beautiful images.",
+                    text: "Discover beaches, mountains, wildlife, culture, and local guided experiences across Sri Lanka.",
                     tag: "p",
                   },
                   layout: {},
@@ -919,7 +922,7 @@ export const components: ComponentList[] = [
                   type: "Link",
                   parentId: "banner_hero_primary_left",
                   props: {
-                    text: "Get Started",
+                    text: "Start Planning",
                     href: "?page=getStarted",
                   },
                   layout: {
@@ -999,7 +1002,7 @@ export const components: ComponentList[] = [
                   id: "banner_hero_bottom_title",
                   parentId: "banner_hero_bottom_panel",
                   type: "Text",
-                  props: { text: "Oceanfront escapes for every season", tag: "h2" },
+                  props: { text: "Island escapes for every season", tag: "h2" },
                   layout: {},
                   style: {
                     fontSize: 34,
@@ -1014,7 +1017,7 @@ export const components: ComponentList[] = [
                   parentId: "banner_hero_bottom_panel",
                   type: "Text",
                   props: {
-                    text: "Book curated coastal tours with flexible dates and local guides.",
+                    text: "Book curated Sri Lanka tours with flexible dates and trusted local guides.",
                     tag: "p",
                   },
                   layout: {},
@@ -1054,7 +1057,7 @@ export const components: ComponentList[] = [
               id: "banner_hero_marquee_headline",
               parentId: "banner_hero_marquee",
               type: "Text",
-              props: { text: "Adventure starts with one good decision", tag: "h2" },
+              props: { text: "Your Sri Lanka adventure starts here", tag: "h2" },
               layout: {},
               style: {
                 fontSize: 44,
@@ -1076,7 +1079,7 @@ export const components: ComponentList[] = [
                   id: "banner_hero_marquee_t1",
                   parentId: "banner_hero_marquee_track",
                   type: "Text",
-                  props: { text: "MOUNTAINS", tag: "span" },
+                  props: { text: "HILL COUNTRY", tag: "span" },
                   layout: {},
                   style: { fontSize: 48, fontWeight: 700, textColor: "#22c55e" },
                   children: [],
@@ -1094,7 +1097,7 @@ export const components: ComponentList[] = [
                   id: "banner_hero_marquee_t3",
                   parentId: "banner_hero_marquee_track",
                   type: "Text",
-                  props: { text: "RAINFORESTS", tag: "span" },
+                  props: { text: "WILDLIFE PARKS", tag: "span" },
                   layout: {},
                   style: { fontSize: 48, fontWeight: 700, textColor: "#f59e0b" },
                   children: [],
@@ -1155,7 +1158,7 @@ export const components: ComponentList[] = [
                   id: "banner_large_logo_text",
                   parentId: "banner_large_logo_wrap",
                   type: "Text",
-                  props: { text: "TrailNest Expeditions", tag: "h2" },
+                  props: { text: "TrailNest Sri Lanka Tours", tag: "h2" },
                   layout: {},
                   style: { fontSize: 34, fontWeight: 800, textColor: "#0f172a" },
                   children: [],
@@ -1271,7 +1274,7 @@ export const components: ComponentList[] = [
               id: "banner_slideshow_full_caption",
               parentId: "banner_slideshow_full",
               type: "Text",
-              props: { text: "Northern lights. Desert dunes. Alpine lakes.", tag: "h3" },
+              props: { text: "Golden beaches. Misty hills. Ancient kingdoms.", tag: "h3" },
               layout: { position: "absolute", left: 28, bottom: 28 },
               style: { fontSize: 30, fontWeight: 700, textColor: "#ffffff" },
               children: [],
@@ -1382,7 +1385,7 @@ export const components: ComponentList[] = [
                   id: "banner_split_title",
                   parentId: "banner_split_right_wrap",
                   type: "Text",
-                  props: { text: "Find your next signature journey", tag: "h2" },
+                  props: { text: "Find your next unforgettable Sri Lanka journey", tag: "h2" },
                   layout: {},
                   style: {
                     fontSize: 34,
@@ -1397,7 +1400,7 @@ export const components: ComponentList[] = [
                   parentId: "banner_split_right_wrap",
                   type: "Text",
                   props: {
-                    text: "Compare routes, plan better stops, and book trusted local experiences.",
+                    text: "Compare destinations, plan better stops, and book trusted local travel experiences.",
                     tag: "p",
                   },
                   layout: {},
@@ -1412,16 +1415,16 @@ export const components: ComponentList[] = [
     ],
   },
   {
-    label: "Collections",
+    label: "Tourism Collections",
     list: [
       {
-        label: "Collection list: Bento",
+        label: "Destination collection: Bento",
         icon: "🧩",
         node: {
           id: "collection_list_bento",
           parentId: null,
           type: "Frame",
-          name: "Collection List Bento",
+          name: "Destination Collection Bento",
 
           layout: {
             width: { value: 100, unit: "%" },
@@ -1440,12 +1443,12 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "collection" },
+          dataBinding: { source: "destination_collection" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "collection",
-              menu: "collections",
+              enabled: true,
+              targetResource: "destination_collection",
+              menu: "tourism-collections",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 5,
@@ -1467,7 +1470,7 @@ export const components: ComponentList[] = [
                 textAlign: "left",
               },
               props: {
-                text: "Shop by collection",
+                text: "Explore by travel style",
                 tag: "h2",
               },
               children: [],
@@ -1515,7 +1518,7 @@ export const components: ComponentList[] = [
                       id: "collection_bento_card_1",
                       parentId: "collection_bento_top_row",
                       type: "Frame",
-                      name: "Collection Card 1",
+                      name: "Destination Card 1",
 
                       layout: {
                         width: { value: 32, unit: "%" },
@@ -1534,7 +1537,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_1_image",
                           parentId: "collection_bento_card_1",
                           type: "Image",
-                          name: "Collection Image 1",
+                          name: "Destination Image 1",
 
                           layout: {
                             width: { value: 100, unit: "%" },
@@ -1543,9 +1546,16 @@ export const components: ComponentList[] = [
 
                           props: {
                             src: "/no-image.jpg",
-                            alt: "Collection image",
+                            alt: "Sri Lanka destination collection image",
                             objectFit: "cover",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1554,7 +1564,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_1_text",
                           parentId: "collection_bento_card_1",
                           type: "Text",
-                          name: "Collection Label 1",
+                          name: "Destination Label 1",
 
                           layout: {
                             position: "absolute",
@@ -1570,9 +1580,15 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Collection title",
+                            text: "Curated Sri Lanka escape",
                             tag: "span",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1583,7 +1599,7 @@ export const components: ComponentList[] = [
                       id: "collection_bento_card_2",
                       parentId: "collection_bento_top_row",
                       type: "Frame",
-                      name: "Collection Card 2",
+                      name: "Destination Card 2",
 
                       layout: {
                         width: { value: 32, unit: "%" },
@@ -1602,7 +1618,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_2_image",
                           parentId: "collection_bento_card_2",
                           type: "Image",
-                          name: "Collection Image 2",
+                          name: "Destination Image 2",
 
                           layout: {
                             width: { value: 100, unit: "%" },
@@ -1611,9 +1627,16 @@ export const components: ComponentList[] = [
 
                           props: {
                             src: "/no-image.jpg",
-                            alt: "Collection image",
+                            alt: "Sri Lanka destination collection image",
                             objectFit: "cover",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1622,7 +1645,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_2_text",
                           parentId: "collection_bento_card_2",
                           type: "Text",
-                          name: "Collection Label 2",
+                          name: "Destination Label 2",
 
                           layout: {
                             position: "absolute",
@@ -1638,9 +1661,15 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Collection title",
+                            text: "Curated Sri Lanka escape",
                             tag: "span",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1651,7 +1680,7 @@ export const components: ComponentList[] = [
                       id: "collection_bento_card_3",
                       parentId: "collection_bento_top_row",
                       type: "Frame",
-                      name: "Collection Card 3",
+                      name: "Destination Card 3",
 
                       layout: {
                         width: { value: 32, unit: "%" },
@@ -1670,7 +1699,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_3_image",
                           parentId: "collection_bento_card_3",
                           type: "Image",
-                          name: "Collection Image 3",
+                          name: "Destination Image 3",
 
                           layout: {
                             width: { value: 100, unit: "%" },
@@ -1679,9 +1708,16 @@ export const components: ComponentList[] = [
 
                           props: {
                             src: "/no-image.jpg",
-                            alt: "Collection image",
+                            alt: "Sri Lanka destination collection image",
                             objectFit: "cover",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1690,7 +1726,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_3_text",
                           parentId: "collection_bento_card_3",
                           type: "Text",
-                          name: "Collection Label 3",
+                          name: "Destination Label 3",
 
                           layout: {
                             position: "absolute",
@@ -1706,9 +1742,15 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Collection title",
+                            text: "Curated Sri Lanka escape",
                             tag: "span",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1740,7 +1782,7 @@ export const components: ComponentList[] = [
                       id: "collection_bento_card_4",
                       parentId: "collection_bento_bottom_row",
                       type: "Frame",
-                      name: "Collection Card 4",
+                      name: "Destination Card 4",
 
                       layout: {
                         width: { value: 65, unit: "%" },
@@ -1759,7 +1801,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_4_image",
                           parentId: "collection_bento_card_4",
                           type: "Image",
-                          name: "Collection Image 4",
+                          name: "Destination Image 4",
 
                           layout: {
                             width: { value: 100, unit: "%" },
@@ -1768,9 +1810,16 @@ export const components: ComponentList[] = [
 
                           props: {
                             src: "/no-image.jpg",
-                            alt: "Collection image",
+                            alt: "Sri Lanka destination collection image",
                             objectFit: "cover",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1779,7 +1828,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_4_text",
                           parentId: "collection_bento_card_4",
                           type: "Text",
-                          name: "Collection Label 4",
+                          name: "Destination Label 4",
 
                           layout: {
                             position: "absolute",
@@ -1795,9 +1844,15 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Collection title",
+                            text: "Curated Sri Lanka escape",
                             tag: "span",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1808,7 +1863,7 @@ export const components: ComponentList[] = [
                       id: "collection_bento_card_5",
                       parentId: "collection_bento_bottom_row",
                       type: "Frame",
-                      name: "Collection Card 5",
+                      name: "Destination Card 5",
 
                       layout: {
                         width: { value: 32, unit: "%" },
@@ -1827,7 +1882,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_5_image",
                           parentId: "collection_bento_card_5",
                           type: "Image",
-                          name: "Collection Image 5",
+                          name: "Destination Image 5",
 
                           layout: {
                             width: { value: 100, unit: "%" },
@@ -1836,9 +1891,16 @@ export const components: ComponentList[] = [
 
                           props: {
                             src: "/no-image.jpg",
-                            alt: "Collection image",
+                            alt: "Sri Lanka destination collection image",
                             objectFit: "cover",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1847,7 +1909,7 @@ export const components: ComponentList[] = [
                           id: "collection_bento_card_5_text",
                           parentId: "collection_bento_card_5",
                           type: "Text",
-                          name: "Collection Label 5",
+                          name: "Destination Label 5",
 
                           layout: {
                             position: "absolute",
@@ -1863,9 +1925,15 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Collection title",
+                            text: "Curated Sri Lanka escape",
                             tag: "span",
                           },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                           children: [],
                         },
@@ -1879,13 +1947,13 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Collection list: Carousel",
+        label: "Travel styles: Carousel",
         icon: "🎠",
         node: {
           id: "collection_list_carousel",
           parentId: null,
           type: "Frame",
-          name: "Collection List Carousel",
+          name: "Travel Style Collection Carousel",
 
           layout: {
             width: { value: 100, unit: "%" },
@@ -1904,12 +1972,12 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "collection" },
+          dataBinding: { source: "destination_collection" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "collection",
-              menu: "collections",
+              enabled: true,
+              targetResource: "destination_collection",
+              menu: "tourism-collections",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 8,
@@ -1934,7 +2002,7 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Shop by collection",
+                text: "Explore by travel style",
                 tag: "h2",
               },
 
@@ -1987,7 +2055,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_1_image",
                       parentId: "collection_carousel_item_1",
                       type: "Image",
-                      name: "Collection Image 1",
+                      name: "Destination Image 1",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -1996,8 +2064,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Collection image",
+                        alt: "Sri Lanka destination collection image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -2007,7 +2082,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_1_title",
                       parentId: "collection_carousel_item_1",
                       type: "Text",
-                      name: "Collection Title 1",
+                      name: "Collection Sri Lanka travel guide 1",
 
                       layout: {},
 
@@ -2020,8 +2095,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Collection title",
+                        text: "Curated Sri Lanka escape",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -2053,7 +2134,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_2_image",
                       parentId: "collection_carousel_item_2",
                       type: "Image",
-                      name: "Collection Image 2",
+                      name: "Destination Image 2",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -2062,8 +2143,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Collection image",
+                        alt: "Sri Lanka destination collection image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -2073,7 +2161,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_2_title",
                       parentId: "collection_carousel_item_2",
                       type: "Text",
-                      name: "Collection Title 2",
+                      name: "Collection Sri Lanka travel guide 2",
 
                       layout: {},
 
@@ -2086,8 +2174,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Collection title",
+                        text: "Curated Sri Lanka escape",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -2119,7 +2213,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_3_image",
                       parentId: "collection_carousel_item_3",
                       type: "Image",
-                      name: "Collection Image 3",
+                      name: "Destination Image 3",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -2128,8 +2222,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Collection image",
+                        alt: "Sri Lanka destination collection image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -2139,7 +2240,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_3_title",
                       parentId: "collection_carousel_item_3",
                       type: "Text",
-                      name: "Collection Title 3",
+                      name: "Collection Sri Lanka travel guide 3",
 
                       layout: {},
 
@@ -2152,8 +2253,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Collection title",
+                        text: "Curated Sri Lanka escape",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -2185,7 +2292,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_4_image",
                       parentId: "collection_carousel_item_4",
                       type: "Image",
-                      name: "Collection Image 4",
+                      name: "Destination Image 4",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -2194,8 +2301,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Collection image",
+                        alt: "Sri Lanka destination collection image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -2205,7 +2319,7 @@ export const components: ComponentList[] = [
                       id: "collection_carousel_item_4_title",
                       parentId: "collection_carousel_item_4",
                       type: "Text",
-                      name: "Collection Title 4",
+                      name: "Collection Sri Lanka travel guide 4",
 
                       layout: {},
 
@@ -2218,8 +2332,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Collection title",
+                        text: "Curated Sri Lanka escape",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -2232,19 +2352,19 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Collection list: Editorial",
+        label: "Destination collection: Editorial",
         icon: "📰",
         node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
       },
       {
-        label: "Collection list: Grid",
+        label: "Destination collection: Grid",
         icon: "▦",
         node: { id: "", parentId: "", type: "Frame", props: {}, children: [] },
       },
     ],
   },
   {
-    label: "Forms",
+    label: "Travel Forms",
     list: [
       {
         label: "Contact form",
@@ -2320,7 +2440,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Contact us",
+                    text: "Plan your trip with us",
                     tag: "h2",
                   },
 
@@ -2331,7 +2451,7 @@ export const components: ComponentList[] = [
                   id: "contact_form_name_email_row",
                   parentId: "contact_form_container",
                   type: "Frame",
-                  name: "Name Email Row",
+                  name: "Traveler name Email Row",
 
                   layout: {
                     width: { value: 100, unit: "%" },
@@ -2378,7 +2498,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Name",
+                            text: "Traveler name",
                             tag: "span",
                           },
 
@@ -2408,7 +2528,7 @@ export const components: ComponentList[] = [
 
                           props: {
                             name: "name",
-                            placeholder: "Enter your name",
+                            placeholder: "Enter traveler name",
                             inputType: "text",
                           },
 
@@ -2520,7 +2640,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Phone",
+                        text: "WhatsApp / phone",
                         tag: "span",
                       },
 
@@ -2550,7 +2670,7 @@ export const components: ComponentList[] = [
 
                       props: {
                         name: "phone",
-                        placeholder: "Enter your phone number",
+                        placeholder: "Enter your WhatsApp number",
                         inputType: "text",
                       },
 
@@ -2590,7 +2710,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Comment",
+                        text: "Trip request",
                         tag: "span",
                       },
 
@@ -2633,7 +2753,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Write your message...",
+                            text: "Tell us your destination, travel dates, group size, and preferred experiences...",
                             tag: "span",
                           },
 
@@ -2661,7 +2781,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    label: "Submit",
+                    label: "Send Inquiry",
                     variant: "primary",
                   },
 
@@ -2738,7 +2858,7 @@ export const components: ComponentList[] = [
                     textAlign: "center",
                   },
                   props: {
-                    text: "Subscribe to our emails",
+                    text: "Get Sri Lanka travel inspiration",
                     tag: "h2",
                   },
                   children: [],
@@ -2758,7 +2878,7 @@ export const components: ComponentList[] = [
                     textAlign: "center",
                   },
                   props: {
-                    text: "Be the first to know about new collections and special offers.",
+                    text: "Receive destination guides, seasonal travel tips, and curated tour ideas.",
                     tag: "p",
                   },
                   children: [],
@@ -2802,7 +2922,7 @@ export const components: ComponentList[] = [
                         textColor: "#999999",
                       },
                       props: {
-                        text: "Email address",
+                        text: "Email address for travel updates",
                         tag: "span",
                       },
                       children: [],
@@ -2904,10 +3024,10 @@ export const components: ComponentList[] = [
     ],
   },
   {
-    label: "Products",
+    label: "Tour Packages",
     list: [
       {
-        label: "Featured collection: Carousel",
+        label: "Featured tours: Carousel",
         icon: "🎠",
         node: {
           id: "featured_collection_carousel_large",
@@ -2940,12 +3060,12 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "product" },
+          dataBinding: { source: "tour_package" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "product",
-              menu: "featured-products",
+              enabled: true,
+              targetResource: "tour_package",
+              menu: "featured-tour-packages",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 8,
@@ -2957,7 +3077,7 @@ export const components: ComponentList[] = [
               id: "featured_collection_carousel_large_title",
               parentId: "featured_collection_carousel_large",
               type: "Text",
-              name: "Carousel Title",
+              name: "Carousel Sri Lanka travel guide",
 
               layout: {},
 
@@ -2970,9 +3090,15 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Featured products",
+                text: "Featured travel experiences",
                 tag: "h2",
               },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
               children: [],
             },
@@ -3037,8 +3163,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3056,8 +3189,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Classic White Tee",
+                        text: "Ella scenic rail tour",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3074,8 +3213,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 19.99",
+                        text: "From Rs. 19,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3119,8 +3264,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3138,8 +3290,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Urban Green Shirt",
+                        text: "Sigiriya heritage climb",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3156,8 +3314,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 24.99",
+                        text: "From Rs. 24,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3201,8 +3365,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3220,8 +3391,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Minimal Graphic Tee",
+                        text: "Galle fort walking tour",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3238,8 +3415,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 21.99",
+                        text: "From Rs. 21,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3283,8 +3466,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3302,8 +3492,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Soft Cotton Shirt",
+                        text: "Mirissa whale watching",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3320,8 +3516,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 27.99",
+                        text: "From Rs. 27,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3334,7 +3536,7 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Featured collection: Editorial",
+        label: "Featured tours: Editorial",
         icon: "📰",
         node: {
           id: "featured_collection_editorial_v2",
@@ -3366,12 +3568,12 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "product" },
+          dataBinding: { source: "tour_package" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "product",
-              menu: "featured-products",
+              enabled: true,
+              targetResource: "tour_package",
+              menu: "featured-tour-packages",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 8,
@@ -3383,7 +3585,7 @@ export const components: ComponentList[] = [
               id: "featured_collection_editorial_v2_title",
               parentId: "featured_collection_editorial_v2",
               type: "Text",
-              name: "Editorial Title",
+              name: "Editorial Sri Lanka travel guide",
 
               layout: {},
 
@@ -3395,9 +3597,15 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Featured products",
+                text: "Featured travel experiences",
                 tag: "h2",
               },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
               children: [],
             },
@@ -3427,7 +3635,7 @@ export const components: ComponentList[] = [
                   id: "featured_collection_editorial_v2_product_1",
                   parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Editorial Product 1",
+                  name: "Editorial Tour 1",
 
                   layout: {
                     width: { value: 280, unit: "px" },
@@ -3455,8 +3663,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3474,8 +3689,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3492,8 +3713,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 19.99",
+                        text: "From Rs. 19,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3505,7 +3732,7 @@ export const components: ComponentList[] = [
                   id: "featured_collection_editorial_v2_product_2",
                   parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Editorial Product 2",
+                  name: "Editorial Tour 2",
 
                   layout: {
                     width: { value: 180, unit: "px" },
@@ -3536,8 +3763,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3555,8 +3789,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3573,8 +3813,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 19.99",
+                        text: "From Rs. 19,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3586,7 +3832,7 @@ export const components: ComponentList[] = [
                   id: "featured_collection_editorial_v2_product_3",
                   parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Editorial Product 3",
+                  name: "Editorial Tour 3",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -3614,8 +3860,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3633,8 +3886,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3651,8 +3910,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 19.99",
+                        text: "From Rs. 19,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3664,7 +3929,7 @@ export const components: ComponentList[] = [
                   id: "featured_collection_editorial_v2_product_4",
                   parentId: "featured_collection_editorial_v2_grid",
                   type: "Frame",
-                  name: "Editorial Product 4",
+                  name: "Editorial Tour 4",
 
                   layout: {
                     width: { value: 340, unit: "px" },
@@ -3695,8 +3960,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Product image",
+                        alt: "Sri Lanka tour package image",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -3714,8 +3986,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -3732,8 +4010,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 19.99",
+                        text: "From Rs. 19,500",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -3746,13 +4030,13 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Featured product",
+        label: "Featured tour package",
         icon: "📦",
         node: {
           id: "featured_product",
           parentId: null,
           type: "Frame",
-          name: "Featured Product",
+          name: "Featured Tour Package",
 
           layout: {
             width: { value: 100, unit: "%" },
@@ -3777,12 +4061,12 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
-          dataBinding: { source: "product" },
+          dataBinding: { source: "tour_package" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "product",
-              menu: "featured-product",
+              enabled: true,
+              targetResource: "tour_package",
+              menu: "featured-tour-package",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 1,
@@ -3797,7 +4081,7 @@ export const components: ComponentList[] = [
               id: "featured_product_image_wrapper",
               parentId: "featured_product",
               type: "Frame",
-              name: "Featured Product Image Wrapper",
+              name: "Featured Tour Package Image Wrapper",
 
               layout: {
                 width: { value: 35, unit: "%" },
@@ -3823,7 +4107,7 @@ export const components: ComponentList[] = [
                   id: "featured_product_image",
                   parentId: "featured_product_image_wrapper",
                   type: "Image",
-                  name: "Featured Product Image",
+                  name: "Featured Tour Package Image",
 
                   layout: {
                     width: { value: 100, unit: "%" },
@@ -3832,9 +4116,16 @@ export const components: ComponentList[] = [
 
                   props: {
                     src: "/no-image.jpg",
-                    alt: "Featured product",
+                    alt: "Featured tour package",
                     objectFit: "cover",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                   children: [],
                 },
@@ -3846,7 +4137,7 @@ export const components: ComponentList[] = [
               id: "featured_product_content",
               parentId: "featured_product",
               type: "Frame",
-              name: "Featured Product Content",
+              name: "Featured Tour Package Content",
 
               layout: {
                 width: { value: 100, unit: "%" },
@@ -3869,7 +4160,7 @@ export const components: ComponentList[] = [
                   id: "featured_product_title",
                   parentId: "featured_product_content",
                   type: "Text",
-                  name: "Featured Product Title",
+                  name: "Featured Tour Package Sri Lanka travel guide",
 
                   layout: {},
 
@@ -3882,9 +4173,15 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Product title",
+                    text: "Tour package title",
                     tag: "h2",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                   children: [],
                 },
@@ -3893,7 +4190,7 @@ export const components: ComponentList[] = [
                   id: "featured_product_price",
                   parentId: "featured_product_content",
                   type: "Text",
-                  name: "Featured Product Price",
+                  name: "Featured Tour Package Price",
 
                   layout: {},
 
@@ -3906,9 +4203,15 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Rs. 19.99",
+                    text: "From Rs. 19,500",
                     tag: "span",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
+                      },
 
                   children: [],
                 },
@@ -3917,7 +4220,7 @@ export const components: ComponentList[] = [
                   id: "featured_product_reviews",
                   parentId: "featured_product_content",
                   type: "Text",
-                  name: "Featured Product Reviews",
+                  name: "Featured Tour Package Reviews",
 
                   layout: {},
 
@@ -3930,7 +4233,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "★★★★★   3 reviews",
+                    text: "★★★★★   128 traveler reviews",
                     tag: "span",
                   },
 
@@ -3941,7 +4244,7 @@ export const components: ComponentList[] = [
                   id: "featured_product_button",
                   parentId: "featured_product_content",
                   type: "Frame",
-                  name: "Featured Product Button",
+                  name: "Featured Tour Package Button",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -3964,7 +4267,7 @@ export const components: ComponentList[] = [
                       id: "featured_product_button_text",
                       parentId: "featured_product_button",
                       type: "Text",
-                      name: "Featured Product Button Text",
+                      name: "Featured Tour Package Button Text",
 
                       layout: {},
 
@@ -3977,7 +4280,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Sold out",
+                        text: "Check availability",
                         tag: "span",
                       },
 
@@ -3991,13 +4294,13 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Product highlight",
+        label: "Tour highlight",
         icon: "⭐",
         node: {
           id: "product_highlight",
           parentId: null,
           type: "Frame",
-          name: "Product Highlight",
+          name: "Tour Highlight",
 
           layout: {
             width: { value: 100, unit: "%" },
@@ -4014,12 +4317,12 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
-          dataBinding: { source: "product" },
+          dataBinding: { source: "tour_package" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "product",
-              menu: "product-highlight",
+              enabled: true,
+              targetResource: "tour_package",
+              menu: "tour-highlight",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 1,
@@ -4058,7 +4361,7 @@ export const components: ComponentList[] = [
                   id: "product_highlight_main_image",
                   parentId: "product_highlight_left",
                   type: "Image",
-                  name: "Main Product Image",
+                  name: "Main Tour Image",
 
                   layout: {
                     width: { value: 100, unit: "%" },
@@ -4067,9 +4370,16 @@ export const components: ComponentList[] = [
 
                   props: {
                     src: "/no-image.jpg",
-                    alt: "Featured product",
+                    alt: "Featured tour package",
                     objectFit: "cover",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                   children: [],
                 },
@@ -4101,7 +4411,7 @@ export const components: ComponentList[] = [
                   id: "product_highlight_secondary_image",
                   parentId: "product_highlight_right",
                   type: "Image",
-                  name: "Secondary Product Image",
+                  name: "Secondary Tour Image",
 
                   layout: {
                     width: { value: 100, unit: "%" },
@@ -4110,9 +4420,16 @@ export const components: ComponentList[] = [
 
                   props: {
                     src: "/no-image.jpg",
-                    alt: "Secondary product",
+                    alt: "Secondary Sri Lanka tour image",
                     objectFit: "cover",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                   children: [],
                 },
@@ -4121,7 +4438,7 @@ export const components: ComponentList[] = [
                   id: "product_highlight_title",
                   parentId: "product_highlight_right",
                   type: "Text",
-                  name: "Product Title",
+                  name: "Product Sri Lanka travel guide",
 
                   layout: {
                     position: "absolute",
@@ -4138,9 +4455,15 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Product title",
+                    text: "Tour package title",
                     tag: "span",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
                   children: [],
                 },
@@ -4149,7 +4472,7 @@ export const components: ComponentList[] = [
                   id: "product_highlight_price",
                   parentId: "product_highlight_right",
                   type: "Text",
-                  name: "Product Price",
+                  name: "Tour Price",
 
                   layout: {
                     position: "absolute",
@@ -4166,9 +4489,15 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Rs. 19.99",
+                    text: "From Rs. 19,500",
                     tag: "span",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
+                      },
 
                   children: [],
                 },
@@ -4194,7 +4523,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Shop now",
+                    text: "View itinerary",
                     tag: "span",
                   },
 
@@ -4206,14 +4535,14 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Product hotspots",
+        label: "Trip hotspots",
         icon: "📍",
 
         node: {
           id: "product_hotspots",
           parentId: null,
           type: "Frame",
-          name: "Product Hotspots",
+          name: "Trip Hotspots",
 
           layout: {
             width: { value: 100, unit: "%" },
@@ -4238,12 +4567,12 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
-          dataBinding: { source: "product" },
+          dataBinding: { source: "tour_package" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "product",
-              menu: "product-hotspots",
+              enabled: true,
+              targetResource: "tour_package",
+              menu: "trip-hotspots",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 1,
@@ -4270,9 +4599,15 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Shop the look",
+                text: "Explore trip highlights",
                 tag: "h2",
               },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
               children: [],
             },
@@ -4314,6 +4649,13 @@ export const components: ComponentList[] = [
                     alt: "Lifestyle scene",
                     objectFit: "cover",
                   },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
+                      },
 
                   children: [],
                 },
@@ -4413,14 +4755,14 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Recommended products",
+        label: "Recommended tours",
         icon: "✨",
 
         node: {
           id: "recommended_products",
           parentId: null,
           type: "Frame",
-          name: "Recommended Products",
+          name: "Recommended Tours",
 
           layout: {
             width: { value: 100, unit: "%" },
@@ -4447,12 +4789,12 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "product" },
+          dataBinding: { source: "tour_package" },
           runtime: {
             repeat: {
-              enabled: false,
-              targetResource: "product",
-              menu: "recommended-products",
+              enabled: true,
+              targetResource: "tour_package",
+              menu: "recommended-tours",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
               limit: 4,
@@ -4464,7 +4806,7 @@ export const components: ComponentList[] = [
               id: "recommended_products_title",
               parentId: "recommended_products",
               type: "Text",
-              name: "Recommended Products Title",
+              name: "Recommended Tours Sri Lanka travel guide",
 
               layout: {},
 
@@ -4477,9 +4819,15 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Related products",
+                text: "Recommended tours",
                 tag: "h2",
               },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
+                      },
 
               children: [],
             },
@@ -4488,7 +4836,7 @@ export const components: ComponentList[] = [
               id: "recommended_products_grid",
               parentId: "recommended_products",
               type: "Frame",
-              name: "Recommended Products Grid",
+              name: "Recommended Tours Grid",
 
               layout: {
                 width: { value: 100, unit: "%" },
@@ -4513,7 +4861,7 @@ export const components: ComponentList[] = [
                   id: "recommended_product_1",
                   parentId: "recommended_products_grid",
                   type: "Frame",
-                  name: "Recommended Product 1",
+                  name: "Recommended Tour 1",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -4534,7 +4882,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_image_1",
                       parentId: "recommended_product_1",
                       type: "Image",
-                      name: "Recommended Product Image 1",
+                      name: "Recommended Tour Image 1",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -4543,8 +4891,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Recommended product",
+                        alt: "Recommended Sri Lanka tour",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -4554,7 +4909,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_title_1",
                       parentId: "recommended_product_1",
                       type: "Text",
-                      name: "Recommended Product Title 1",
+                      name: "Recommended Tour Sri Lanka travel guide 1",
 
                       layout: {},
 
@@ -4567,8 +4922,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "h3",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -4578,7 +4939,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_price_1",
                       parentId: "recommended_product_1",
                       type: "Text",
-                      name: "Recommended Product Price 1",
+                      name: "Recommended Tour Price 1",
 
                       layout: {},
 
@@ -4591,8 +4952,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 999",
+                        text: "From Rs. 9,900",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -4605,7 +4972,7 @@ export const components: ComponentList[] = [
                   id: "recommended_product_2",
                   parentId: "recommended_products_grid",
                   type: "Frame",
-                  name: "Recommended Product 2",
+                  name: "Recommended Tour 2",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -4626,7 +4993,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_image_2",
                       parentId: "recommended_product_2",
                       type: "Image",
-                      name: "Recommended Product Image 2",
+                      name: "Recommended Tour Image 2",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -4635,8 +5002,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Recommended product",
+                        alt: "Recommended Sri Lanka tour",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -4646,7 +5020,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_title_2",
                       parentId: "recommended_product_2",
                       type: "Text",
-                      name: "Recommended Product Title 2",
+                      name: "Recommended Tour Sri Lanka travel guide 2",
 
                       layout: {},
 
@@ -4659,8 +5033,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "h3",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -4670,7 +5050,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_price_2",
                       parentId: "recommended_product_2",
                       type: "Text",
-                      name: "Recommended Product Price 2",
+                      name: "Recommended Tour Price 2",
 
                       layout: {},
 
@@ -4683,8 +5063,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 999",
+                        text: "From Rs. 9,900",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -4697,7 +5083,7 @@ export const components: ComponentList[] = [
                   id: "recommended_product_3",
                   parentId: "recommended_products_grid",
                   type: "Frame",
-                  name: "Recommended Product 3",
+                  name: "Recommended Tour 3",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -4718,7 +5104,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_image_3",
                       parentId: "recommended_product_3",
                       type: "Image",
-                      name: "Recommended Product Image 3",
+                      name: "Recommended Tour Image 3",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -4727,8 +5113,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Recommended product",
+                        alt: "Recommended Sri Lanka tour",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -4738,7 +5131,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_title_3",
                       parentId: "recommended_product_3",
                       type: "Text",
-                      name: "Recommended Product Title 3",
+                      name: "Recommended Tour Sri Lanka travel guide 3",
 
                       layout: {},
 
@@ -4751,8 +5144,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "h3",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -4762,7 +5161,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_price_3",
                       parentId: "recommended_product_3",
                       type: "Text",
-                      name: "Recommended Product Price 3",
+                      name: "Recommended Tour Price 3",
 
                       layout: {},
 
@@ -4775,8 +5174,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 999",
+                        text: "From Rs. 9,900",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -4789,7 +5194,7 @@ export const components: ComponentList[] = [
                   id: "recommended_product_4",
                   parentId: "recommended_products_grid",
                   type: "Frame",
-                  name: "Recommended Product 4",
+                  name: "Recommended Tour 4",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -4810,7 +5215,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_image_4",
                       parentId: "recommended_product_4",
                       type: "Image",
-                      name: "Recommended Product Image 4",
+                      name: "Recommended Tour Image 4",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -4819,8 +5224,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Recommended product",
+                        alt: "Recommended Sri Lanka tour",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -4830,7 +5242,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_title_4",
                       parentId: "recommended_product_4",
                       type: "Text",
-                      name: "Recommended Product Title 4",
+                      name: "Recommended Tour Sri Lanka travel guide 4",
 
                       layout: {},
 
@@ -4843,8 +5255,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "h3",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -4854,7 +5272,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_price_4",
                       parentId: "recommended_product_4",
                       type: "Text",
-                      name: "Recommended Product Price 4",
+                      name: "Recommended Tour Price 4",
 
                       layout: {},
 
@@ -4867,8 +5285,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 999",
+                        text: "From Rs. 9,900",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -4880,7 +5304,7 @@ export const components: ComponentList[] = [
                   id: "recommended_product_5",
                   parentId: "recommended_products_grid",
                   type: "Frame",
-                  name: "Recommended Product 5",
+                  name: "Recommended Tour 5",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -4901,7 +5325,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_image_5",
                       parentId: "recommended_product_5",
                       type: "Image",
-                      name: "Recommended Product Image 5",
+                      name: "Recommended Tour Image 5",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -4910,8 +5334,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Recommended product",
+                        alt: "Recommended Sri Lanka tour",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -4921,7 +5352,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_title_5",
                       parentId: "recommended_product_5",
                       type: "Text",
-                      name: "Recommended Product Title 5",
+                      name: "Recommended Tour Sri Lanka travel guide 5",
 
                       layout: {},
 
@@ -4934,8 +5365,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "h3",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -4945,7 +5382,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_price_5",
                       parentId: "recommended_product_5",
                       type: "Text",
-                      name: "Recommended Product Price 5",
+                      name: "Recommended Tour Price 5",
 
                       layout: {},
 
@@ -4958,8 +5395,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 999",
+                        text: "From Rs. 9,900",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -4971,7 +5414,7 @@ export const components: ComponentList[] = [
                   id: "recommended_product_6",
                   parentId: "recommended_products_grid",
                   type: "Frame",
-                  name: "Recommended Product 6",
+                  name: "Recommended Tour 6",
 
                   layout: {
                     width: { value: 220, unit: "px" },
@@ -4992,7 +5435,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_image_6",
                       parentId: "recommended_product_6",
                       type: "Image",
-                      name: "Recommended Product Image 6",
+                      name: "Recommended Tour Image 6",
 
                       layout: {
                         width: { value: 220, unit: "px" },
@@ -5001,8 +5444,15 @@ export const components: ComponentList[] = [
 
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Recommended product",
+                        alt: "Recommended Sri Lanka tour",
                         objectFit: "cover",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                          alt: "name|title|tour_name|destination|collection_name",
+                        },
                       },
 
                       children: [],
@@ -5012,7 +5462,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_title_6",
                       parentId: "recommended_product_6",
                       type: "Text",
-                      name: "Recommended Product Title 6",
+                      name: "Recommended Tour Sri Lanka travel guide 6",
 
                       layout: {},
 
@@ -5025,8 +5475,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Product title",
+                        text: "Tour package title",
                         tag: "h3",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                        },
                       },
 
                       children: [],
@@ -5036,7 +5492,7 @@ export const components: ComponentList[] = [
                       id: "recommended_product_price_6",
                       parentId: "recommended_product_6",
                       type: "Text",
-                      name: "Recommended Product Price 6",
+                      name: "Recommended Tour Price 6",
 
                       layout: {},
 
@@ -5049,8 +5505,14 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Rs. 999",
+                        text: "From Rs. 9,900",
                         tag: "span",
+                      },
+
+                      runtime: {
+                        columnMap: {
+                          text: "price|starting_price|package_price|rate|from_price",
+                        },
                       },
 
                       children: [],
@@ -5065,10 +5527,10 @@ export const components: ComponentList[] = [
     ],
   },
   {
-    label: "Storytelling",
+    label: "Travel Stories",
     list: [
       {
-        label: "Blog posts: Carousel",
+        label: "Travel stories: Carousel",
         icon: "🎠",
 
         node: {
@@ -5100,7 +5562,7 @@ export const components: ComponentList[] = [
               id: "blog_carousel_title",
               parentId: "blog_posts_carousel",
               type: "Text",
-              name: "Blog Carousel Title",
+              name: "Blog Carousel Sri Lanka travel guide",
               layout: {},
               style: {
                 fontSize: 22,
@@ -5110,7 +5572,7 @@ export const components: ComponentList[] = [
                 textAlign: "left",
               },
               props: {
-                text: "Blog posts",
+                text: "Travel stories",
                 tag: "h2",
               },
               children: [],
@@ -5159,7 +5621,7 @@ export const components: ComponentList[] = [
                         height: { value: 270, unit: "px" },
                       },
                       props: {
-                        src: "https://images.unsplash.com/photo-1517048676732-d65bc937f952",
+                        src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -5169,7 +5631,7 @@ export const components: ComponentList[] = [
                       id: "blog_carousel_card_title_1",
                       parentId: "blog_carousel_card_1",
                       type: "Text",
-                      name: "Blog Card Title 1",
+                      name: "Blog Card Sri Lanka travel guide 1",
                       layout: {},
                       style: {
                         fontSize: 13,
@@ -5178,7 +5640,7 @@ export const components: ComponentList[] = [
                         textColor: "#111111",
                         textAlign: "left",
                       },
-                      props: { text: "Title", tag: "h3" },
+                      props: { text: "Sri Lanka travel guide", tag: "h3" },
                       children: [],
                     },
                     {
@@ -5193,7 +5655,7 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Date   |   Author", tag: "span" },
+                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
                       children: [],
                     },
                     {
@@ -5209,7 +5671,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
                       children: [],
@@ -5244,7 +5706,7 @@ export const components: ComponentList[] = [
                         height: { value: 270, unit: "px" },
                       },
                       props: {
-                        src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+                        src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -5254,7 +5716,7 @@ export const components: ComponentList[] = [
                       id: "blog_carousel_card_title_2",
                       parentId: "blog_carousel_card_2",
                       type: "Text",
-                      name: "Blog Card Title 2",
+                      name: "Blog Card Sri Lanka travel guide 2",
                       layout: {},
                       style: {
                         fontSize: 13,
@@ -5263,7 +5725,7 @@ export const components: ComponentList[] = [
                         textColor: "#111111",
                         textAlign: "left",
                       },
-                      props: { text: "Title", tag: "h3" },
+                      props: { text: "Sri Lanka travel guide", tag: "h3" },
                       children: [],
                     },
                     {
@@ -5278,7 +5740,7 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Date   |   Author", tag: "span" },
+                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
                       children: [],
                     },
                     {
@@ -5294,7 +5756,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
                       children: [],
@@ -5329,7 +5791,7 @@ export const components: ComponentList[] = [
                         height: { value: 270, unit: "px" },
                       },
                       props: {
-                        src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+                        src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -5339,7 +5801,7 @@ export const components: ComponentList[] = [
                       id: "blog_carousel_card_title_3",
                       parentId: "blog_carousel_card_3",
                       type: "Text",
-                      name: "Blog Card Title 3",
+                      name: "Blog Card Sri Lanka travel guide 3",
                       layout: {},
                       style: {
                         fontSize: 13,
@@ -5348,7 +5810,7 @@ export const components: ComponentList[] = [
                         textColor: "#111111",
                         textAlign: "left",
                       },
-                      props: { text: "Title", tag: "h3" },
+                      props: { text: "Sri Lanka travel guide", tag: "h3" },
                       children: [],
                     },
                     {
@@ -5363,7 +5825,7 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Date   |   Author", tag: "span" },
+                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
                       children: [],
                     },
                     {
@@ -5379,7 +5841,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
                       children: [],
@@ -5414,7 +5876,7 @@ export const components: ComponentList[] = [
                         height: { value: 270, unit: "px" },
                       },
                       props: {
-                        src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
+                        src: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -5424,7 +5886,7 @@ export const components: ComponentList[] = [
                       id: "blog_carousel_card_title_4",
                       parentId: "blog_carousel_card_4",
                       type: "Text",
-                      name: "Blog Card Title 4",
+                      name: "Blog Card Sri Lanka travel guide 4",
                       layout: {},
                       style: {
                         fontSize: 13,
@@ -5433,7 +5895,7 @@ export const components: ComponentList[] = [
                         textColor: "#111111",
                         textAlign: "left",
                       },
-                      props: { text: "Title", tag: "h3" },
+                      props: { text: "Sri Lanka travel guide", tag: "h3" },
                       children: [],
                     },
                     {
@@ -5448,7 +5910,7 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Date   |   Author", tag: "span" },
+                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
                       children: [],
                     },
                     {
@@ -5464,7 +5926,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
                       children: [],
@@ -5477,7 +5939,7 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Blog posts: Editorial",
+        label: "Travel stories: Editorial",
         icon: "📝",
         node: {
           id: "blog_editorial",
@@ -5529,7 +5991,7 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Blog posts",
+                text: "Travel stories",
                 tag: "h2",
               },
 
@@ -5591,7 +6053,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+                        src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
                         alt: "Featured blog image",
                         objectFit: "cover",
                       },
@@ -5604,7 +6066,7 @@ export const components: ComponentList[] = [
                       parentId: "featured_post",
                       type: "Text",
 
-                      name: "Featured Title",
+                      name: "Featured Sri Lanka travel guide",
 
                       layout: {},
 
@@ -5617,7 +6079,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Design systems that scale beautifully",
+                        text: "A slow travel guide to Sri Lanka’s hill country",
                         tag: "h3",
                       },
 
@@ -5641,7 +6103,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "May 24  •  Editorial",
+                        text: "Travel Guide  •  Sri Lanka",
                         tag: "span",
                       },
 
@@ -5665,7 +6127,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "A closer look at how modern editorial layouts create hierarchy, rhythm, and visual balance across digital storefronts.",
+                        text: "Ride scenic trains, visit tea estates, hike misty viewpoints, and plan a peaceful mountain itinerary.",
                         tag: "p",
                       },
 
@@ -5727,7 +6189,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+                            src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
                             alt: "Blog image",
                             objectFit: "cover",
                           },
@@ -5740,7 +6202,7 @@ export const components: ComponentList[] = [
                           parentId: "side_post_1",
                           type: "Text",
 
-                          name: "Side Title 1",
+                          name: "Side Sri Lanka travel guide 1",
 
                           layout: {},
 
@@ -5752,7 +6214,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Crafting immersive editorial experiences",
+                            text: "Best coastal towns for beach lovers",
                             tag: "h4",
                           },
 
@@ -5792,7 +6254,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            src: "https://images.unsplash.com/photo-1517048676732-d65bc937f952",
+                            src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
                             alt: "Blog image",
                             objectFit: "cover",
                           },
@@ -5805,7 +6267,7 @@ export const components: ComponentList[] = [
                           parentId: "side_post_2",
                           type: "Text",
 
-                          name: "Side Title 2",
+                          name: "Side Sri Lanka travel guide 2",
 
                           layout: {},
 
@@ -5817,7 +6279,7 @@ export const components: ComponentList[] = [
                           },
 
                           props: {
-                            text: "Minimal interfaces with maximum clarity",
+                            text: "Cultural triangle itinerary ideas",
                             tag: "h4",
                           },
 
@@ -5833,7 +6295,7 @@ export const components: ComponentList[] = [
         },
       },
       {
-        label: "Blog posts: Grid",
+        label: "Travel stories: Grid",
         icon: "📰",
 
         node: {
@@ -5873,7 +6335,7 @@ export const components: ComponentList[] = [
               id: "blog_grid_title",
               parentId: "blog_grid",
               type: "Text",
-              name: "Grid Title",
+              name: "Grid Sri Lanka travel guide",
 
               layout: {},
 
@@ -5886,7 +6348,7 @@ export const components: ComponentList[] = [
               },
 
               props: {
-                text: "Blog posts",
+                text: "Travel stories",
                 tag: "h2",
               },
 
@@ -5949,7 +6411,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1517048676732-d65bc937f952",
+                        src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -5961,7 +6423,7 @@ export const components: ComponentList[] = [
                       id: "blog_card_title_1",
                       parentId: "blog_card_1",
                       type: "Text",
-                      name: "Blog Title 1",
+                      name: "Blog Sri Lanka travel guide 1",
 
                       layout: {},
 
@@ -5974,7 +6436,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Title",
+                        text: "Sri Lanka travel guide",
                         tag: "h3",
                       },
 
@@ -5997,7 +6459,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Date   |   Author",
+                        text: "Travel Guide   |   TrailNest",
                         tag: "span",
                       },
 
@@ -6020,7 +6482,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
 
@@ -6064,7 +6526,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3",
+                        src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -6076,7 +6538,7 @@ export const components: ComponentList[] = [
                       id: "blog_card_title_2",
                       parentId: "blog_card_2",
                       type: "Text",
-                      name: "Blog Title 2",
+                      name: "Blog Sri Lanka travel guide 2",
 
                       layout: {},
 
@@ -6089,7 +6551,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Title",
+                        text: "Sri Lanka travel guide",
                         tag: "h3",
                       },
 
@@ -6112,7 +6574,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Date   |   Author",
+                        text: "Travel Guide   |   TrailNest",
                         tag: "span",
                       },
 
@@ -6135,7 +6597,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
 
@@ -6179,7 +6641,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085",
+                        src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
                         alt: "Blog image",
                         objectFit: "cover",
                       },
@@ -6191,7 +6653,7 @@ export const components: ComponentList[] = [
                       id: "blog_card_title_3",
                       parentId: "blog_card_3",
                       type: "Text",
-                      name: "Blog Title 3",
+                      name: "Blog Sri Lanka travel guide 3",
 
                       layout: {},
 
@@ -6204,7 +6666,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Title",
+                        text: "Sri Lanka travel guide",
                         tag: "h3",
                       },
 
@@ -6227,7 +6689,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "Date   |   Author",
+                        text: "Travel Guide   |   TrailNest",
                         tag: "span",
                       },
 
@@ -6250,7 +6712,7 @@ export const components: ComponentList[] = [
                       },
 
                       props: {
-                        text: "An excerpt of your blog post's content",
+                        text: "Helpful tips, destination ideas, and local insights for planning a better Sri Lanka journey.",
                         tag: "p",
                       },
 
@@ -6295,7 +6757,7 @@ export const components: ComponentList[] = [
               id: "carousel_title",
               parentId: "story_carousel",
               type: "Text",
-              name: "Carousel Title",
+              name: "Carousel Sri Lanka travel guide",
               layout: {},
               style: {
                 fontSize: 22,
@@ -6305,7 +6767,7 @@ export const components: ComponentList[] = [
                 textAlign: "left",
               },
               props: {
-                text: "Discover elevated design",
+                text: "Discover unforgettable Sri Lanka journeys",
                 tag: "h2",
               },
               children: [],
@@ -6354,7 +6816,7 @@ export const components: ComponentList[] = [
                       },
                       props: {
                         src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
-                        alt: "Carousel item",
+                        alt: "Sri Lanka travel experience",
                         objectFit: "cover",
                       },
                       children: [],
@@ -6363,7 +6825,7 @@ export const components: ComponentList[] = [
                       id: "carousel_item_title_1",
                       parentId: "carousel_item_1",
                       type: "Text",
-                      name: "Item Title 1",
+                      name: "Item Sri Lanka travel guide 1",
                       layout: {},
                       style: {
                         fontSize: 10,
@@ -6373,7 +6835,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Artistry in action",
+                        text: "Scenic hill country",
                         tag: "h3",
                       },
                       children: [],
@@ -6391,7 +6853,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Bold style that's recognizable anywhere",
+                        text: "Tea trails, waterfalls, viewpoints, and slow mountain mornings",
                         tag: "p",
                       },
                       children: [],
@@ -6426,7 +6888,7 @@ export const components: ComponentList[] = [
                       },
                       props: {
                         src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
-                        alt: "Carousel item",
+                        alt: "Sri Lanka travel experience",
                         objectFit: "cover",
                       },
                       children: [],
@@ -6435,7 +6897,7 @@ export const components: ComponentList[] = [
                       id: "carousel_item_title_2",
                       parentId: "carousel_item_2",
                       type: "Text",
-                      name: "Item Title 2",
+                      name: "Item Sri Lanka travel guide 2",
                       layout: {},
                       style: {
                         fontSize: 10,
@@ -6445,7 +6907,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Uncompromising standards",
+                        text: "Trusted local guides",
                         tag: "h3",
                       },
                       children: [],
@@ -6463,7 +6925,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Expert construction and an impeccable finish",
+                        text: "Carefully planned routes, reliable transfers, and authentic local experiences",
                         tag: "p",
                       },
                       children: [],
@@ -6498,7 +6960,7 @@ export const components: ComponentList[] = [
                       },
                       props: {
                         src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
-                        alt: "Carousel item",
+                        alt: "Sri Lanka travel experience",
                         objectFit: "cover",
                       },
                       children: [],
@@ -6507,7 +6969,7 @@ export const components: ComponentList[] = [
                       id: "carousel_item_title_3",
                       parentId: "carousel_item_3",
                       type: "Text",
-                      name: "Item Title 3",
+                      name: "Item Sri Lanka travel guide 3",
                       layout: {},
                       style: {
                         fontSize: 10,
@@ -6517,7 +6979,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Made to last",
+                        text: "Memories made to last",
                         tag: "h3",
                       },
                       children: [],
@@ -6535,7 +6997,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Pieces that only get better with time and wear",
+                        text: "Journeys designed for meaningful moments, not rushed checklists",
                         tag: "p",
                       },
                       children: [],
@@ -6570,7 +7032,7 @@ export const components: ComponentList[] = [
                       },
                       props: {
                         src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
-                        alt: "Carousel item",
+                        alt: "Sri Lanka travel experience",
                         objectFit: "cover",
                       },
                       children: [],
@@ -6579,7 +7041,7 @@ export const components: ComponentList[] = [
                       id: "carousel_item_title_4",
                       parentId: "carousel_item_4",
                       type: "Text",
-                      name: "Item Title 4",
+                      name: "Item Sri Lanka travel guide 4",
                       layout: {},
                       style: {
                         fontSize: 10,
@@ -6589,7 +7051,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Quality you can feel",
+                        text: "Island beauty you can feel",
                         tag: "h3",
                       },
                       children: [],
@@ -6607,7 +7069,7 @@ export const components: ComponentList[] = [
                         textAlign: "left",
                       },
                       props: {
-                        text: "Authentic materials with refined details",
+                        text: "Golden beaches, ancient temples, wildlife parks, and warm hospitality",
                         tag: "p",
                       },
                       children: [],
@@ -6682,7 +7144,7 @@ export const components: ComponentList[] = [
 
                   props: {
                     src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
-                    alt: "Editorial Product",
+                    alt: "Sri Lanka featured travel experience",
                     objectFit: "cover",
                   },
 
@@ -6752,7 +7214,7 @@ export const components: ComponentList[] = [
                   id: "editorial_title",
                   parentId: "editorial_content_side",
                   type: "Text",
-                  name: "Editorial Title",
+                  name: "Editorial Sri Lanka travel guide",
 
                   layout: {},
 
@@ -6765,7 +7227,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Our signature product",
+                    text: "Our signature Sri Lanka journey",
                     tag: "h2",
                   },
 
@@ -6790,7 +7252,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Made with care and intentionally loved by our customers. This signature bestseller is crafted with precision.",
+                    text: "Curated with local insight and loved by travelers, this journey blends iconic sights with authentic Sri Lankan experiences.",
                     tag: "p",
                   },
 
@@ -6817,7 +7279,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "Shop now",
+                    text: "View itinerary",
                     href: "#",
                   },
 
@@ -6916,7 +7378,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    text: "UP\nTHE\nANTE",
+                    text: "EXPLORE\nTHE\nISLAND",
                     tag: "h1",
                   },
 
@@ -6956,7 +7418,7 @@ export const components: ComponentList[] = [
                   id: "image1",
                   parentId: "frame2",
                   type: "Image",
-                  name: "Editorial Product Image",
+                  name: "Editorial Travel Image",
 
                   layout: {
                     width: { value: 100, unit: "%" },
@@ -6964,7 +7426,7 @@ export const components: ComponentList[] = [
                   },
 
                   props: {
-                    src: "https://media.istockphoto.com/id/178642135/photo/mountains-of-snow.jpg?s=1024x1024&w=is&k=20&c=Izd2BMtYNtkBbueLwgGOW_z0mk1my5vZxve2-Ukbyjw=",
+                    src: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1800&q=80",
                     alt: "Editorial Image",
                     objectFit: "cover",
                   },
@@ -7017,7 +7479,7 @@ export const components: ComponentList[] = [
                   id: "compare_title",
                   type: "Text",
                   parentId: "compare_text",
-                  props: { text: "Find your perfect fit", tag: "h2" },
+                  props: { text: "Find your perfect travel style", tag: "h2" },
                   layout: {},
                   style: {
                     fontSize: 28,
@@ -7032,7 +7494,7 @@ export const components: ComponentList[] = [
                   id: "compare_body",
                   type: "Text",
                   parentId: "compare_text",
-                  props: { text: "Discover the best of both worlds", tag: "p" },
+                  props: { text: "Compare culture, coast, wildlife, and hill-country experiences", tag: "p" },
                   layout: {},
                   style: {
                     fontSize: 13,
@@ -7057,7 +7519,7 @@ export const components: ComponentList[] = [
                       id: "compare_view_all",
                       type: "Link",
                       parentId: "compare_buttons",
-                      props: { text: "View all", href: "#" },
+                      props: { text: "View tours", href: "#" },
                       layout: {
                         padding: { top: 8, right: 14, bottom: 8, left: 14 },
                         border: 1,
@@ -7075,7 +7537,7 @@ export const components: ComponentList[] = [
                       id: "compare_shop_now",
                       type: "Link",
                       parentId: "compare_buttons",
-                      props: { text: "Shop now", href: "#" },
+                      props: { text: "View itinerary", href: "#" },
                       layout: {
                         padding: { top: 8, right: 14, bottom: 8, left: 14 },
                       },
@@ -7181,7 +7643,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "image_text_content",
                   props: {
-                    text: "Our signature product",
+                    text: "Our signature Sri Lanka journey",
                     tag: "h3",
                   },
                   layout: {
@@ -7200,7 +7662,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "image_text_content",
                   props: {
-                    text: "Made with care and intentionally loved by our customers. This signature bestseller blends comfort and style.",
+                    text: "Curated with local insight and traveler comfort, this signature journey blends culture, nature, and relaxation.",
                     tag: "p",
                   },
                   layout: {
@@ -7219,7 +7681,7 @@ export const components: ComponentList[] = [
                   type: "Link",
                   parentId: "image_text_content",
                   props: {
-                    text: "Shop now",
+                    text: "View itinerary",
                     href: "#",
                   },
                   layout: {
@@ -7328,7 +7790,7 @@ export const components: ComponentList[] = [
     ],
   },
   {
-    label: "Text",
+    label: "Travel Content",
     list: [
       {
         label: "FAQ",
@@ -7354,7 +7816,7 @@ export const components: ComponentList[] = [
               type: "Text",
               parentId: "faq_section",
               props: {
-                text: "Frequently asked questions",
+                text: "Travel planning FAQs",
                 tag: "h2",
               },
               layout: {
@@ -7388,7 +7850,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "faq_item_1",
                   props: {
-                    text: "What is the return policy?",
+                    text: "Can I customize my itinerary?",
                     tag: "span",
                   },
                   layout: {},
@@ -7437,7 +7899,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "faq_item_2",
                   props: {
-                    text: "Are any purchases final sale?",
+                    text: "Are bookings flexible?",
                     tag: "span",
                   },
                   layout: {},
@@ -7486,7 +7948,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "faq_item_3",
                   props: {
-                    text: "When will I get my order?",
+                    text: "When should I confirm my tour?",
                     tag: "span",
                   },
                   layout: {},
@@ -7587,7 +8049,7 @@ export const components: ComponentList[] = [
                       id: "icon_text_1_title",
                       type: "Text",
                       parentId: "icon_text_1",
-                      props: { text: "Intentional design", tag: "h3" },
+                      props: { text: "Thoughtful itineraries", tag: "h3" },
                       layout: {},
                       style: {
                         fontSize: 18,
@@ -7603,7 +8065,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "icon_text_1",
                       props: {
-                        text: "Everything we do starts with why",
+                        text: "Every route is planned around your travel goals",
                         tag: "p",
                       },
                       layout: {},
@@ -7650,7 +8112,7 @@ export const components: ComponentList[] = [
                       id: "icon_text_2_title",
                       type: "Text",
                       parentId: "icon_text_2",
-                      props: { text: "Made with care", tag: "h3" },
+                      props: { text: "Guided with care", tag: "h3" },
                       layout: {},
                       style: {
                         fontSize: 18,
@@ -7666,7 +8128,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "icon_text_2",
                       props: {
-                        text: "We believe in building better",
+                        text: "We believe travel should feel personal, safe, and memorable",
                         tag: "p",
                       },
                       layout: {},
@@ -7713,7 +8175,7 @@ export const components: ComponentList[] = [
                       id: "icon_text_3_title",
                       type: "Text",
                       parentId: "icon_text_3",
-                      props: { text: "A team with a goal", tag: "h3" },
+                      props: { text: "Local experts with a goal", tag: "h3" },
                       layout: {},
                       style: {
                         fontSize: 18,
@@ -7729,7 +8191,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "icon_text_3",
                       props: {
-                        text: "Real people making great products",
+                        text: "Real local experts creating better journeys",
                         tag: "p",
                       },
                       layout: {},
@@ -7784,7 +8246,7 @@ export const components: ComponentList[] = [
                 type: "Text",
                 parentId: "marquee_track",
                 props: {
-                  text: "We make things that work better and last longer.",
+                  text: "We create Sri Lanka journeys that feel easier, richer, and more memorable.",
                   tag: "span",
                 },
                 layout: {},
@@ -7856,7 +8318,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "col_1",
                       props: {
-                        text: "Intentional design",
+                        text: "Thoughtful itineraries",
                         tag: "h3",
                       },
                       layout: {},
@@ -7873,7 +8335,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "col_1",
                       props: {
-                        text: "We create with intention. Our products solve real problems with clean design and honest materials.",
+                        text: "We plan with intention. Our tours solve real travel challenges with clear routes, local insight, and flexible support.",
                         tag: "p",
                       },
                       layout: {},
@@ -7908,7 +8370,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "col_2",
                       props: {
-                        text: "Quality first",
+                        text: "Experience first",
                         tag: "h3",
                       },
                       layout: {},
@@ -7925,7 +8387,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "col_2",
                       props: {
-                        text: "We obsess over the details and strive to deliver the best products at the best prices, every time.",
+                        text: "We obsess over timing, transfers, guides, and stops so every trip feels smooth and worthwhile.",
                         tag: "p",
                       },
                       layout: {},
@@ -7960,7 +8422,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "col_3",
                       props: {
-                        text: "Customer care",
+                        text: "Traveler care",
                         tag: "h3",
                       },
                       layout: {},
@@ -7977,7 +8439,7 @@ export const components: ComponentList[] = [
                       type: "Text",
                       parentId: "col_3",
                       props: {
-                        text: "We're always on your side. Keeping our loyal customers happy is our top priority and number one goal.",
+                        text: "We're always on your side. Keeping travelers informed, comfortable, and confident is our top priority.",
                         tag: "p",
                       },
                       layout: {},
@@ -8038,7 +8500,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "pull_quote_inner",
                   props: {
-                    text: "At the heart of every product lies a unique story, driven by our passion for quality and innovation. Each item enhances your everyday life and sparks joy.",
+                    text: "At the heart of every journey is a story: misty hills, ancient cities, coastal sunsets, wildlife encounters, and the people who make Sri Lanka unforgettable.",
                     tag: "h2",
                   },
                   layout: {},
@@ -8057,7 +8519,7 @@ export const components: ComponentList[] = [
                   type: "Link",
                   parentId: "pull_quote_inner",
                   props: {
-                    text: "Shop now",
+                    text: "View itinerary",
                     href: "#",
                   },
                   layout: {
@@ -8116,7 +8578,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "rich_text_inner",
                   props: {
-                    text: "New arrivals",
+                    text: "New travel experiences",
                     tag: "h2",
                   },
                   layout: {},
@@ -8134,7 +8596,7 @@ export const components: ComponentList[] = [
                   type: "Text",
                   parentId: "rich_text_inner",
                   props: {
-                    text: "We make things that work better and last longer. Our products solve real problems with clean design and honest materials.",
+                    text: "We design travel experiences that work better from start to finish, with clear itineraries, trusted guides, and authentic Sri Lankan moments.",
                     tag: "p",
                   },
                   layout: {
@@ -8153,7 +8615,7 @@ export const components: ComponentList[] = [
                   type: "Link",
                   parentId: "rich_text_inner",
                   props: {
-                    text: "Shop now",
+                    text: "View itinerary",
                     href: "#",
                   },
                   layout: {
