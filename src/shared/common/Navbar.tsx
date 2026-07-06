@@ -104,7 +104,7 @@ export const Navbar = () => {
                 {userMenuOpen && (
                   <div
                     role="menu"
-                    className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-bg shadow-lg"
+                    className="absolute right-0 mt-2 w-48 overflow-hidden rounded-xl border border-border bg-bg shadow-lg z-50"
                   >
                     <Link
                       href="/profile"

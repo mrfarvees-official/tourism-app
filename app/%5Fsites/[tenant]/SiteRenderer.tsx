@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { sitePage } from "@/app/designer/[tenant]/widgets/palette/data";
 import RenderComponent from "@/app/designer/[tenant]/widgets/palette/RenderComponent";
 import { DesignerState, ComponentNode } from "@/app/designer/[tenant]/widgets/palette/types";
 
@@ -8,6 +9,11 @@ type PageSchema = {
   header?: ComponentNode;
   template?: ComponentNode;
   footer?: ComponentNode;
+};
+
+type PageRecord = {
+  slug?: string;
+  schema?: PageSchema;
 };
 
 type Props = {
@@ -22,6 +28,7 @@ const initialDesignerState: DesignerState = {
   footer: { nodes: {}, rootIds: [] },
   selectedSection: null,
   selectedId: null,
+  insertIndex: null,
   hoveredSection: null,
   hoveredId: null,
   history: [],
@@ -40,6 +47,12 @@ const resolveSchema = (schema?: PageSchema | null): PageSchema | null => {
   };
 };
 
+const defaultSchema = (): PageSchema => ({
+  header: sitePage.header,
+  template: sitePage.template,
+  footer: sitePage.footer,
+});
+
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -48,24 +61,39 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
   return value as Record<string, unknown>;
 };
 
-const unwrapRecord = (value: unknown): PageSchema | null => {
-  const record = asRecord(value);
+const unwrapPayload = (value: unknown): unknown => {
+  let current = value;
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    const record = asRecord(current);
+    if (!record) {
+      return current;
+    }
+
+    if ("data" in record) {
+      current = record.data;
+      continue;
+    }
+
+    return current;
+  }
+
+  return current;
+};
+
+const unwrapRecord = (value: unknown): PageRecord | null => {
+  const record = asRecord(unwrapPayload(value));
   if (!record) {
     return null;
   }
 
-  const directSchema = asRecord(record.schema);
-  if (directSchema) {
-    return directSchema as PageSchema;
-  }
-
-  const candidates = [record.data, record.page, record.item];
+  const candidates = [record.page, record.item, record];
   for (const candidate of candidates) {
     const nested = asRecord(candidate);
     if (nested) {
       const nestedSchema = asRecord(nested.schema);
       if (nestedSchema) {
-        return nestedSchema as PageSchema;
+        return nested as PageRecord;
       }
     }
   }
@@ -82,31 +110,39 @@ async function fetchTenantPage(tenant: string, slug: string): Promise<PageSchema
     return null;
   }
 
-  const url = new URL(
+  const baseUrl = apiOrigin.endsWith("/") ? apiOrigin : `${apiOrigin}/`;
+  const candidates = [
     `api/live/${encodeURIComponent(tenant)}/${encodeURI(slug)}`,
-    apiOrigin.endsWith("/") ? apiOrigin : `${apiOrigin}/`,
-  );
+    `api/live/${encodeURIComponent(tenant)}`,
+  ];
 
-  const response = await fetch(url, {
-    cache: "no-store",
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  });
+  for (const candidate of candidates) {
+    const response = await fetch(new URL(candidate, baseUrl), {
+      cache: "no-store",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
 
-  if (!response.ok) {
-    return null;
+    if (!response.ok) {
+      continue;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const record = unwrapRecord(payload);
+    if (record?.schema) {
+      return record.schema;
+    }
   }
 
-  const payload = (await response.json()) as unknown;
-  return unwrapRecord(payload);
+  return null;
 }
 
 export default function SiteRenderer({ tenant, path, schema }: Props) {
   const [, setDesignerState] = useState<DesignerState>(initialDesignerState);
-  const [resolved, setResolved] = useState(resolveSchema(schema));
+  const [resolved, setResolved] = useState(resolveSchema(schema) ?? defaultSchema());
   const resolvedPath = useMemo(() => path || "home", [path]);
 
   useEffect(() => {
@@ -119,10 +155,10 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           return;
         }
 
-        setResolved(resolveSchema(next));
+        setResolved(resolveSchema(next) ?? defaultSchema());
       } catch {
         if (active) {
-          setResolved(resolveSchema(schema));
+          setResolved(resolveSchema(schema) ?? defaultSchema());
         }
       }
     };
@@ -135,16 +171,7 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
   }, [tenant, resolvedPath, schema]);
 
   if (!resolved) {
-    return (
-      <main className="flex min-h-screen w-full items-center justify-center bg-white px-6 text-center">
-        <div className="max-w-md">
-          <h1 className="text-2xl font-semibold text-gray-900">Page unavailable</h1>
-          <p className="mt-3 text-sm leading-6 text-gray-600">
-            This tenant page could not be loaded from the backend.
-          </p>
-        </div>
-      </main>
-    );
+    return null;
   }
 
   return (
@@ -157,6 +184,8 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           section="header"
           setShowComponentModal={() => {}}
           setDesignerState={setDesignerState}
+          tenantKey={tenant}
+          pageSlug={resolvedPath}
         />
       ) : null}
       {resolved.template ? (
@@ -167,6 +196,8 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           section="template"
           setShowComponentModal={() => {}}
           setDesignerState={setDesignerState}
+          tenantKey={tenant}
+          pageSlug={resolvedPath}
         />
       ) : null}
       {resolved.footer ? (
@@ -177,6 +208,8 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           section="footer"
           setShowComponentModal={() => {}}
           setDesignerState={setDesignerState}
+          tenantKey={tenant}
+          pageSlug={resolvedPath}
         />
       ) : null}
     </main>

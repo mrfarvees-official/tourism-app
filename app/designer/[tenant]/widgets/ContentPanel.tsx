@@ -8,23 +8,18 @@ export default function ContentPanel({
   headerNode,
   templateNode,
   footerNode,
-  setHeaderNode,
-  setTemplateNode,
-  setFooterNode,
   setDesignerState,
   setShowComponentModal,
 }: {
   headerNode: ComponentNode;
   templateNode: ComponentNode;
   footerNode: ComponentNode;
-  setHeaderNode: Dispatch<SetStateAction<ComponentNode>>;
-  setTemplateNode: Dispatch<SetStateAction<ComponentNode>>;
-  setFooterNode: Dispatch<SetStateAction<ComponentNode>>;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
   setShowComponentModal: Dispatch<SetStateAction<boolean>>;
 }) {
   return (
-    <div className="min-h-screen min-w-0 border border-border">
+    <div className="min-h-screen min-w-max border border-border bg-white">
+      <div className="min-w-max">
       <RenderComponent
         component={headerNode}
         isDesigner={true}
@@ -51,6 +46,7 @@ export default function ContentPanel({
         setDesignerState={setDesignerState}
         setShowComponentModal={setShowComponentModal}
       />
+      </div>
     </div>
   );
 }

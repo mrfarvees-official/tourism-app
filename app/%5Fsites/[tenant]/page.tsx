@@ -1,4 +1,5 @@
 import SitePageClient from "./SitePageClient";
+import CustomerIntakePortal from "./CustomerIntakePortal";
 import { ComponentNode } from "@/app/designer/[tenant]/widgets/palette/types";
 
 type PageSchema = {
@@ -8,6 +9,7 @@ type PageSchema = {
 };
 
 type PageRecord = {
+  slug?: string;
   schema?: PageSchema;
 };
 
@@ -17,6 +19,7 @@ type Props = {
   }>;
   searchParams?: Promise<{
     path?: string | string[];
+    token?: string | string[];
   }>;
 };
 
@@ -42,50 +45,98 @@ const resolveSchema = (record?: PageRecord | null): PageSchema | null => {
   };
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+};
+
+const unwrapPayload = (value: unknown): unknown => {
+  let current = value;
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    const record = asRecord(current);
+    if (!record) {
+      return current;
+    }
+
+    if ("data" in record) {
+      current = record.data;
+      continue;
+    }
+
+    return current;
+  }
+
+  return current;
+};
+
+const unwrapRecord = (value: unknown): PageRecord | null => {
+  const record = asRecord(unwrapPayload(value));
+  if (!record) {
+    return null;
+  }
+
+  const candidates = [record.page, record.item, record];
+  for (const candidate of candidates) {
+    const nested = asRecord(candidate);
+    if (nested) {
+      const nestedSchema = asRecord(nested.schema);
+      if (nestedSchema) {
+        return nested as PageRecord;
+      }
+    }
+  }
+
+  return null;
+};
+
 async function fetchTenantPage(tenant: string, slug: string): Promise<PageRecord | null> {
   const apiOrigin = (process.env.API_ORIGIN ?? process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/+$/, "");
   if (!apiOrigin) {
     return null;
   }
 
-  const url = new URL(
+  const baseUrl = apiOrigin.endsWith("/") ? apiOrigin : `${apiOrigin}/`;
+  const candidates = [
     `api/live/${encodeURIComponent(tenant)}/${encodeURI(slug)}`,
-    apiOrigin.endsWith("/") ? apiOrigin : `${apiOrigin}/`,
-  );
+    `api/live/${encodeURIComponent(tenant)}`,
+  ];
 
-  const response = await fetch(url, {
-    cache: "no-store",
-  });
+  for (const candidate of candidates) {
+    const response = await fetch(new URL(candidate, baseUrl), {
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    return null;
+    if (!response.ok) {
+      continue;
+    }
+
+    const payload = (await response.json()) as unknown;
+    const record = unwrapRecord(payload);
+    if (record?.schema) {
+      return record;
+    }
   }
 
-  const payload = (await response.json()) as unknown;
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-    return null;
-  }
-
-  const record = payload as { data?: unknown; page?: unknown; item?: unknown; schema?: PageSchema };
-  if (record.data && typeof record.data === "object" && !Array.isArray(record.data)) {
-    return record.data as PageRecord;
-  }
-
-  if (record.page && typeof record.page === "object" && !Array.isArray(record.page)) {
-    return record.page as PageRecord;
-  }
-
-  if (record.item && typeof record.item === "object" && !Array.isArray(record.item)) {
-    return record.item as PageRecord;
-  }
-
-  return payload as PageRecord;
+  return null;
 }
 
 export default async function Site({ params, searchParams }: Props) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const path = normalizePath(resolvedSearchParams?.path);
+
+  if (path === "customer-intake") {
+    const token = Array.isArray(resolvedSearchParams?.token)
+      ? resolvedSearchParams.token[0]
+      : resolvedSearchParams?.token;
+
+    return <CustomerIntakePortal tenant={resolvedParams.tenant} token={token} />;
+  }
+
   const page = await fetchTenantPage(resolvedParams.tenant, path);
 
   return <SitePageClient tenant={resolvedParams.tenant} path={path} schema={resolveSchema(page)} />;

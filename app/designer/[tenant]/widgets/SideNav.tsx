@@ -3,7 +3,7 @@
 import { ChevronRight, ChevronLeft, ChevronDown, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
-import { ComponentNode, DesignerState, SizeUnit } from "./palette/types";
+import { ComponentNode, DesignerState, LayoutProps, SizeUnit } from "./palette/types";
 import { DesignerTree } from "./componentService";
 
 type Props = {
@@ -44,6 +44,19 @@ function updateNodeById(
   };
 }
 
+function removeNodeById(node: ComponentNode, id: string): ComponentNode | null {
+  if (node.id === id) return null;
+
+  const nextChildren = (node.children ?? [])
+    .map((child) => removeNodeById(child, id))
+    .filter((child): child is ComponentNode => child !== null);
+
+  return {
+    ...node,
+    children: nextChildren,
+  };
+}
+
 function num(v?: number) {
   return v ?? 0;
 }
@@ -78,9 +91,17 @@ export default function SideNav({
         ? headerNode
         : selectedSection === "template"
           ? templateNode
-          : footerNode;
+        : footerNode;
     return findNodeById(root, selectedId);
   }, [selectedSection, selectedId, headerNode, templateNode, footerNode]);
+
+  const selectedProps = useMemo(
+    () =>
+      selectedNode && typeof selectedNode.props === "object"
+        ? (selectedNode.props as Record<string, unknown>)
+        : {},
+    [selectedNode],
+  );
 
   const setNodeInSection = (section: SectionKey, id: string, updater: (target: ComponentNode) => ComponentNode) => {
     if (section === "header") {
@@ -97,6 +118,66 @@ export default function SideNav({
   const patchSelected = (updater: (target: ComponentNode) => ComponentNode) => {
     if (!selectedSection || !selectedId) return;
     setNodeInSection(selectedSection, selectedId, updater);
+  };
+
+  const handleDeleteSelected = () => {
+    if (!selectedSection || !selectedId || !selectedNode) return;
+
+    if (selectedNode.parentId === null) {
+      window.alert("The root node cannot be deleted.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${selectedNode.id}"? This action cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    if (selectedSection === "header") {
+      setHeaderNode((prev) => removeNodeById(prev, selectedId) ?? prev);
+    } else if (selectedSection === "template") {
+      setTemplateNode((prev) => removeNodeById(prev, selectedId) ?? prev);
+    } else {
+      setFooterNode((prev) => removeNodeById(prev, selectedId) ?? prev);
+    }
+
+    closeInspector();
+  };
+
+  const deleteNodeFromSection = (section: string, nodeId: string) => {
+    const target =
+      section === "header"
+        ? headerNode
+        : section === "template"
+          ? templateNode
+          : footerNode;
+    const node = findNodeById(target, nodeId);
+
+    if (!node || node.parentId === null) {
+      window.alert("The root node cannot be deleted.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${node.id}"? This action cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    if (section === "header") {
+      setHeaderNode((prev) => removeNodeById(prev, nodeId) ?? prev);
+    } else if (section === "template") {
+      setTemplateNode((prev) => removeNodeById(prev, nodeId) ?? prev);
+    } else {
+      setFooterNode((prev) => removeNodeById(prev, nodeId) ?? prev);
+    }
+
+    if (
+      designerState.selectedId === nodeId &&
+      designerState.selectedSection === section
+    ) {
+      closeInspector();
+    }
   };
 
   const closeInspector = () => {
@@ -133,11 +214,49 @@ export default function SideNav({
     }));
   };
 
+  const setDimensionValue = (
+    key: "width" | "height" | "minWidth" | "minHeight" | "maxWidth" | "maxHeight",
+    value: string,
+  ) => {
+    patchSelected((n) => ({
+      ...n,
+      layout: {
+        ...(n.layout ?? {}),
+        [key]: {
+          value: value === "auto" ? "auto" : Number(value || 0),
+          unit: (n.layout?.[key]?.unit ?? "px") as SizeUnit,
+        },
+      },
+    }));
+  };
+
+  const setDimensionUnit = (
+    key: "width" | "height" | "minWidth" | "minHeight" | "maxWidth" | "maxHeight",
+    unit: SizeUnit,
+  ) => {
+    patchSelected((n) => ({
+      ...n,
+      layout: {
+        ...(n.layout ?? {}),
+        [key]: {
+          value: n.layout?.[key]?.value ?? 0,
+          unit,
+        },
+      },
+    }));
+  };
+
   const setLayoutNum = (key: "gap" | "top" | "right" | "bottom" | "left" | "border") => {
     return (v: string) =>
       patchSelected((n) => ({
         ...n,
-        layout: { ...(n.layout ?? {}), [key]: Number(v || 0) },
+        layout: {
+          ...(n.layout ?? {}),
+          [key]: Number(v || 0),
+          ...(key === "gap" && Number(v || 0) > 0 && (n.layout?.display ?? "block") === "block"
+            ? { display: "flex" }
+            : {}),
+        },
       }));
   };
 
@@ -172,11 +291,116 @@ export default function SideNav({
     }));
   };
 
-  const setPropValue = (key: string, v: string) => {
+  const setLayoutValue = (key: keyof LayoutProps, value: unknown) => {
     patchSelected((n) => ({
       ...n,
-      props: { ...(n.props as Record<string, unknown>), [key]: v } as ComponentNode["props"],
+      layout: {
+        ...(n.layout ?? {}),
+        [key]: value,
+      },
     }));
+  };
+
+  const setPropValue = (key: string, value: unknown) => {
+    patchSelected((n) => ({
+      ...n,
+      props: { ...(n.props as Record<string, unknown>), [key]: value } as ComponentNode["props"],
+    }));
+  };
+
+  const renderPropControl = (key: string, value: unknown) => {
+    const baseClass = "w-full border rounded px-2 py-1 text-sm";
+
+    if (typeof value === "boolean") {
+      return (
+        <label key={key} className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={value} onChange={(e) => setPropValue(key, e.target.checked)} />
+          {key}
+        </label>
+      );
+    }
+
+    if (typeof value === "number") {
+      return (
+        <input
+          key={key}
+          type="number"
+          className={baseClass}
+          placeholder={key}
+          value={Number.isFinite(value) ? value : 0}
+          onChange={(e) => setPropValue(key, e.target.value === "" ? 0 : Number(e.target.value))}
+        />
+      );
+    }
+
+    if (key === "tag") {
+      return (
+        <select key={key} className={baseClass} value={String(value ?? "p")} onChange={(e) => setPropValue(key, e.target.value)}>
+          <option value="p">p</option>
+          <option value="span">span</option>
+          <option value="h1">h1</option>
+          <option value="h2">h2</option>
+          <option value="h3">h3</option>
+          <option value="h4">h4</option>
+          <option value="h5">h5</option>
+          <option value="h6">h6</option>
+        </select>
+      );
+    }
+
+    if (key === "variant") {
+      return (
+        <select key={key} className={baseClass} value={String(value ?? "primary")} onChange={(e) => setPropValue(key, e.target.value)}>
+          <option value="primary">primary</option>
+          <option value="secondary">secondary</option>
+          <option value="ghost">ghost</option>
+        </select>
+      );
+    }
+
+    if (key === "inputType") {
+      return (
+        <select key={key} className={baseClass} value={String(value ?? "text")} onChange={(e) => setPropValue(key, e.target.value)}>
+          <option value="text">text</option>
+          <option value="email">email</option>
+          <option value="password">password</option>
+          <option value="number">number</option>
+        </select>
+      );
+    }
+
+    if (key === "objectFit") {
+      return (
+        <select key={key} className={baseClass} value={String(value ?? "cover")} onChange={(e) => setPropValue(key, e.target.value)}>
+          <option value="cover">cover</option>
+          <option value="contain">contain</option>
+        </select>
+      );
+    }
+
+    if (key === "provider") {
+      return (
+        <select key={key} className={baseClass} value={String(value ?? "custom")} onChange={(e) => setPropValue(key, e.target.value)}>
+          <option value="youtube">youtube</option>
+          <option value="vimeo">vimeo</option>
+          <option value="facebook">facebook</option>
+          <option value="tiktok">tiktok</option>
+          <option value="instagram">instagram</option>
+          <option value="file">file</option>
+          <option value="custom">custom</option>
+        </select>
+      );
+    }
+
+    return (
+      <input
+        key={key}
+        className={baseClass}
+        placeholder={key}
+        value={value == null ? "" : String(value)}
+        onChange={(e) => setPropValue(key, e.target.value)}
+      />
+    );
   };
 
   const setRuntimeRepeat = (key: string, v: string | boolean) => {
@@ -222,7 +446,7 @@ export default function SideNav({
       transition={{ type: "spring", stiffness: 260, damping: 25 }}
       className="relative h-full bg-[#fff] shadow-xl border-r border-border overflow-hidden shrink-0"
     >
-      <div className="h-full p-2 overflow-y-auto">
+      <div className="h-full p-2 overflow-y-auto overflow-x-hidden">
         <div className={`flex items-center mb-6 ${open ? "justify-between" : "justify-center"}`}>
           {open && <h2 className="text-md font-semibold whitespace-nowrap">Layout Frame</h2>}
           <button
@@ -246,13 +470,14 @@ export default function SideNav({
                 <ChevronDown size={16} className={`transition-transform ${headerOpen ? "rotate-0" : "-rotate-90"}`} />
               </button>
               {headerOpen && (
-                <div className="px-2 pb-2">
+                <div className="px-2 pb-2 overflow-x-auto">
                   <DesignerTree
                     section="header"
                     component={headerNode}
                     designerState={designerState}
                     setDesignerState={setDesignerState}
                     setShowComponentModal={setShowComponentModal}
+                    onDeleteNode={deleteNodeFromSection}
                   />
                 </div>
               )}
@@ -268,13 +493,14 @@ export default function SideNav({
                 <ChevronDown size={16} className={`transition-transform ${templateOpen ? "rotate-0" : "-rotate-90"}`} />
               </button>
               {templateOpen && (
-                <div className="px-2 pb-2">
+                <div className="px-2 pb-2 overflow-x-auto">
                   <DesignerTree
                     section="template"
                     component={templateNode}
                     designerState={designerState}
                     setDesignerState={setDesignerState}
                     setShowComponentModal={setShowComponentModal}
+                    onDeleteNode={deleteNodeFromSection}
                   />
                 </div>
               )}
@@ -290,13 +516,14 @@ export default function SideNav({
                 <ChevronDown size={16} className={`transition-transform ${footerOpen ? "rotate-0" : "-rotate-90"}`} />
               </button>
               {footerOpen && (
-                <div className="px-2 pb-2">
+                <div className="px-2 pb-2 overflow-x-auto">
                   <DesignerTree
                     section="footer"
                     component={footerNode}
                     designerState={designerState}
                     setDesignerState={setDesignerState}
                     setShowComponentModal={setShowComponentModal}
+                    onDeleteNode={deleteNodeFromSection}
                   />
                 </div>
               )}
@@ -369,7 +596,7 @@ export default function SideNav({
                   <select
                     className="border rounded px-2 py-1 text-sm"
                     value={selectedNode.layout?.display ?? "block"}
-                    onChange={(e) => patchSelected((n) => ({ ...n, layout: { ...(n.layout ?? {}), display: e.target.value as ComponentNode["layout"]["display"] } }))}
+                    onChange={(e) => patchSelected((n) => ({ ...n, layout: { ...(n.layout ?? {}), display: e.target.value as LayoutProps["display"] } }))}
                   >
                     <option value="block">block</option>
                     <option value="flex">flex</option>
@@ -403,6 +630,57 @@ export default function SideNav({
                     value={String(num(selectedNode.layout?.padding?.left))}
                     onChange={(e) => setSpacing("padding", "left", e.target.value)}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="minWidth" value={String(selectedNode.layout?.minWidth?.value ?? "")} onChange={(e) => setDimensionValue("minWidth", e.target.value)} />
+                  <select className="border rounded px-2 py-1 text-sm" value={(selectedNode.layout?.minWidth?.unit ?? "px") as string} onChange={(e) => setDimensionUnit("minWidth", e.target.value as SizeUnit)}>
+                    <option value="px">px</option><option value="%">%</option><option value="rem">rem</option><option value="vw">vw</option><option value="vh">vh</option><option value="auto">auto</option>
+                  </select>
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="maxWidth" value={String(selectedNode.layout?.maxWidth?.value ?? "")} onChange={(e) => setDimensionValue("maxWidth", e.target.value)} />
+                  <select className="border rounded px-2 py-1 text-sm" value={(selectedNode.layout?.maxWidth?.unit ?? "px") as string} onChange={(e) => setDimensionUnit("maxWidth", e.target.value as SizeUnit)}>
+                    <option value="px">px</option><option value="%">%</option><option value="rem">rem</option><option value="vw">vw</option><option value="vh">vh</option><option value="auto">auto</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="minHeight" value={String(selectedNode.layout?.minHeight?.value ?? "")} onChange={(e) => setDimensionValue("minHeight", e.target.value)} />
+                  <select className="border rounded px-2 py-1 text-sm" value={(selectedNode.layout?.minHeight?.unit ?? "px") as string} onChange={(e) => setDimensionUnit("minHeight", e.target.value as SizeUnit)}>
+                    <option value="px">px</option><option value="%">%</option><option value="rem">rem</option><option value="vw">vw</option><option value="vh">vh</option><option value="auto">auto</option>
+                  </select>
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="maxHeight" value={String(selectedNode.layout?.maxHeight?.value ?? "")} onChange={(e) => setDimensionValue("maxHeight", e.target.value)} />
+                  <select className="border rounded px-2 py-1 text-sm" value={(selectedNode.layout?.maxHeight?.unit ?? "px") as string} onChange={(e) => setDimensionUnit("maxHeight", e.target.value as SizeUnit)}>
+                    <option value="px">px</option><option value="%">%</option><option value="rem">rem</option><option value="vw">vw</option><option value="vh">vh</option><option value="auto">auto</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <select className="border rounded px-2 py-1 text-sm" value={selectedNode.layout?.flexDirection ?? "row"} onChange={(e) => setLayoutValue("flexDirection", e.target.value as LayoutProps["flexDirection"])}>
+                    <option value="row">row</option><option value="column">column</option>
+                  </select>
+                  <select className="border rounded px-2 py-1 text-sm" value={selectedNode.layout?.justifyContent ?? "start"} onChange={(e) => setLayoutValue("justifyContent", e.target.value as LayoutProps["justifyContent"])}>
+                    <option value="start">start</option><option value="center">center</option><option value="end">end</option><option value="space-between">space-between</option>
+                  </select>
+                  <select className="border rounded px-2 py-1 text-sm" value={selectedNode.layout?.alignItems ?? "stretch"} onChange={(e) => setLayoutValue("alignItems", e.target.value as LayoutProps["alignItems"])}>
+                    <option value="start">start</option><option value="center">center</option><option value="end">end</option><option value="stretch">stretch</option>
+                  </select>
+                  <select className="border rounded px-2 py-1 text-sm" value={selectedNode.layout?.position ?? "static"} onChange={(e) => setLayoutValue("position", e.target.value as LayoutProps["position"])}>
+                    <option value="static">static</option><option value="relative">relative</option><option value="absolute">absolute</option><option value="sticky">sticky</option><option value="fixed">fixed</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="top" value={String(selectedNode.layout?.top ?? "")} onChange={(e) => setLayoutValue("top", Number(e.target.value || 0))} />
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="right" value={String(selectedNode.layout?.right ?? "")} onChange={(e) => setLayoutValue("right", Number(e.target.value || 0))} />
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="bottom" value={String(selectedNode.layout?.bottom ?? "")} onChange={(e) => setLayoutValue("bottom", Number(e.target.value || 0))} />
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="left" value={String(selectedNode.layout?.left ?? "")} onChange={(e) => setLayoutValue("left", Number(e.target.value || 0))} />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="zIndex" value={String(selectedNode.layout?.zIndex ?? "")} onChange={(e) => setLayoutValue("zIndex", Number(e.target.value || 0))} />
+                  <input className="border rounded px-2 py-1 text-sm" placeholder="border" value={String(selectedNode.layout?.border ?? "")} onChange={(e) => setLayoutNum("border")(e.target.value)} />
+                  <select className="border rounded px-2 py-1 text-sm" value={selectedNode.layout?.overflow ?? "visible"} onChange={(e) => setLayoutValue("overflow", e.target.value as LayoutProps["overflow"])}>
+                    <option value="visible">visible</option><option value="hidden">hidden</option><option value="auto">auto</option><option value="scroll">scroll</option>
+                  </select>
+                  <label className="flex items-center gap-2 text-sm border rounded px-2 py-1">
+                    <input type="checkbox" checked={!!selectedNode.layout?.wrap} onChange={(e) => setLayoutValue("wrap", e.target.checked)} />
+                    Wrap
+                  </label>
                 </div>
               </section>
 
@@ -439,6 +717,80 @@ export default function SideNav({
                     value={String(selectedNode.style?.borderRadius ?? "")}
                     onChange={(e) => setStyleValue("borderRadius", e.target.value)}
                   />
+                  <input
+                    className="border rounded px-2 py-1 text-sm"
+                    placeholder="borderColor"
+                    value={selectedNode.style?.borderColor ?? ""}
+                    onChange={(e) => setStyleValue("borderColor", e.target.value)}
+                  />
+                  <input
+                    className="border rounded px-2 py-1 text-sm"
+                    placeholder="borderWidth"
+                    value={String(selectedNode.style?.borderWidth ?? "")}
+                    onChange={(e) => setStyleValue("borderWidth", e.target.value)}
+                  />
+                  <input
+                    className="border rounded px-2 py-1 text-sm"
+                    placeholder="opacity"
+                    value={String(selectedNode.style?.opacity ?? "")}
+                    onChange={(e) => setStyleValue("opacity", e.target.value)}
+                  />
+                  <input
+                    className="border rounded px-2 py-1 text-sm"
+                    placeholder="boxShadow"
+                    value={selectedNode.style?.boxShadow ?? ""}
+                    onChange={(e) => setStyleValue("boxShadow", e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="border rounded px-2 py-1 text-sm"
+                    value={selectedNode.style?.backgroundSize ?? "cover"}
+                    onChange={(e) => setStyleValue("backgroundSize", e.target.value)}
+                  >
+                    <option value="cover">cover</option>
+                    <option value="contain">contain</option>
+                    <option value="auto">auto</option>
+                  </select>
+                  <select
+                    className="border rounded px-2 py-1 text-sm"
+                    value={selectedNode.style?.backgroundRepeat ?? "no-repeat"}
+                    onChange={(e) => setStyleValue("backgroundRepeat", e.target.value)}
+                  >
+                    <option value="repeat">repeat</option>
+                    <option value="no-repeat">no-repeat</option>
+                    <option value="repeat-x">repeat-x</option>
+                    <option value="repeat-y">repeat-y</option>
+                  </select>
+                  <select
+                    className="border rounded px-2 py-1 text-sm"
+                    value={selectedNode.style?.backgroundPosition ?? "center center"}
+                    onChange={(e) => setStyleValue("backgroundPosition", e.target.value)}
+                  >
+                    <option value="left">left</option>
+                    <option value="center">center</option>
+                    <option value="right">right</option>
+                    <option value="top">top</option>
+                    <option value="bottom">bottom</option>
+                    <option value="left top">left top</option>
+                    <option value="left center">left center</option>
+                    <option value="left bottom">left bottom</option>
+                    <option value="center top">center top</option>
+                    <option value="center center">center center</option>
+                    <option value="center bottom">center bottom</option>
+                    <option value="right top">right top</option>
+                    <option value="right center">right center</option>
+                    <option value="right bottom">right bottom</option>
+                  </select>
+                  <select
+                    className="border rounded px-2 py-1 text-sm"
+                    value={selectedNode.style?.textAlign ?? "left"}
+                    onChange={(e) => setStyleValue("textAlign", e.target.value)}
+                  >
+                    <option value="left">left</option>
+                    <option value="center">center</option>
+                    <option value="right">right</option>
+                  </select>
                 </div>
               </section>
 
@@ -475,6 +827,16 @@ export default function SideNav({
               </section>
 
               <section className="space-y-2">
+                <h3 className="text-sm font-semibold">Props</h3>
+                <div className="space-y-2">
+                  {Object.entries(selectedProps).length === 0 && (
+                    <p className="text-xs text-slate-500">No editable props for this node.</p>
+                  )}
+                  {Object.entries(selectedProps).map(([key, value]) => renderPropControl(key, value))}
+                </div>
+              </section>
+
+              <section className="space-y-2">
                 <h3 className="text-sm font-semibold">Resource</h3>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -490,18 +852,6 @@ export default function SideNav({
                   value={selectedNode.runtime?.repeat?.menu ?? ""}
                   onChange={(e) => setRuntimeRepeat("menu", e.target.value)}
                 />
-                <select
-                  className="w-full border rounded px-2 py-1 text-sm"
-                  value={selectedNode.runtime?.repeat?.targetResource ?? "product"}
-                  onChange={(e) => setRuntimeRepeat("targetResource", e.target.value)}
-                >
-                  <option value="product">product</option>
-                  <option value="collection">collection</option>
-                  <option value="customer">customer</option>
-                  <option value="cart">cart</option>
-                  <option value="form">form</option>
-                  <option value="custom">custom</option>
-                </select>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     className="border rounded px-2 py-1 text-sm"
@@ -536,6 +886,16 @@ export default function SideNav({
                   value={selectedNode.runtime?.columnMap?.src ?? ""}
                   onChange={(e) => setColumnMap("src", e.target.value)}
                 />
+              </section>
+
+              <section className="pt-2 border-t border-border">
+                <button
+                  type="button"
+                  className="w-full rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+                  onClick={handleDeleteSelected}
+                >
+                  Delete selected node
+                </button>
               </section>
             </div>
           </div>

@@ -29,6 +29,7 @@ import { PiSlidersHorizontalBold } from "react-icons/pi";
 import { IoText } from "react-icons/io5";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { ChevronDown, Search } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogBody,
@@ -47,8 +48,6 @@ import { components } from "./palette/data";
 import RenderComponent from "./palette/RenderComponent";
 
 const iSize = 12;
-const ROW_HEIGHT = 24;
-
 const isHeroSection = (label?: string) => {
   if (!label) return false;
 
@@ -144,6 +143,7 @@ type DesignerTreeProps = {
   designerState: DesignerState;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
   setShowComponentModal: Dispatch<SetStateAction<boolean>>;
+  onDeleteNode?: (section: string, nodeId: string) => void;
 };
 
 const NEST_GAP = 8;
@@ -154,6 +154,7 @@ export const DesignerTree = ({
   section,
   setDesignerState,
   setShowComponentModal,
+  onDeleteNode,
   level = 0,
 }: DesignerTreeProps) => {
   const rules = componentRegistry[component.type as Component];
@@ -180,25 +181,35 @@ export const DesignerTree = ({
     setShowComponentModal(true);
   };
 
+  const handleDeleteNode = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    onDeleteNode?.(section, component.id);
+  };
+
   useEffect(() => {
     console.log(designerState);
   }, [designerState.hoveredId]);
 
   return (
-    <div style={{ marginLeft: level * NEST_GAP }}>
+    <div style={{ marginLeft: level * NEST_GAP, width: "max-content", minWidth: "100%" }}>
       <motion.div
+        whileHover={{ scale: 1.01 }}
         style={{
           position: "relative",
-          height: ROW_HEIGHT,
           display: "flex",
           alignItems: "center",
+          gap: 8,
+          minHeight: 28,
+          width: "max-content",
+          minWidth: "100%",
           border: "1px solid transparent",
-          borderRadius: 6,
-          paddingRight: 12,
+          borderRadius: 8,
+          padding: "4px 6px",
           boxSizing: "border-box",
-          background: "#fff",
-          marginTop: 1,
-          marginBottom: 1,
+          background: "transparent",
+          marginTop: 4,
+          marginBottom: 4,
+          boxShadow: "none",
         }}
       >
         <div
@@ -206,14 +217,12 @@ export const DesignerTree = ({
             setDesignerState((prev) => ({ ...prev, hoveredId: component.id }))
           }
           style={{
-            height: ROW_HEIGHT,
             display: "inline-flex",
             alignItems: "center",
-            gap: 8,
-            padding: "0 6px",
+            gap: 10,
             cursor: "pointer",
             userSelect: "none",
-            flex: 1,
+            flex: "1 1 auto",
             minWidth: 0,
           }}
         >
@@ -224,12 +233,13 @@ export const DesignerTree = ({
                 setOpen((prev) => !prev);
               }}
               style={{
-                width: 14,
-                minWidth: 14,
+                width: 16,
+                minWidth: 16,
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
+                color: "#64748b",
               }}
             >
               <motion.span
@@ -247,11 +257,12 @@ export const DesignerTree = ({
 
           <span
             style={{
-              width: 16,
-              minWidth: 16,
+              width: 18,
+              minWidth: 18,
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
+              color: "#1d4ed8",
             }}
           >
             {icon}
@@ -272,17 +283,42 @@ export const DesignerTree = ({
               }));
             }}
             style={{
-              fontSize: 15,
-              lineHeight: 1,
-              color: "#111827",
+              fontSize: 14,
+              fontWeight: 600,
+              lineHeight: 1.1,
+              color: "#0f172a",
               whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
               cursor: "pointer",
+              letterSpacing: "-0.01em",
             }}
           >
             {component.id}
           </span>
+          {component.parentId !== null && onDeleteNode && (
+            <button
+              type="button"
+              onClick={handleDeleteNode}
+              onMouseDown={(e) => e.stopPropagation()}
+              title="Delete this node"
+              aria-label={`Delete ${component.id}`}
+              style={{
+                height: 18,
+                width: 18,
+                flex: "0 0 auto",
+                border: "none",
+                borderRadius: 999,
+                background: "transparent",
+                color: "#ef4444",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
         </div>
       </motion.div>
 
@@ -299,6 +335,8 @@ export const DesignerTree = ({
             }}
             style={{
               overflow: "hidden",
+              width: "max-content",
+              minWidth: "100%",
             }}
           >
             {hasChildren &&
@@ -310,6 +348,7 @@ export const DesignerTree = ({
                   designerState={designerState}
                   setDesignerState={setDesignerState}
                   setShowComponentModal={setShowComponentModal}
+                  onDeleteNode={onDeleteNode}
                   level={level + 1}
                 />
               ))}
@@ -319,6 +358,7 @@ export const DesignerTree = ({
                   marginLeft: NEST_GAP,
                   marginTop: 1,
                   marginBottom: 1,
+                  width: "max-content",
                 }}
               >
                 <button

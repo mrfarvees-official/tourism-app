@@ -10,11 +10,15 @@ import { initializeDesignStates } from "./componentService";
 import ComponentModal from "./componentService";
 import {
   deleteTenantPage,
+  ContentDataChildFieldPayload,
+  ContentDataChildPayload,
+  ContentDataSnapshotPayload,
   listTenantPages,
   loadTenantPage,
   saveTenantPage,
   updateTenantPage,
 } from "@/src/api/routes/designer/page";
+import { FaX } from "react-icons/fa6";
 
 type TenantPageRecord = {
   slug?: string;
@@ -140,8 +144,228 @@ const asPlainObject = (value: unknown): Record<string, unknown> | null => {
   return value as Record<string, unknown>;
 };
 
-const isDataBoundNode = (node: ComponentNode) =>
-  !!node.dataBinding?.source && node.dataBinding.source !== "static";
+const getNodeSourceKey = (node: ComponentNode) =>
+  node.runtime?.repeat?.menu ??
+  node.runtime?.repeat?.targetResource ??
+  node.dataBinding?.source ??
+  null;
+
+const isDataBoundNode = (node: ComponentNode) => {
+  const sourceKey = getNodeSourceKey(node);
+  return !!sourceKey && sourceKey !== "static";
+};
+
+const getColumnMap = (node: ComponentNode): Record<string, string> | null => {
+  const runtimeObject = asPlainObject(node.runtime);
+  const runtimeMap = asPlainObject(runtimeObject?.columnMap);
+  if (runtimeMap) {
+    return Object.fromEntries(
+      Object.entries(runtimeMap).filter(([, value]) => typeof value === "string"),
+    ) as Record<string, string>;
+  }
+
+  const propsObject = asPlainObject(node.props);
+  const propsMap = asPlainObject(propsObject?.columnMap);
+  if (propsMap) {
+    return Object.fromEntries(
+      Object.entries(propsMap).filter(([, value]) => typeof value === "string"),
+    ) as Record<string, string>;
+  }
+
+  return null;
+};
+
+const toContentChildField = (
+  fieldKey: string,
+  sourceColumn: string,
+  value: unknown,
+): ContentDataChildFieldPayload | null => {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value === "boolean") {
+    return {
+      field_key: fieldKey,
+      source_column: sourceColumn,
+      field_type: "bool",
+      value_bool: value,
+    };
+  }
+
+  if (typeof value === "number") {
+    return Number.isInteger(value)
+      ? {
+          field_key: fieldKey,
+          source_column: sourceColumn,
+          field_type: "int",
+          value_int: value,
+        }
+      : {
+          field_key: fieldKey,
+          source_column: sourceColumn,
+          field_type: "decimal",
+          value_decimal: value,
+        };
+  }
+
+  if (typeof value === "string") {
+    return {
+      field_key: fieldKey,
+      source_column: sourceColumn,
+      field_type: "string",
+      value_string: value,
+    };
+  }
+
+  return {
+    field_key: fieldKey,
+    source_column: sourceColumn,
+    field_type: "text",
+    value_text: JSON.stringify(value),
+  };
+};
+
+const collectContentFields = (node: ComponentNode): ContentDataChildFieldPayload[] => {
+  const fields: ContentDataChildFieldPayload[] = [];
+  const propsObject = asPlainObject(node.props) ?? {};
+  const columnMap = getColumnMap(node);
+
+  if (columnMap) {
+    for (const [fieldKey, sourceColumn] of Object.entries(columnMap)) {
+      const field = toContentChildField(fieldKey, sourceColumn, propsObject[fieldKey]);
+      if (field) {
+        fields.push(field);
+      }
+    }
+  } else {
+    for (const [fieldKey, value] of Object.entries(propsObject)) {
+      if (fieldKey === "columnMap") {
+        continue;
+      }
+
+      const field = toContentChildField(fieldKey, fieldKey, value);
+      if (field) {
+        fields.push(field);
+      }
+    }
+  }
+
+  for (const child of node.children ?? []) {
+    fields.push(...collectContentFields(child));
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[designer] collectContentFields", {
+      nodeId: node.id,
+      nodeType: node.type,
+      fieldCount: fields.length,
+      hasColumnMap: !!columnMap,
+      childCount: node.children?.length ?? 0,
+    });
+  }
+
+  return fields;
+};
+
+const buildContentChildPayload = (
+  node: ComponentNode,
+  sourceKey: string,
+  sortOrder: number,
+): ContentDataChildPayload => {
+  const payload = {
+    node_id: node.id,
+    parent_id: node.parentId ?? null,
+    component_type: node.type,
+    props: node.props ?? {},
+    layout: node.layout ?? {},
+    style: node.style ?? {},
+    runtime: node.runtime ?? {},
+  };
+
+  return {
+    source_key: sourceKey,
+    row_key: node.id,
+    sort_order: sortOrder,
+    payload,
+    data: payload,
+    fields: collectContentFields(node),
+  };
+};
+
+const buildContentDataSnapshot = (
+  node: ComponentNode,
+  pageSlug: string,
+): ContentDataSnapshotPayload | null => {
+  const sourceKey = getNodeSourceKey(node);
+  if (!sourceKey || sourceKey === "static") {
+    return null;
+  }
+
+  const children = (node.children ?? []).map((child, index) =>
+    buildContentChildPayload(child, sourceKey, index),
+  );
+
+  if (!children.length) {
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[designer] buildContentDataSnapshot skipped - no children", {
+        nodeId: node.id,
+        nodeType: node.type,
+        sourceKey,
+      });
+    }
+    return null;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[designer] buildContentDataSnapshot", {
+      nodeId: node.id,
+      nodeType: node.type,
+      sourceKey,
+      childCount: children.length,
+      childFieldCounts: children.map((child) => ({
+        rowKey: child.row_key,
+        fieldCount: child.fields?.length ?? 0,
+      })),
+    });
+  }
+
+  return {
+    content_schema_menu: sourceKey,
+    data: {
+      page_slug: pageSlug,
+      component_id: node.id,
+      component_type: node.type,
+      repeat: node.runtime?.repeat ?? null,
+      data_binding: node.dataBinding ?? null,
+      props: node.props ?? {},
+      layout: node.layout ?? {},
+      style: node.style ?? {},
+      runtime: node.runtime ?? {},
+    },
+    children,
+  };
+};
+
+const collectContentDataSnapshots = (
+  node: ComponentNode,
+  pageSlug: string,
+  acc: ContentDataSnapshotPayload[] = [],
+) => {
+  if (isDataBoundNode(node)) {
+    const snapshot = buildContentDataSnapshot(node, pageSlug);
+    if (snapshot) {
+      acc.push(snapshot);
+    }
+    return acc;
+  }
+
+  for (const child of node.children ?? []) {
+    collectContentDataSnapshots(child, pageSlug, acc);
+  }
+
+  return acc;
+};
 
 const sanitizeSchemaNode = (node: ComponentNode): ComponentNode => {
   const children = node.children ?? [];
@@ -420,12 +644,31 @@ export default function MainPanel() {
         template: sanitizeSchemaNode(templateNode),
         footer: sanitizeSchemaNode(footerNode),
       },
+      content_datas: [
+        ...collectContentDataSnapshots(headerNode, pageSlug.trim() || "home"),
+        ...collectContentDataSnapshots(templateNode, pageSlug.trim() || "home"),
+        ...collectContentDataSnapshots(footerNode, pageSlug.trim() || "home"),
+      ],
       components: serializePageComponents({
         header: headerNode,
         template: templateNode,
         footer: footerNode,
       }),
     };
+
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[designer] save payload summary", {
+        slug: payload.slug,
+        contentDataCount: payload.content_datas.length,
+        contentDataChildrenCounts: payload.content_datas.map((item) => ({
+          menu: item.content_schema_menu,
+          childCount: item.children?.length ?? 0,
+          fieldCounts: item.children?.map((child) => child.fields?.length ?? 0) ?? [],
+        })),
+        componentCount: payload.components.length,
+      });
+      console.debug("[designer] save payload", payload);
+    }
 
     try {
       const existingSlug =
@@ -435,6 +678,10 @@ export default function MainPanel() {
         ? await updateTenantPage(payload, existingSlug)
         : await saveTenantPage(payload);
       const record = unwrapRecord(response);
+
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[designer] save response", record ?? response);
+      }
 
       if (record) {
         setCurrentPage(record);
@@ -515,7 +762,7 @@ export default function MainPanel() {
     <div className="flex h-[calc(100dvh-3.5rem)] flex-col overflow-hidden bg-bg sm:h-[calc(100dvh-4rem)]">
       <div className="shrink-0 border-b border-border bg-white/90 px-4 py-3 backdrop-blur">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-2">
+          <div className="flex flex-row gap-[30px]">
             <div>
               <div className="text-xs uppercase tracking-[0.28em] text-gray-500">
                 Tenant content
@@ -524,9 +771,8 @@ export default function MainPanel() {
                 {tenantKey || "Unknown tenant"}
               </div>
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <label className="flex flex-col gap-1 text-sm">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
+              <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm">
                 <span className="text-gray-500">Pages</span>
                 <select
                   className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none"
@@ -540,16 +786,16 @@ export default function MainPanel() {
                   <option value="home">home</option>
                   {pages.map((page) => (
                     <option
-                      key={page.slug ?? page.title}
-                      value={page.slug ?? "home"}
+                      key={page.slug}
+                      value={page.slug}
                     >
-                      {page.title ?? page.slug ?? "untitled"}
+                      {page.title}
                     </option>
                   ))}
                 </select>
               </label>
 
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm">
                 <span className="text-gray-500">Slug</span>
                 <input
                   className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none"
@@ -559,7 +805,7 @@ export default function MainPanel() {
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm">
                 <span className="text-gray-500">Title</span>
                 <input
                   className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none"
@@ -569,7 +815,7 @@ export default function MainPanel() {
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-sm">
+              <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm">
                 <span className="text-gray-500">Status</span>
                 <select
                   className="rounded-md border border-border bg-white px-3 py-2 text-sm outline-none"
@@ -583,7 +829,7 @@ export default function MainPanel() {
                 </select>
               </label>
 
-              <div className="flex items-end gap-2">
+              <div className="flex flex-none items-end gap-2">
                 <button
                   type="button"
                   onClick={() => void loadPage(pageSlug)}
@@ -614,8 +860,13 @@ export default function MainPanel() {
         </div>
 
         {pageMessage ? (
-          <div className="mt-3 rounded-md border border-border bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          <div className="mt-3 rounded-md border border-border bg-gray-50 px-3 py-2 text-sm text-gray-700 flex justify-between">
             {pageMessage}
+            <button
+              onClick={() => setPageMessage("")}
+            >
+              <FaX size={15} className="text-red-500"/>
+            </button>
           </div>
         ) : null}
       </div>
@@ -637,14 +888,11 @@ export default function MainPanel() {
         />
 
         <div className="relative min-w-0 flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto overscroll-contain">
+          <div className="h-full overflow-auto overscroll-contain">
             <ContentPanel
               headerNode={headerNode}
               templateNode={templateNode}
               footerNode={footerNode}
-              setHeaderNode={setHeaderNode}
-              setTemplateNode={setTemplateNode}
-              setFooterNode={setFooterNode}
               setDesignerState={setDesignerState}
               setShowComponentModal={setShowComponentModal}
             />
@@ -667,4 +915,3 @@ export default function MainPanel() {
     </div>
   );
 }
-

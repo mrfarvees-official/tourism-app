@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction } from "react";
 import { ComponentNode, Dimension, Component, DesignerState } from "./types";
 import { componentRegistry } from "./types";
 import { http } from "@/src/api/config/http";
+import { buildContactInquiryPayload, sendContactInquiry } from "@/src/api/routes/settings/contact";
 import * as FaIcons from "react-icons/fa";
 import * as MdIcons from "react-icons/md";
 import * as IoIcons from "react-icons/io5";
@@ -64,6 +65,10 @@ type HoverContextType = {
 };
 
 const HoverContext = React.createContext<HoverContextType | null>(null);
+type FormContextType = {
+  insideForm: boolean;
+};
+const FormContext = React.createContext<FormContextType | null>(null);
 const DESIGNER_IMAGE_SRC = "/no-image.jpg";
 const RESOURCE_SOURCES = new Set([
   "product",
@@ -118,6 +123,33 @@ function unwrapArray(payload: unknown): unknown[] | null {
 
 function hasDataBinding(component: ComponentNode) {
   return !!component.dataBinding?.source && component.dataBinding.source !== "static";
+}
+
+function extractTextValue(component: ComponentNode): string | undefined {
+  const firstChild = component.children?.[0];
+  if (!firstChild || firstChild.type !== "Text") {
+    return undefined;
+  }
+
+  const props = firstChild.props as { text?: string } | undefined;
+  return props?.text;
+}
+
+function isContactMessageBox(component: ComponentNode): boolean {
+  return component.id === "contact_form_comment_box" || component.name === "Trip request";
+}
+
+function isTripRequestTextarea(component: ComponentNode): boolean {
+  if (component.type !== "Frame") {
+    return false;
+  }
+
+  const placeholder = extractTextValue(component)?.toLowerCase() ?? "";
+  return (
+    placeholder.includes("tell us your destination") ||
+    (placeholder.includes("travel dates") && placeholder.includes("group size")) ||
+    placeholder.includes("preferred experiences")
+  );
 }
 
 function getTenantKeyFromLocation(): string | null {
@@ -423,6 +455,8 @@ function RenderComponentInner({
   setDesignerState,
   runtimeItem,
   resourceIntent,
+  tenantKey,
+  pageSlug,
 }: {
   component: ComponentNode;
   isDesigner: boolean;
@@ -433,9 +467,12 @@ function RenderComponentInner({
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
   runtimeItem?: unknown;
   resourceIntent?: boolean;
+  tenantKey?: string;
+  pageSlug?: string;
 }) {
   const repeatable = useRepeatableData({ isDesigner, component });
   const hoverContext = React.useContext(HoverContext);
+  const formContext = React.useContext(FormContext);
 
   const hoveredId = hoverContext?.hoveredId ?? null;
   const setHoveredId = hoverContext?.setHoveredId ?? (() => {});
@@ -586,29 +623,31 @@ function RenderComponentInner({
       }
     : {};
 
-  const commonHoverProps = {
-    onMouseEnter: (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setHoveredId(component.id);
-    },
-    onMouseMove: (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setHoveredId(component.id);
-    },
-    onMouseLeave: (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setHoveredId((prev) => (prev === component.id ? null : prev));
-    },
-    onMouseDown: (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setDesignerState((prev) => ({
-        ...prev,
-        selectedId: component.id,
-        selectedSection: section as "header" | "template" | "footer" | null,
-        insertIndex: null,
-      }));
-    },
-  };
+  const commonHoverProps = isDesigner
+    ? {
+        onMouseEnter: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setHoveredId(component.id);
+        },
+        onMouseMove: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setHoveredId(component.id);
+        },
+        onMouseLeave: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setHoveredId((prev) => (prev === component.id ? null : prev));
+        },
+        onMouseDown: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setDesignerState((prev) => ({
+            ...prev,
+            selectedId: component.id,
+            selectedSection: section as "header" | "template" | "footer" | null,
+            insertIndex: null,
+          }));
+        },
+      }
+    : {};
 
   const resolveExposed = (fallback: string | undefined) => {
     if (isDesigner) return fallback;
@@ -685,6 +724,8 @@ function RenderComponentInner({
               setDesignerState={setDesignerState}
               runtimeItem={item}
               resourceIntent={hasResourceIntent}
+              tenantKey={tenantKey}
+              pageSlug={pageSlug}
             />
           </React.Fragment>
         ))
@@ -703,6 +744,97 @@ function RenderComponentInner({
   const renderAddChildControl = () => {
     return (
       null
+    );
+  };
+
+  const FormRenderer = ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) => {
+    const [submitState, setSubmitState] = React.useState<{
+      status: "idle" | "submitting" | "success" | "error";
+      message: string;
+    }>({ status: "idle", message: "" });
+
+    const resolvedTenantKey = tenantKey ?? getTenantKeyFromLocation();
+    const resolvedPageSlug = pageSlug ?? "home";
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (isDesigner) {
+        return;
+      }
+
+      if (!resolvedTenantKey) {
+        setSubmitState({
+          status: "error",
+          message: "Missing tenant context for this form.",
+        });
+        return;
+      }
+
+      const form = event.currentTarget;
+      const payload = Object.fromEntries(
+        Array.from(new FormData(form).entries()).map(([key, value]) => [
+          key,
+          typeof value === "string" ? value.trim() : value,
+        ]),
+      );
+      const inquiryPayload = buildContactInquiryPayload(resolvedTenantKey, payload, {
+        pageSlug: resolvedPageSlug,
+        source: "designer-contact-form",
+      });
+
+      setSubmitState({ status: "submitting", message: "" });
+
+      try {
+        await sendContactInquiry(resolvedTenantKey, inquiryPayload);
+        form.reset();
+        setSubmitState({
+          status: "success",
+          message: "Your request was sent successfully.",
+        });
+      } catch (error: unknown) {
+        const response = error && typeof error === "object" ? (error as { response?: { data?: { error?: string; message?: string } }; message?: string }) : null;
+        setSubmitState({
+          status: "error",
+          message:
+            response?.response?.data?.error ??
+            response?.response?.data?.message ??
+            response?.message ??
+            "Failed to send request.",
+        });
+      }
+    };
+
+    return (
+      <FormContext.Provider value={{ insideForm: true }}>
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            ...wrapperStyle,
+            display: wrapperStyle.display ?? "block",
+          }}
+          {...commonHoverProps}
+        >
+          {children}
+
+          {!isDesigner && submitState.status !== "idle" ? (
+            <div
+              style={{
+                marginTop: 12,
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: submitState.status === "error" ? "#b91c1c" : "#166534",
+              }}
+            >
+              {submitState.message}
+            </div>
+          ) : null}
+        </form>
+      </FormContext.Provider>
     );
   };
 
@@ -1014,6 +1146,7 @@ function RenderComponentInner({
 
       return (
         <button
+          type={formContext?.insideForm ? "submit" : "button"}
           style={{
             ...wrapperStyle,
             border: "none",
@@ -1044,7 +1177,43 @@ function RenderComponentInner({
       );
     }
 
+    case "Form":
+      return <FormRenderer>{renderChildren()}</FormRenderer>;
+
     default:
+      if (!isDesigner && (isContactMessageBox(component) || isTripRequestTextarea(component))) {
+        const placeholder = extractTextValue(component) ?? "Tell us about your trip.";
+
+        return (
+          <div style={wrapperStyle} {...commonHoverProps}>
+            <textarea
+              name="message"
+              placeholder={placeholder}
+              required
+              rows={5}
+              style={{
+                width: "100%",
+                height: "100%",
+                minHeight: "100%",
+                display: "block",
+                resize: "none",
+                cursor: "text",
+                pointerEvents: "auto",
+                position: "relative",
+                zIndex: 1,
+                background: "transparent",
+                border: 0,
+                outline: "none",
+                fontFamily: "inherit",
+                fontSize: 14,
+                color: "inherit",
+              }}
+            />
+            {renderAddChildControl()}
+          </div>
+        );
+      }
+
       return (
         <div
           style={{
@@ -1116,6 +1285,8 @@ export default function RenderComponent({
   section,
   setShowComponentModal,
   setDesignerState,
+  tenantKey,
+  pageSlug,
 }: {
   component: ComponentNode;
   isDesigner: boolean;
@@ -1123,6 +1294,8 @@ export default function RenderComponent({
   section: string;
   setShowComponentModal: Dispatch<SetStateAction<boolean>>;
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
+  tenantKey?: string;
+  pageSlug?: string;
 }) {
   const [hoveredId, setHoveredId] = React.useState<string | null>(null);
 
@@ -1136,6 +1309,8 @@ export default function RenderComponent({
         section={section}
         setShowComponentModal={setShowComponentModal}
         setDesignerState={setDesignerState}
+        tenantKey={tenantKey}
+        pageSlug={pageSlug}
       />
     </HoverContext.Provider>
   );

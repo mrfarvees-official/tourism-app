@@ -10,7 +10,7 @@ export default async function TenantAdmin({
   
   return (
     <AuthGuard tenant={tenant}>
-      <MainPanel />
+      <MainPanel tenant={tenant} />
     </AuthGuard>
   );
 }

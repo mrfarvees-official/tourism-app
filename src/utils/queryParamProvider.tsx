@@ -21,6 +21,16 @@ export function QueryParamProvider({ children }: { children: React.ReactNode }) 
   const pendingRef = React.useRef<Update[]>([]);
   const scheduledRef = React.useRef(false);
   const lastHrefRef = React.useRef<string | null>(null);
+  const pathnameRef = React.useRef(pathname);
+  const routerRef = React.useRef(router);
+
+  React.useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  React.useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
 
   const flush = React.useCallback(() => {
     scheduledRef.current = false;
@@ -33,15 +43,16 @@ export function QueryParamProvider({ children }: { children: React.ReactNode }) 
     pendingRef.current = [];
 
     const qs = sp.toString();
-    const href = qs ? `${pathname}?${qs}` : pathname;
+    const currentPathname = pathnameRef.current;
+    const href = qs ? `${currentPathname}?${qs}` : currentPathname;
 
     if (href === lastHrefRef.current) return;
     lastHrefRef.current = href;
 
     React.startTransition(() => {
-      router.replace(href, { scroll: false });
+      routerRef.current.replace(href, { scroll: false });
     });
-  }, [pathname, router]);
+  }, []);
 
   const setParam = React.useCallback(
     (key: string, value: string | null) => {

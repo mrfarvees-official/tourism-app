@@ -25,8 +25,13 @@ export function useQueryState<T>(
 
   const updatingFromUrlRef = React.useRef(false);
   const didMountRef = React.useRef(false);
+  const serializeRef = React.useRef(serialize);
 
   const [state, setState] = React.useState<T>(() => parse(searchParams.get(key)));
+
+  React.useEffect(() => {
+    serializeRef.current = serialize;
+  }, [serialize]);
 
   // URL -> state
   React.useEffect(() => {
@@ -51,10 +56,20 @@ export function useQueryState<T>(
       return;
     }
 
-    const encoded = serialize(state);
+    const encoded = serializeRef.current(state);
     const isDefault = Object.is(state, defaultValue);
+    const currentRaw = searchParams.get(key);
+
+    if (isDefault) {
+      if (currentRaw == null || currentRaw === "") {
+        return;
+      }
+    } else if (currentRaw === encoded) {
+      return;
+    }
+
     setParam(key, isDefault ? null : encoded);
-  }, [state, key, defaultValue, serialize, setParam]);
+  }, [state, key, defaultValue, searchParams, setParam]);
 
   return [state, setState] as const;
 }

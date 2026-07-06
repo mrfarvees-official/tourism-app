@@ -22,6 +22,11 @@ export function AuthBootstrapper() {
   const redirected = useRef(false);
   const markedReady = useRef(false);
 
+  const isPublicTenantPath = (value: string) => {
+    const normalized = (value || "/").toLowerCase();
+    return normalized === "/" || normalized === "/customer-intake";
+  };
+
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
@@ -40,15 +45,28 @@ export function AuthBootstrapper() {
     if (redirected.current) return;
 
     const isTenantSubdomain = typeof window !== "undefined" && !isBaseHost();
+    const normalizedPath = (pathname || "/").toLowerCase();
+    const isBaseHome = isBaseHost() && normalizedPath === "/";
+    const isAuthPage = normalizedPath === "/signin" || normalizedPath === "/signup";
 
     // allow tenant root to stay unauthenticated
     if ((authStatus !== "authenticated" || !user)) {
-      if (isTenantSubdomain && pathname === "/") return;
+      if (isTenantSubdomain && isPublicTenantPath(normalizedPath)) return;
 
-      if (pathname.toLowerCase() !== "/signin") {
+      if (!isAuthPage) {
         redirected.current = true;
         router.replace("/SignIn");
       }
+      return;
+    }
+
+    // keep the public homepage available even after login
+    if (isBaseHome) return;
+
+    // auth pages on the base host should resolve back to the public homepage
+    if (isBaseHost() && isAuthPage) {
+      redirected.current = true;
+      router.replace("/");
       return;
     }
 

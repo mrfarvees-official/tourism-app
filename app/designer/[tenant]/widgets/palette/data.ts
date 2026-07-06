@@ -411,8 +411,8 @@ export const template: ComponentNode = {
                       },
                       runtime: {
                         columnMap: {
-                          src: "image|image_url|thumbnail|cover|src",
-                          alt: "name|title|destination",
+                          src: "image",
+                          alt: "title",
                         },
                       },
                       children: [],
@@ -430,7 +430,7 @@ export const template: ComponentNode = {
                       },
                       runtime: {
                         columnMap: {
-                          text: "name|title|destination",
+                          text: "title",
                         },
                       },
                       children: [],
@@ -451,7 +451,7 @@ export const template: ComponentNode = {
                       },
                       runtime: {
                         columnMap: {
-                          text: "description|copy|summary",
+                          text: "description",
                         },
                       },
                       children: [],
@@ -7785,6 +7785,58 @@ export const components: ComponentList[] = [
               ],
             },
           ],
+        },
+      },
+    ],
+  },
+  {
+    label: "Text",
+    list: [
+      {
+        label: "Paragraph",
+        icon: "T",
+        node: {
+          id: "basic_text_block",
+          type: "Text",
+          parentId: null,
+          name: "Text",
+          props: {
+            text: "Write your text here.",
+            tag: "p",
+          },
+          layout: {
+            width: { value: 100, unit: "%" },
+          },
+          style: {
+            fontSize: 18,
+            lineHeight: 1.6,
+            textColor: "#1f2937",
+          },
+          children: [],
+        },
+      },
+      {
+        label: "Heading",
+        icon: "H",
+        node: {
+          id: "basic_heading_block",
+          type: "Text",
+          parentId: null,
+          name: "Heading",
+          props: {
+            text: "Add a heading here.",
+            tag: "h2",
+          },
+          layout: {
+            width: { value: 100, unit: "%" },
+          },
+          style: {
+            fontSize: 36,
+            fontWeight: 700,
+            lineHeight: 1.15,
+            textColor: "#111827",
+          },
+          children: [],
         },
       },
     ],

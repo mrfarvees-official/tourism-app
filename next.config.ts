@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   allowedDevOrigins: ['lvh.me', '*.lvh.me', 'localhost', '*.localhost'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
   reactStrictMode: false,
 };
 

@@ -3,14 +3,21 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-import { FaHouseChimney, FaImage, FaInbox, FaUser } from "react-icons/fa6";
+import {
+  FaBullhorn,
+  FaDatabase,
+  FaGear,
+  FaHouseChimney,
+  FaInbox,
+  FaPhotoFilm,
+  FaTags,
+  FaUser,
+} from "react-icons/fa6";
 import { BiSolidPlaneAlt } from "react-icons/bi";
-import { MdBarChart } from "react-icons/md";
-import { RiDiscountPercentFill, RiMegaphoneFill } from "react-icons/ri";
-import { IoMdSettings } from "react-icons/io";
+import { MdBarChart, MdSchema } from "react-icons/md";
 import { TiThMenu } from "react-icons/ti";
 
-const SIDEBAR_EXPANDED = 250;
+const SIDEBAR_EXPANDED = 200;
 const SIDEBAR_COLLAPSED = 60;
 
 export type MenuKey =
@@ -19,6 +26,7 @@ export type MenuKey =
   | "tours"
   | "customers"
   | "analytics"
+  | "media"
   | "discounts"
   | "content"
   | "marketing"
@@ -27,6 +35,17 @@ export type MenuKey =
 type Props = {
   currentMenu: MenuKey;
   onChangeMenu: (menu: MenuKey) => void;
+  contentSchemas: Array<{
+    id: number;
+    name?: string;
+    menu?: string;
+    source_key?: string | null;
+    version?: string;
+    status?: string;
+  }>;
+  selectedContentSchemaId: number | null;
+  onSelectContentSchema: (schemaId: number | null) => void;
+  onOpenContentStudio: () => void;
 };
 
 type NavItemProps = {
@@ -71,8 +90,15 @@ function NavItem({ active, open, label, onClick, Icon }: NavItemProps) {
   );
 }
 
-export default function SideNavbar({ currentMenu, onChangeMenu }: Props) {
-  const [open, setOpen] = useState(true);
+export default function SideNavbar({
+  currentMenu,
+  onChangeMenu,
+  contentSchemas,
+  selectedContentSchemaId,
+  onSelectContentSchema,
+  onOpenContentStudio,
+}: Props) {
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const keyDown = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -166,43 +192,59 @@ export default function SideNavbar({ currentMenu, onChangeMenu }: Props) {
 
           <li>
             <NavItem
-              active={currentMenu === "discounts"}
-              open={open}
-              label="Discounts"
-              onClick={() => onChangeMenu("discounts")}
-              Icon={RiDiscountPercentFill}
-            />
-          </li>
-
-          <li>
-            <NavItem
-              active={currentMenu === "content"}
-              open={open}
-              label="Content"
-              onClick={() => onChangeMenu("content")}
-              Icon={FaImage}
-            />
-          </li>
-
-          <li>
-            <NavItem
-              active={currentMenu === "marketing"}
-              open={open}
-              label="Marketing"
-              onClick={() => onChangeMenu("marketing")}
-              Icon={RiMegaphoneFill}
-            />
-          </li>
-
-          <li>
-            <NavItem
               active={currentMenu === "settings"}
               open={open}
               label="Settings"
               onClick={() => onChangeMenu("settings")}
-              Icon={IoMdSettings}
+              Icon={FaGear}
             />
           </li>
+
+          <li>
+            <NavItem
+              active={currentMenu === "media"}
+              open={open}
+              label="Media"
+              onClick={() => onChangeMenu("media")}
+              Icon={FaPhotoFilm}
+            />
+          </li>
+
+          <li>
+            <NavItem
+              active={currentMenu === "content" && selectedContentSchemaId === null}
+              open={open}
+              label="Content Studio"
+              onClick={() => {
+                onChangeMenu("content");
+                onOpenContentStudio();
+              }}
+              Icon={MdSchema}
+            />
+          </li>
+          {contentSchemas.map((schema) => {
+            const active = schema.id === selectedContentSchemaId;
+            const sourceKey = schema.menu?.trim() || schema.source_key?.trim();
+            const sourceLabel = sourceKey
+              ? sourceKey.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
+              : schema.name ?? `Schema #${schema.id}`;
+
+            return (
+              <li key={schema.id}>
+                <NavItem
+                  active={active}
+                  open={open}
+                  label={sourceLabel}
+                  onClick={() => {
+                    onChangeMenu("content");
+                    onSelectContentSchema(schema.id);
+                  }}
+                  Icon={FaDatabase}
+                />
+              </li>
+            );
+          })}
+
         </ul>
       </nav>
     </motion.aside>
