@@ -168,14 +168,17 @@ export const DesignerTree = ({
 
   const icon = typeIcons[component.type as Exclude<Component, "Model">];
 
-  const handleAddChild = (e: MouseEvent<HTMLButtonElement>) => {
+  const openComponentModal = (
+    e: MouseEvent<HTMLButtonElement>,
+    insertIndex: number | null,
+  ) => {
     e.stopPropagation();
 
     setDesignerState((prev) => ({
       ...prev,
       selectedId: component.id,
       selectedSection: section as "header" | "template" | "footer" | null,
-      insertIndex: null,
+      insertIndex,
     }));
 
     setShowComponentModal(true);
@@ -340,17 +343,74 @@ export const DesignerTree = ({
             }}
           >
             {hasChildren &&
-              visibleChildren.map((child) => (
-                <DesignerTree
-                  key={child.id}
-                  component={child}
-                  section={section}
-                  designerState={designerState}
-                  setDesignerState={setDesignerState}
-                  setShowComponentModal={setShowComponentModal}
-                  onDeleteNode={onDeleteNode}
-                  level={level + 1}
-                />
+              visibleChildren.map((child, index) => (
+                <div key={child.id}>
+                  <DesignerTree
+                    component={child}
+                    section={section}
+                    designerState={designerState}
+                    setDesignerState={setDesignerState}
+                    setShowComponentModal={setShowComponentModal}
+                    onDeleteNode={onDeleteNode}
+                    level={level + 1}
+                  />
+                  {canHaveChildren && index < visibleChildren.length - 1 && (
+                    <div
+                      style={{
+                        marginLeft: NEST_GAP,
+                        marginTop: 2,
+                        marginBottom: 2,
+                        width: "max-content",
+                        minWidth: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 1,
+                          minWidth: 18,
+                          background:
+                            "linear-gradient(90deg, rgba(3,102,252,0.15), rgba(3,102,252,0.35), rgba(3,102,252,0.15))",
+                          borderRadius: 999,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => openComponentModal(e, index + 1)}
+                        style={{
+                          height: 24,
+                          padding: "0 10px",
+                          borderRadius: 999,
+                          border: "1px dashed #0366fc",
+                          background: "#f8fbff",
+                          fontSize: 12,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          color: "#0366fc",
+                          gap: 4,
+                          boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+                        }}
+                      >
+                        <IoIosAddCircleOutline size={16} style={{ color: "#0366fc" }} />
+                        Insert here
+                      </button>
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 1,
+                          minWidth: 18,
+                          background:
+                            "linear-gradient(90deg, rgba(3,102,252,0.15), rgba(3,102,252,0.35), rgba(3,102,252,0.15))",
+                          borderRadius: 999,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               ))}
             {canHaveChildren && (
               <div
@@ -363,7 +423,7 @@ export const DesignerTree = ({
               >
                 <button
                   type="button"
-                  onClick={handleAddChild}
+                  onClick={(e) => openComponentModal(e, null)}
                   style={{
                     height: 22,
                     padding: "0 8px",

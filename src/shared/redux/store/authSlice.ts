@@ -1,6 +1,6 @@
 import { csrf, http } from "@/src/api/config/http";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { redirectToTenantIfNeeded, redirectToBase } from "@/src/utils/tenant";
+import { redirectToTenantIfNeeded } from "@/src/utils/tenant";
 import { getDeviceInfo } from "@/src/utils/device";
 
 type Tenant = {
@@ -99,8 +99,14 @@ export const login = createAsyncThunk<
     }
 
     return data.user;
-  } catch (e: any) {
-    const status = e?.response?.status;
+  } catch (e: unknown) {
+    const error = e as {
+      response?: {
+        status?: number;
+        data?: { message?: string; errors?: Record<string, string[]> };
+      };
+    };
+    const status = error?.response?.status;
 
     if (status === 302) {
       return rejectWithValue(
@@ -109,9 +115,9 @@ export const login = createAsyncThunk<
     }
 
     const msg =
-      e?.response?.data?.message ||
-      e?.response?.data?.errors?.email?.[0] ||
-      e?.response?.data?.errors?.password?.[0] ||
+      error?.response?.data?.message ||
+      error?.response?.data?.errors?.email?.[0] ||
+      error?.response?.data?.errors?.password?.[0] ||
       (status === 419
         ? "CSRF token mismatch. Call /sanctum/csrf-cookie first."
         : null) ||
@@ -128,6 +134,7 @@ export const register = createAsyncThunk<
     email: string;
     password: string;
     password_confirmation: string;
+    tenantKey?: string;
   },
   { rejectValue: string }
 >("auth/register", async (payload, { rejectWithValue }) => {
@@ -136,6 +143,7 @@ export const register = createAsyncThunk<
     await csrf();
     const { data } = await http.post<LoginResponse>("/auth/register", {
       ...payload,
+      tenantKey: payload.tenantKey?.trim() || undefined,
       device_name: device?.deviceName, // "Brave on Windows"
       browser_name: device?.browser, // "Brave"
       os_name: device?.os, // "Windows"
@@ -148,19 +156,24 @@ export const register = createAsyncThunk<
     }
 
     return data.user;
-  } catch (e: any) {
-    const msg = e?.response?.data?.message || "Register failed";
+  } catch (e: unknown) {
+    const error = e as { response?: { data?: { message?: string } } };
+    const msg = error?.response?.data?.message || "Register failed";
     return rejectWithValue(msg);
   }
 });
 
-export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
+export const logout = createAsyncThunk<
+  void,
+  { redirectTo?: string } | void,
+  { rejectValue: string }
+>(
   "auth/logout",
-  async (_, { rejectWithValue }) => {
+  async (_payload, { rejectWithValue }) => {
     try {
       await csrf();
       await http.post("/auth/logout");
-    } catch (e: any) {
+    } catch {
       return rejectWithValue("Logout failed");
     }
   },
@@ -214,7 +227,7 @@ const authSlice = createSlice({
           redirectToTenantIfNeeded(a.payload, "/");
         }
       })
-      .addCase(login.rejected, (s, a: any) => {
+      .addCase(login.rejected, (s, a: { payload?: string }) => {
         s.user = null;
         s.authStatus = "guest"; // auth truth after failed login
         s.requestStatus = "error";
@@ -237,7 +250,7 @@ const authSlice = createSlice({
           redirectToTenantIfNeeded(a.payload, "/");
         }
       })
-      .addCase(register.rejected, (s, a: any) => {
+      .addCase(register.rejected, (s, a: { payload?: string }) => {
         s.requestStatus = "error";
         s.error = a.payload || "Register failed";
       })
@@ -254,12 +267,8 @@ const authSlice = createSlice({
         s.authStatus = "guest";
         s.requestStatus = "idle";
         s.error = null;
-
-        if (typeof window !== "undefined") {
-          redirectToBase("/SignIn"); // or "/"
-        }
       })
-      .addCase(logout.rejected, (s, a: any) => {
+      .addCase(logout.rejected, (s, a: { payload?: string }) => {
         // If logout fails, keep user as-is, but show error
         s.requestStatus = "error";
         s.error = a.payload || "Logout failed";

@@ -1,5 +1,19 @@
 export type TenantKey = string;
 
+type TenantLike = {
+  key?: string;
+  role?: string;
+  slug?: string;
+  status?: string;
+};
+
+type UserLike = {
+  tenant?: TenantLike;
+  tenantKey?: string;
+  tenant_key?: string;
+  tenants?: TenantLike[];
+};
+
 const ROOT_DOMAIN = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "")
   .toLowerCase()
   .trim();
@@ -13,7 +27,7 @@ const RESERVED = new Set(
     .filter(Boolean)
 );
 
-function getTenantKey(user: any): TenantKey | null {
+function getTenantKey(user: UserLike | null | undefined): TenantKey | null {
   const key =
     user?.tenants?.[0]?.key ??
     user?.tenant_key ??
@@ -24,13 +38,26 @@ function getTenantKey(user: any): TenantKey | null {
   return typeof key === "string" && key.trim().length ? key.trim() : null;
 }
 
-function isCustomer(user: any): boolean {
+export function isCustomer(user: UserLike | null | undefined): boolean {
   const tenants = Array.isArray(user?.tenants) ? user.tenants : [];
   return tenants.some(
-    (t: any) =>
+    (t) =>
       (t?.status ?? "").toLowerCase() === "active" &&
       (t?.role ?? "").toLowerCase() === "customer"
   );
+}
+
+export function hasAdminAccess(user: UserLike | null | undefined): boolean {
+  const tenants = Array.isArray(user?.tenants) ? user.tenants : [];
+  return tenants.some(
+    (t) =>
+      (t?.status ?? "").toLowerCase() === "active" &&
+      (t?.role ?? "").toLowerCase() !== "customer"
+  );
+}
+
+function getCustomerDashboardTarget() {
+  return `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}/customer/dashboard`;
 }
 
 function getSubdomain(hostname: string) {
@@ -62,7 +89,7 @@ export function isBaseHost() {
   return host === ROOT_DOMAIN || host === `www.${ROOT_DOMAIN}`;
 }
 
-export function redirectToTenantIfNeeded(user: any, path = "/") {
+export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path = "/") {
   if (typeof window === "undefined") return;
   if (!ROOT_DOMAIN) return;
 
@@ -70,15 +97,26 @@ export function redirectToTenantIfNeeded(user: any, path = "/") {
   const sub = getSubdomain(hostname);
   const tenantKey = getTenantKey(user);
   const currentPath = window.location.pathname;
-
-  // allow admin pages to stay
-  if (currentPath.startsWith("/admin")) return;
+  const canAccessAdmin = hasAdminAccess(user);
+  const isAdminPath = currentPath.startsWith("/admin");
 
   // allow designer tenant pages to stay
   if (currentPath.startsWith("/designer/")) return;
 
-  // non-customer/admin/owner -> base admin
-  if (!isCustomer(user)) {
+  if (isAdminPath && !canAccessAdmin) {
+    const customerTarget = getCustomerDashboardTarget();
+
+    if (window.location.href !== customerTarget) {
+      window.location.replace(customerTarget);
+    }
+    return;
+  }
+
+  // privileged users stay on admin routes
+  if (isAdminPath) return;
+
+  // non-customer/admin/owner -> tenant site
+  if (canAccessAdmin) {
     const adminPath = tenantKey ? `/admin/${tenantKey}` : "/admin";
     const adminTarget = `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}${adminPath}`;
 
@@ -88,12 +126,12 @@ export function redirectToTenantIfNeeded(user: any, path = "/") {
     return;
   }
 
-  // customer with no tenant -> base admin
+  // customer-only accounts without a tenant land on the customer dashboard
   if (!tenantKey) {
-    const adminTarget = `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}/admin`;
+    const customerTarget = getCustomerDashboardTarget();
 
-    if (window.location.href !== adminTarget) {
-      window.location.replace(adminTarget);
+    if (window.location.href !== customerTarget) {
+      window.location.replace(customerTarget);
     }
     return;
   }

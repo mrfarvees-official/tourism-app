@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { sitePage } from "@/app/designer/[tenant]/widgets/palette/data";
-import RenderComponent from "@/app/designer/[tenant]/widgets/palette/RenderComponent";
+import RenderComponent, { type ContentDataSnapshot } from "@/app/designer/[tenant]/widgets/palette/RenderComponent";
 import { DesignerState, ComponentNode } from "@/app/designer/[tenant]/widgets/palette/types";
 
 type PageSchema = {
@@ -15,6 +15,9 @@ type PageRecord = {
   slug?: string;
   schema?: PageSchema;
 };
+
+type DestinationRow = Record<string, unknown>;
+type DestinationChildSnapshot = NonNullable<ContentDataSnapshot["children"]>[number];
 
 type Props = {
   tenant: string;
@@ -101,10 +104,131 @@ const unwrapRecord = (value: unknown): PageRecord | null => {
   return null;
 };
 
+const unwrapArray = (value: unknown): unknown[] | null => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  const record = asRecord(value);
+  if (!record) {
+    return null;
+  }
+
+  const candidates = [record.data, record.items, record.results, record.rows];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+
+    if (candidate && typeof candidate === "object") {
+      const nested = asRecord(candidate);
+      if (!nested) {
+        continue;
+      }
+
+      const nestedCandidates = [nested.data, nested.items, nested.results, nested.rows];
+      for (const nestedCandidate of nestedCandidates) {
+        if (Array.isArray(nestedCandidate)) {
+          return nestedCandidate;
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
+const toDestinationChildSnapshot = (item: DestinationRow, index: number): DestinationChildSnapshot => ({
+  source_key: "destination_collection",
+  row_key: String(item.id ?? item.slug ?? index),
+  sort_order: index,
+  data: item,
+});
+
+const buildDestinationSnapshots = (items: DestinationRow[]): ContentDataSnapshot[] => {
+  const children = items.map((item, index) => toDestinationChildSnapshot(item, index));
+
+  return [
+    {
+      content_schema_menu: "destination",
+      data: {
+        source: "destinations",
+        content_schema_menu: "destination",
+        total: items.length,
+      },
+      children,
+    },
+    {
+      content_schema_menu: "destination_collection",
+      data: {
+        source: "destinations",
+        content_schema_menu: "destination_collection",
+        total: items.length,
+      },
+      children,
+    },
+  ];
+};
+
+async function fetchTenantDestinations(tenant: string): Promise<ContentDataSnapshot[]> {
+  try {
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[site] destinations:fetch:start", { tenant });
+    }
+    const apiOrigin = getApiOrigin();
+    if (!apiOrigin) {
+      throw new Error("Missing API origin");
+    }
+
+    const response = await fetch(
+      new URL(`/api/public/${encodeURIComponent(tenant)}/destinations`, `${apiOrigin}/`),
+      {
+        cache: "no-store",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[site] destinations:fetch:failed", {
+          tenant,
+          status: response.status,
+          statusText: response.statusText,
+        });
+      }
+      return [];
+    }
+
+    const payload = (await response.json()) as unknown;
+    const rows = unwrapArray(unwrapPayload(payload));
+    const items = Array.isArray(rows) ? rows.filter((row): row is DestinationRow => !!row && typeof row === "object" && !Array.isArray(row)) : [];
+    const snapshots = buildDestinationSnapshots(items);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[site] destinations:fetch:ok", {
+        tenant,
+        rowCount: items.length,
+        snapshotMenus: snapshots.map((snapshot) => snapshot.content_schema_menu),
+      });
+    }
+
+    return snapshots;
+  } catch {
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[site] destinations:fetch:error", { tenant });
+    }
+    return [];
+  }
+}
+
 const getApiOrigin = () =>
   (process.env.NEXT_PUBLIC_API_ORIGIN ?? process.env.API_ORIGIN ?? "").replace(/\/+$/, "");
 
-async function fetchTenantPage(tenant: string, slug: string): Promise<PageSchema | null> {
+async function fetchTenantPage(tenant: string, slug: string): Promise<PageRecord | null> {
   const apiOrigin = getApiOrigin();
   if (!apiOrigin) {
     return null;
@@ -133,7 +257,7 @@ async function fetchTenantPage(tenant: string, slug: string): Promise<PageSchema
     const payload = (await response.json()) as unknown;
     const record = unwrapRecord(payload);
     if (record?.schema) {
-      return record.schema;
+      return record;
     }
   }
 
@@ -143,22 +267,40 @@ async function fetchTenantPage(tenant: string, slug: string): Promise<PageSchema
 export default function SiteRenderer({ tenant, path, schema }: Props) {
   const [, setDesignerState] = useState<DesignerState>(initialDesignerState);
   const [resolved, setResolved] = useState(resolveSchema(schema) ?? defaultSchema());
+  const [contentDatas, setContentDatas] = useState<ContentDataSnapshot[]>([]);
   const resolvedPath = useMemo(() => path || "home", [path]);
 
   useEffect(() => {
     let active = true;
 
     const run = async () => {
+      setContentDatas([]);
       try {
-        const next = await fetchTenantPage(tenant, resolvedPath);
+        const [next, destinationSnapshots] = await Promise.all([
+          fetchTenantPage(tenant, resolvedPath),
+          fetchTenantDestinations(tenant),
+        ]);
         if (!active) {
           return;
         }
 
-        setResolved(resolveSchema(next) ?? defaultSchema());
+        setResolved(resolveSchema(next?.schema) ?? defaultSchema());
+        setContentDatas(destinationSnapshots);
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[site] renderer:hydrate", {
+            tenant,
+            path: resolvedPath,
+            hasSchema: !!next?.schema,
+            snapshotCount: destinationSnapshots.length,
+          });
+        }
       } catch {
         if (active) {
           setResolved(resolveSchema(schema) ?? defaultSchema());
+          setContentDatas([]);
+          if (process.env.NODE_ENV !== "production") {
+            console.debug("[site] renderer:hydrate:error", { tenant, path: resolvedPath });
+          }
         }
       }
     };
@@ -186,6 +328,7 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           setDesignerState={setDesignerState}
           tenantKey={tenant}
           pageSlug={resolvedPath}
+          contentDatas={contentDatas}
         />
       ) : null}
       {resolved.template ? (
@@ -198,6 +341,7 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           setDesignerState={setDesignerState}
           tenantKey={tenant}
           pageSlug={resolvedPath}
+          contentDatas={contentDatas}
         />
       ) : null}
       {resolved.footer ? (
@@ -210,6 +354,7 @@ export default function SiteRenderer({ tenant, path, schema }: Props) {
           setDesignerState={setDesignerState}
           tenantKey={tenant}
           pageSlug={resolvedPath}
+          contentDatas={contentDatas}
         />
       ) : null}
     </main>

@@ -22,6 +22,7 @@ export type LayoutProps = {
   unit?: SizeUnit;
 
   display?: "block" | "flex" | "grid" | "inline-flex";
+  columns?: number;
   flexDirection?: "row" | "column";
   justifyContent?: "start" | "center" | "end" | "space-between";
   alignItems?: "start" | "center" | "end" | "stretch";
@@ -219,6 +220,9 @@ export type ComponentNode<K extends Component = Component> = {
       limit?: number;
       dataPath?: string;
       policyPath?: string;
+      policy?: {
+        columnVisibility?: Record<string, boolean>;
+      };
     };
     exposedLabel?: string;
     columnMap?: {

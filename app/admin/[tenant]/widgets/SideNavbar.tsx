@@ -12,6 +12,11 @@ import {
   FaPhotoFilm,
   FaTags,
   FaUser,
+  FaMapLocationDot,
+  FaHotel,
+  FaCar,
+  FaCalendarCheck,
+  FaStar,
 } from "react-icons/fa6";
 import { BiSolidPlaneAlt } from "react-icons/bi";
 import { MdBarChart, MdSchema } from "react-icons/md";
@@ -30,7 +35,16 @@ export type MenuKey =
   | "discounts"
   | "content"
   | "marketing"
-  | "settings";
+  | "settings"
+  | "destinations"
+  | "packages"
+  | "services"
+  | "activities"
+  | "accommodations"
+  | "transport"
+  | "bookings"
+  | "inquiries"
+  | "reviews";
 
 type Props = {
   currentMenu: MenuKey;
@@ -160,7 +174,7 @@ export default function SideNavbar({
             />
           </li>
 
-          <li>
+          {/* <li>
             <NavItem
               active={currentMenu === "tours"}
               open={open}
@@ -168,6 +182,34 @@ export default function SideNavbar({
               onClick={() => onChangeMenu("tours")}
               Icon={BiSolidPlaneAlt}
             />
+          </li> */}
+
+          <li>
+            <NavItem active={currentMenu === "destinations"} open={open} label="Destinations" onClick={() => onChangeMenu("destinations")} Icon={FaMapLocationDot} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "packages"} open={open} label="Packages" onClick={() => onChangeMenu("packages")} Icon={BiSolidPlaneAlt} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "services"} open={open} label="Services" onClick={() => onChangeMenu("services")} Icon={FaTags} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "activities"} open={open} label="Activities" onClick={() => onChangeMenu("activities")} Icon={FaBullhorn} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "accommodations"} open={open} label="Stays" onClick={() => onChangeMenu("accommodations")} Icon={FaHotel} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "transport"} open={open} label="Transport" onClick={() => onChangeMenu("transport")} Icon={FaCar} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "bookings"} open={open} label="Bookings" onClick={() => onChangeMenu("bookings")} Icon={FaCalendarCheck} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "inquiries"} open={open} label="Inquiries" onClick={() => onChangeMenu("inquiries")} Icon={FaInbox} />
+          </li>
+          <li>
+            <NavItem active={currentMenu === "reviews"} open={open} label="Reviews" onClick={() => onChangeMenu("reviews")} Icon={FaStar} />
           </li>
 
           <li>
@@ -210,7 +252,7 @@ export default function SideNavbar({
             />
           </li>
 
-          <li>
+          {/* <li>
             <NavItem
               active={currentMenu === "content" && selectedContentSchemaId === null}
               open={open}
@@ -243,7 +285,7 @@ export default function SideNavbar({
                 />
               </li>
             );
-          })}
+          })} */}
 
         </ul>
       </nav>

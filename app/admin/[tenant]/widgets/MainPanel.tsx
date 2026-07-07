@@ -22,6 +22,15 @@ const isMenuKey = (v: string): v is MenuKey =>
     "content",
     "marketing",
     "settings",
+    "destinations",
+    "packages",
+    "services",
+    "activities",
+    "accommodations",
+    "transport",
+    "bookings",
+    "inquiries",
+    "reviews",
   ].includes(v);
 
 export default function MainPanel({ tenant }: { tenant: string }) {

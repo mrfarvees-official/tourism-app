@@ -2,7 +2,13 @@ import React, { Dispatch, SetStateAction } from "react";
 import { ComponentNode, Dimension, Component, DesignerState } from "./types";
 import { componentRegistry } from "./types";
 import { http } from "@/src/api/config/http";
-import { buildContactInquiryPayload, sendContactInquiry } from "@/src/api/routes/settings/contact";
+import {
+  buildContactInquiryPayload,
+  sendContactInquiry,
+} from "@/src/api/routes/settings/contact";
+import { logout } from "@/src/shared/redux/store/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/src/shared/redux/store";
 import * as FaIcons from "react-icons/fa";
 import * as MdIcons from "react-icons/md";
 import * as IoIcons from "react-icons/io5";
@@ -59,6 +65,11 @@ function hasObjectFit(
   return !!props && typeof props === "object" && "objectFit" in props;
 }
 
+function isAuthLinkLabel(text: string) {
+  const normalized = text.trim().toLowerCase();
+  return normalized === "sign in" || normalized === "sign up";
+}
+
 type HoverContextType = {
   hoveredId: string | null;
   setHoveredId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -82,6 +93,37 @@ const RESOURCE_SOURCES = new Set([
 const RESOURCE_HINTS = ["product", "collection", "destination"];
 const DESIGNER_REPEAT_PREVIEW_COUNT = 3;
 
+export type ContentDataChildFieldSnapshot = {
+  field_key: string;
+  source_column?: string | null;
+  field_type?: "string" | "text" | "int" | "bool" | "decimal" | "asset" | "url";
+  value_string?: string | null;
+  value_text?: string | null;
+  value_int?: number | null;
+  value_bool?: boolean | null;
+  value_decimal?: number | null;
+  value_asset_id?: number | null;
+};
+
+export type ContentDataChildSnapshot = {
+  source_key?: string | null;
+  row_key?: string | null;
+  sort_order?: number;
+  payload?: Record<string, unknown> | unknown[] | null;
+  data?: Record<string, unknown> | unknown[] | null;
+  fields?: ContentDataChildFieldSnapshot[];
+};
+
+export type ContentDataSnapshot = {
+  content_schema_menu: string;
+  data: Record<string, unknown>;
+  children?: ContentDataChildSnapshot[];
+};
+
+const ContentDataContext = React.createContext<ContentDataSnapshot[] | null>(
+  null,
+);
+
 function hasResourceHint(component: ComponentNode) {
   const haystack = `${component.id} ${component.name ?? ""}`.toLowerCase();
   return RESOURCE_HINTS.some((hint) => haystack.includes(hint));
@@ -93,11 +135,58 @@ function readPath(obj: unknown, path?: string): unknown {
     .split(".")
     .filter(Boolean)
     .reduce<unknown>((acc, key) => {
-      if (acc && typeof acc === "object" && key in (acc as Record<string, unknown>)) {
+      if (
+        acc &&
+        typeof acc === "object" &&
+        key in (acc as Record<string, unknown>)
+      ) {
         return (acc as Record<string, unknown>)[key];
       }
       return undefined;
     }, obj);
+}
+
+function childFieldToValue(field: ContentDataChildFieldSnapshot) {
+  return (
+    field.value_bool ??
+    field.value_int ??
+    field.value_decimal ??
+    field.value_string ??
+    field.value_text ??
+    field.value_asset_id
+  );
+}
+
+function childSnapshotToRuntimeItem(child: ContentDataChildSnapshot): unknown {
+  if (
+    child.data &&
+    typeof child.data === "object" &&
+    !Array.isArray(child.data)
+  ) {
+    return child.data;
+  }
+
+  if (
+    child.payload &&
+    typeof child.payload === "object" &&
+    !Array.isArray(child.payload)
+  ) {
+    return child.payload;
+  }
+
+  if (Array.isArray(child.fields) && child.fields.length > 0) {
+    return child.fields.reduce<Record<string, unknown>>((acc, field) => {
+      const key = field.source_column?.trim() || field.field_key?.trim();
+      if (!key) {
+        return acc;
+      }
+
+      acc[key] = childFieldToValue(field);
+      return acc;
+    }, {});
+  }
+
+  return child.data ?? child.payload ?? null;
 }
 
 function unwrapArray(payload: unknown): unknown[] | null {
@@ -122,7 +211,9 @@ function unwrapArray(payload: unknown): unknown[] | null {
 }
 
 function hasDataBinding(component: ComponentNode) {
-  return !!component.dataBinding?.source && component.dataBinding.source !== "static";
+  return (
+    !!component.dataBinding?.source && component.dataBinding.source !== "static"
+  );
 }
 
 function extractTextValue(component: ComponentNode): string | undefined {
@@ -136,7 +227,10 @@ function extractTextValue(component: ComponentNode): string | undefined {
 }
 
 function isContactMessageBox(component: ComponentNode): boolean {
-  return component.id === "contact_form_comment_box" || component.name === "Trip request";
+  return (
+    component.id === "contact_form_comment_box" ||
+    component.name === "Trip request"
+  );
 }
 
 function isTripRequestTextarea(component: ComponentNode): boolean {
@@ -147,7 +241,8 @@ function isTripRequestTextarea(component: ComponentNode): boolean {
   const placeholder = extractTextValue(component)?.toLowerCase() ?? "";
   return (
     placeholder.includes("tell us your destination") ||
-    (placeholder.includes("travel dates") && placeholder.includes("group size")) ||
+    (placeholder.includes("travel dates") &&
+      placeholder.includes("group size")) ||
     placeholder.includes("preferred experiences")
   );
 }
@@ -157,6 +252,18 @@ function getTenantKeyFromLocation(): string | null {
   const parts = window.location.pathname.split("/").filter(Boolean);
   if (parts[0] === "admin" || parts[0] === "designer") return parts[1] ?? null;
   if (parts[0] === "_sites") return parts[1] ?? null;
+  const hostParts = window.location.hostname.split(".").filter(Boolean);
+  if (hostParts.length > 2) {
+    const tenantKey = hostParts[0];
+    if (
+      tenantKey &&
+      tenantKey !== "www" &&
+      tenantKey !== "localhost" &&
+      tenantKey !== "127"
+    ) {
+      return tenantKey;
+    }
+  }
   return null;
 }
 
@@ -173,6 +280,22 @@ function buildTargetEndpoint({
   limit?: number;
   tenantKey?: string | null;
 }): string {
+  if (
+    targetResource === "destination" ||
+    targetResource === "destination_collection"
+  ) {
+    const params = new URLSearchParams();
+    if (typeof limit === "number" && Number.isFinite(limit)) {
+      params.set("limit", String(limit));
+    }
+
+    const qs = params.toString();
+    const base = tenantKey
+      ? `/api/public/${encodeURIComponent(tenantKey)}/destinations`
+      : "/api/public/destinations";
+    return qs ? `${base}?${qs}` : base;
+  }
+
   if (endpoint) {
     const compiled = endpoint.replaceAll(":tenantKey", tenantKey ?? "");
     return compiled;
@@ -192,8 +315,10 @@ function buildTargetEndpoint({
   const params = new URLSearchParams();
   if (tenantKey) params.set("tenantKey", tenantKey);
   if (menu) params.set("menu", menu);
-  if (targetResource && targetResource !== "custom") params.set("resource", targetResource);
-  if (typeof limit === "number" && Number.isFinite(limit)) params.set("limit", String(limit));
+  if (targetResource && targetResource !== "custom")
+    params.set("resource", targetResource);
+  if (typeof limit === "number" && Number.isFinite(limit))
+    params.set("limit", String(limit));
 
   const qs = params.toString();
   return qs ? `${base}?${qs}` : base;
@@ -206,6 +331,7 @@ function useRepeatableData({
   isDesigner: boolean;
   component: ComponentNode;
 }) {
+  const contentSnapshots = React.useContext(ContentDataContext);
   const [items, setItems] = React.useState<unknown[] | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [policy, setPolicy] = React.useState<{
@@ -222,19 +348,100 @@ function useRepeatableData({
 
   const cfg = (repeat ??
     (typeof propsRepeat === "object" && propsRepeat
-      ? (propsRepeat as { enabled?: boolean; endpoint?: string; dataPath?: string })
-      : undefined)) as { enabled?: boolean; endpoint?: string; dataPath?: string } | undefined;
-  const cfgWithTarget = cfg as {
-    enabled?: boolean;
-    endpoint?: string;
-    dataPath?: string;
-    targetResource?: string;
-    menu?: string;
-    limit?: number;
-    policyPath?: string;
-  } | undefined;
-  const sourceFallback = component.dataBinding?.source ?? component.runtime?.repeat?.targetResource;
+      ? (propsRepeat as {
+          enabled?: boolean;
+          endpoint?: string;
+          dataPath?: string;
+        })
+      : undefined)) as
+    | { enabled?: boolean; endpoint?: string; dataPath?: string }
+    | undefined;
+  const cfgWithTarget = cfg as
+    | {
+        enabled?: boolean;
+        endpoint?: string;
+        dataPath?: string;
+        targetResource?: string;
+        menu?: string;
+        limit?: number;
+        policyPath?: string;
+      }
+    | undefined;
+  const sourceFallback =
+    component.dataBinding?.source ?? component.runtime?.repeat?.targetResource;
   const tenantKey = getTenantKeyFromLocation();
+  const matchingSnapshot = React.useMemo(() => {
+    if (isDesigner || !contentSnapshots?.length) {
+      return null;
+    }
+
+    const componentId = component.id.trim();
+    const sourceKeys = new Set(
+      [
+        component.runtime?.repeat?.menu,
+        component.runtime?.repeat?.targetResource,
+        component.dataBinding?.source,
+      ]
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim() !== "",
+        )
+        .map((value) => value.trim()),
+    );
+
+    return (
+      contentSnapshots.find((snapshot) => {
+        const snapshotComponentId = String(
+          readPath(snapshot, "data.component_id") ??
+            readPath(snapshot, "data.node_id") ??
+            "",
+        ).trim();
+        if (snapshotComponentId && snapshotComponentId === componentId) {
+          return true;
+        }
+
+        return sourceKeys.has(snapshot.content_schema_menu.trim());
+      }) ?? null
+    );
+  }, [
+    component.dataBinding?.source,
+    component.id,
+    component.runtime?.repeat?.menu,
+    component.runtime?.repeat?.targetResource,
+    contentSnapshots,
+    isDesigner,
+  ]);
+  const snapshotItems = React.useMemo(() => {
+    if (!matchingSnapshot) {
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[renderer] repeat:snapshot:none", {
+          componentId: component.id,
+          sourceFallback,
+          contentSnapshotCount: contentSnapshots?.length ?? 0,
+        });
+      }
+      return null;
+    }
+
+    const items = (matchingSnapshot.children ?? [])
+      .map((child) => childSnapshotToRuntimeItem(child))
+      .filter((item) => item != null);
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[renderer] repeat:snapshot:match", {
+        componentId: component.id,
+        sourceFallback,
+        menu: matchingSnapshot.content_schema_menu,
+        childCount: matchingSnapshot.children?.length ?? 0,
+        itemCount: items.length,
+      });
+    }
+    return items;
+  }, [
+    matchingSnapshot,
+    component.id,
+    sourceFallback,
+    contentSnapshots?.length,
+  ]);
   const resolvedEndpoint = buildTargetEndpoint({
     targetResource: cfgWithTarget?.targetResource ?? sourceFallback,
     endpoint: cfgWithTarget?.endpoint,
@@ -245,7 +452,9 @@ function useRepeatableData({
 
   const hasRuntimeDataBinding = !!sourceFallback && sourceFallback !== "static";
   const enabled =
-    !isDesigner && !!resolvedEndpoint && (!!cfg?.enabled || hasRuntimeDataBinding);
+    !isDesigner &&
+    (matchingSnapshot !== null ||
+      (!!resolvedEndpoint && (!!cfg?.enabled || hasRuntimeDataBinding)));
   const endpoint = resolvedEndpoint;
   const dataPath = cfg?.dataPath;
   const policyPath = cfgWithTarget?.policyPath;
@@ -258,7 +467,27 @@ function useRepeatableData({
       return;
     }
 
+    if (matchingSnapshot) {
+      setItems(snapshotItems ?? []);
+      setPolicy({ version: 1, columnVisibility: {} });
+      setLoading(false);
+      if (process.env.NODE_ENV !== "production") {
+        console.debug("[renderer] repeat:hydrate:snapshot", {
+          componentId: component.id,
+          itemCount: (snapshotItems ?? []).length,
+        });
+      }
+      return;
+    }
+
     setLoading(true);
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[renderer] repeat:hydrate:fetch", {
+        componentId: component.id,
+        endpoint,
+        dataPath,
+      });
+    }
     http
       .get(endpoint)
       .then((res) => {
@@ -270,17 +499,21 @@ function useRepeatableData({
         const basePayload =
           payload && typeof payload === "object" && !Array.isArray(payload)
             ? ((payload as Record<string, unknown>).data ??
-                (payload as Record<string, unknown>).page ??
-                (payload as Record<string, unknown>).item ??
-                payload)
+              (payload as Record<string, unknown>).page ??
+              (payload as Record<string, unknown>).item ??
+              payload)
             : payload;
         const scoped = dataPath
           ? (readPath(basePayload, dataPath) ?? readPath(payload, dataPath))
           : basePayload;
-        const policyCandidate =
-          policyPath ? readPath(basePayload, policyPath) : readPath(basePayload, "meta.resourcePolicy");
+        const policyCandidate = policyPath
+          ? readPath(basePayload, policyPath)
+          : readPath(basePayload, "meta.resourcePolicy");
         if (policyCandidate && typeof policyCandidate === "object") {
-          const next = policyCandidate as { version?: unknown; columnVisibility?: unknown };
+          const next = policyCandidate as {
+            version?: unknown;
+            columnVisibility?: unknown;
+          };
           setPolicy({
             version: typeof next.version === "number" ? next.version : 1,
             columnVisibility:
@@ -292,10 +525,23 @@ function useRepeatableData({
           setPolicy({ version: 1, columnVisibility: {} });
         }
         const nextItems = unwrapArray(scoped);
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[renderer] repeat:hydrate:fetch:ok", {
+            componentId: component.id,
+            endpoint,
+            itemCount: nextItems?.length ?? 0,
+          });
+        }
         setItems(nextItems ?? []);
       })
       .catch(() => {
         if (cancelled) return;
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[renderer] repeat:hydrate:fetch:error", {
+            componentId: component.id,
+            endpoint,
+          });
+        }
         setItems([]);
       })
       .finally(() => {
@@ -306,9 +552,23 @@ function useRepeatableData({
     return () => {
       cancelled = true;
     };
-  }, [enabled, endpoint, dataPath, policyPath]);
+  }, [
+    enabled,
+    endpoint,
+    dataPath,
+    matchingSnapshot,
+    policyPath,
+    snapshotItems,
+    component.id,
+  ]);
 
-  return { enabled, items, loading, policy };
+  return {
+    enabled,
+    items,
+    loading,
+    policy,
+    hasSnapshotData: matchingSnapshot !== null,
+  };
 }
 
 type ImageCompareRendererProps = {
@@ -471,25 +731,43 @@ function RenderComponentInner({
   pageSlug?: string;
 }) {
   const repeatable = useRepeatableData({ isDesigner, component });
+  const dispatch = useDispatch<AppDispatch>();
+  const authStatus = useSelector((state: RootState) => state.auth.authStatus);
   const hoverContext = React.useContext(HoverContext);
   const formContext = React.useContext(FormContext);
 
   const hoveredId = hoverContext?.hoveredId ?? null;
   const setHoveredId = hoverContext?.setHoveredId ?? (() => {});
-  const isDataBindingContainer = hasDataBinding(component) || !!component.runtime?.repeat;
+  const isDataBindingContainer =
+    hasDataBinding(component) || !!component.runtime?.repeat;
   const templateChildren =
     isDataBindingContainer && (component.children?.length ?? 0) > 0
       ? [component.children![0]]
       : (component.children ?? []);
   const shouldUseRepeatTemplate =
     !isDesigner && repeatable.enabled && templateChildren.length > 0;
-  const effectiveChildren =
-    shouldUseRepeatTemplate
+  const effectiveChildren = shouldUseRepeatTemplate
+    ? templateChildren
+    : isDesigner && isDataBindingContainer
       ? templateChildren
-      : isDesigner && isDataBindingContainer
-        ? templateChildren
-        : (component.children ?? []);
+      : (component.children ?? []);
   const hasChildren = effectiveChildren.length > 0;
+
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "production" || !isDataBindingContainer) {
+      return;
+    }
+
+    console.debug("[renderer] repeat:render", {
+      componentId: component.id,
+      enabled: repeatable.enabled,
+      loading: repeatable.loading,
+      itemCount: repeatable.items?.length ?? 0,
+      hasSnapshotData: repeatable.hasSnapshotData,
+      endpoint: repeatable.enabled ? "active" : "inactive",
+    });
+  });
+
   const runtimeProps = React.useMemo(() => {
     const runtime = component.runtime;
     const map = runtime?.columnMap;
@@ -512,18 +790,41 @@ function RenderComponentInner({
       if (isDesigner) return fallback;
       const path = finalMap[key];
       if (!path) return fallback;
-      const paths = path.split("|").map((item) => item.trim()).filter(Boolean);
-      const isVisible = repeatable.policy.columnVisibility[path];
+      const paths = path
+        .split("|")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      const isDestinationResource =
+        component.dataBinding?.source === "destination" ||
+        component.dataBinding?.source === "destination_collection" ||
+        component.runtime?.repeat?.targetResource === "destination" ||
+        component.runtime?.repeat?.targetResource === "destination_collection";
+      const configuredVisibility =
+        component.runtime?.repeat?.policy?.columnVisibility ?? {};
+      const isVisible =
+        configuredVisibility[path] !== false &&
+        repeatable.policy.columnVisibility[path] !== false &&
+        paths.every((candidate) => configuredVisibility[candidate] !== false);
       if (isVisible === false) return undefined;
       for (const candidate of paths) {
         const value = readPath(runtimeItem, candidate);
         if (value != null && value !== "") return String(value);
       }
+      if (isDestinationResource) {
+        return "N/A";
+      }
       return fallback;
     };
 
     return { getBound };
-  }, [component.runtime, component.props, runtimeItem, isDesigner, repeatable.policy]);
+  }, [
+    component.dataBinding,
+    component.runtime,
+    component.props,
+    runtimeItem,
+    isDesigner,
+    repeatable.policy,
+  ]);
 
   const isExactHovered = isDesigner && hoveredId === component.id;
 
@@ -574,7 +875,9 @@ function RenderComponentInner({
     overflow: component.layout?.overflow,
 
     backgroundColor: component.style?.backgroundColor ?? "transparent",
-    backgroundImage: backgroundImageSrc ? `url("${backgroundImageSrc}")` : undefined,
+    backgroundImage: backgroundImageSrc
+      ? `url("${backgroundImageSrc}")`
+      : undefined,
     backgroundSize: component.style?.backgroundSize ?? "cover",
     backgroundRepeat: component.style?.backgroundRepeat ?? "no-repeat",
     backgroundPosition: component.style?.backgroundPosition ?? "center center",
@@ -585,6 +888,11 @@ function RenderComponentInner({
     justifyContent: component.layout?.justifyContent,
     alignItems: component.layout?.alignItems,
     flexWrap: component.layout?.wrap ? "wrap" : undefined,
+    justifyItems: component.layout?.display === "grid" ? "stretch" : undefined,
+    gridTemplateColumns:
+      component.layout?.display === "grid"
+        ? `repeat(${component.layout?.columns ?? 3}, minmax(0, 1fr))`
+        : undefined,
 
     border:
       typeof component.layout?.border === "number"
@@ -602,7 +910,9 @@ function RenderComponentInner({
       : component.style?.boxShadow,
     outline: isExactHovered ? "1px solid #0366fc" : undefined,
     outlineOffset: isExactHovered ? 0 : undefined,
-    transition: isDesigner ? "box-shadow 120ms ease, outline-color 120ms ease" : undefined,
+    transition: isDesigner
+      ? "box-shadow 120ms ease, outline-color 120ms ease"
+      : undefined,
     color: component.style?.textColor,
     fontSize: component.style?.fontSize,
     fontWeight: component.style?.fontWeight,
@@ -654,20 +964,25 @@ function RenderComponentInner({
     const fromRuntime = component.runtime?.exposedLabel;
     const fromProps =
       component.props && typeof component.props === "object"
-        ? ((component.props as Record<string, unknown>).exposedLabel as string | undefined)
+        ? ((component.props as Record<string, unknown>).exposedLabel as
+            | string
+            | undefined)
         : undefined;
     const exposedPath = fromRuntime ?? fromProps;
     const bound = readPath(runtimeItem, exposedPath);
     if (bound == null) return fallback;
     return String(bound);
   };
+
   const resolveValue = (
     key: "text" | "label" | "src" | "href" | "alt" | "htmlFor",
     fallback?: string,
   ) => resolveExposed(runtimeProps.getBound(key, fallback));
   const resolveImageSrc = (src?: string) =>
     isDesigner && hasResourceIntent ? DESIGNER_IMAGE_SRC : src;
-  const handleDesignerImageFallback = (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const handleDesignerImageFallback = (
+    e: React.SyntheticEvent<HTMLImageElement>,
+  ) => {
     if (!isDesigner) return;
     const img = e.currentTarget;
     if (img.src.endsWith(DESIGNER_IMAGE_SRC)) return;
@@ -675,14 +990,22 @@ function RenderComponentInner({
   };
   const isResourceContainer = !!(
     component.runtime?.resourceContainer ||
-    ((component.props as Record<string, unknown> | undefined)?.resourceContainer as boolean | undefined) ||
+    ((component.props as Record<string, unknown> | undefined)
+      ?.resourceContainer as boolean | undefined) ||
     repeatable.enabled ||
+    repeatable.hasSnapshotData ||
     (isDesigner && isDataBindingContainer)
   );
-  const designerPreviewItems = Array.from({ length: DESIGNER_REPEAT_PREVIEW_COUNT });
+  const designerPreviewItems = Array.from({
+    length: DESIGNER_REPEAT_PREVIEW_COUNT,
+  });
   const resolvedRepeatDisplay =
     component.layout?.display ??
-    ((isDesigner ? designerPreviewItems.length : (repeatable.items?.length ?? 0)) > 1 ? "flex" : "block");
+    ((isDesigner
+      ? designerPreviewItems.length
+      : (repeatable.items?.length ?? 0)) > 1
+      ? "flex"
+      : "block");
   const repeatLayoutStyle: React.CSSProperties = {
     display: resolvedRepeatDisplay,
     flexDirection:
@@ -692,6 +1015,12 @@ function RenderComponentInner({
     alignItems: component.layout?.alignItems,
     flexWrap: component.layout?.wrap ? "wrap" : undefined,
     gap: component.layout?.gap ?? 0,
+    justifyItems: resolvedRepeatDisplay === "grid" ? "stretch" : undefined,
+    alignContent: resolvedRepeatDisplay === "grid" ? "stretch" : undefined,
+    gridTemplateColumns:
+      resolvedRepeatDisplay === "grid"
+        ? `repeat(${component.layout?.columns ?? 3}, minmax(0, 1fr))`
+        : undefined,
     width: "100%",
   };
   const noDataStyle: React.CSSProperties = {
@@ -712,46 +1041,49 @@ function RenderComponentInner({
 
   const renderChildren = (suffix = "", item?: unknown) =>
     hasChildren
-      ? effectiveChildren.map((child) => (
-          <React.Fragment key={`${child.id}${suffix}`}>
-            <RenderComponentInner
-              component={child}
-              isDesigner={isDesigner}
-              isRoot={false}
-              parentId={component.id}
-              section={section}
-              setShowComponentModal={setShowComponentModal}
-              setDesignerState={setDesignerState}
-              runtimeItem={item}
-              resourceIntent={hasResourceIntent}
-              tenantKey={tenantKey}
-              pageSlug={pageSlug}
-            />
-          </React.Fragment>
-        ))
+      ? effectiveChildren.map((child) => {
+          const repeatedChild = suffix
+            ? {
+                ...child,
+                id: `${child.id}${suffix}`,
+              }
+            : child;
+
+          return (
+            <React.Fragment key={`${child.id}${suffix}`}>
+              <RenderComponentInner
+                component={repeatedChild}
+                isDesigner={isDesigner}
+                isRoot={false}
+                parentId={component.id}
+                section={section}
+                setShowComponentModal={setShowComponentModal}
+                setDesignerState={setDesignerState}
+                runtimeItem={item}
+                resourceIntent={hasResourceIntent}
+                tenantKey={tenantKey}
+                pageSlug={pageSlug}
+              />
+            </React.Fragment>
+          );
+        })
       : null;
 
   const renderRepeatedChildren = (items: unknown[]) => (
-    <div style={repeatLayoutStyle}>
+    <>
       {items.map((item, index) => (
         <React.Fragment key={`${component.id}-repeat-${index}`}>
           {renderChildren(`-repeat-${index}`, item)}
         </React.Fragment>
       ))}
-    </div>
+    </>
   );
 
   const renderAddChildControl = () => {
-    return (
-      null
-    );
+    return null;
   };
 
-  const FormRenderer = ({
-    children,
-  }: {
-    children: React.ReactNode;
-  }) => {
+  const FormRenderer = ({ children }: { children: React.ReactNode }) => {
     const [submitState, setSubmitState] = React.useState<{
       status: "idle" | "submitting" | "success" | "error";
       message: string;
@@ -782,10 +1114,14 @@ function RenderComponentInner({
           typeof value === "string" ? value.trim() : value,
         ]),
       );
-      const inquiryPayload = buildContactInquiryPayload(resolvedTenantKey, payload, {
-        pageSlug: resolvedPageSlug,
-        source: "designer-contact-form",
-      });
+      const inquiryPayload = buildContactInquiryPayload(
+        resolvedTenantKey,
+        payload,
+        {
+          pageSlug: resolvedPageSlug,
+          source: "designer-contact-form",
+        },
+      );
 
       setSubmitState({ status: "submitting", message: "" });
 
@@ -797,7 +1133,13 @@ function RenderComponentInner({
           message: "Your request was sent successfully.",
         });
       } catch (error: unknown) {
-        const response = error && typeof error === "object" ? (error as { response?: { data?: { error?: string; message?: string } }; message?: string }) : null;
+        const response =
+          error && typeof error === "object"
+            ? (error as {
+                response?: { data?: { error?: string; message?: string } };
+                message?: string;
+              })
+            : null;
         setSubmitState({
           status: "error",
           message:
@@ -1031,6 +1373,119 @@ function RenderComponentInner({
       const resolvedImageSrc = resolveImageSrc(resolvedSrc);
       const resolvedHref = resolveValue("href", href);
       const resolvedAlt = resolveValue("alt", component.name ?? "image");
+      const isHeaderAuthLink =
+        section === "header" && isAuthLinkLabel(resolvedText ?? text ?? "");
+      const isDesignerHeaderLink = isDesigner && section === "header";
+
+      const renderLinkContent = () => (
+        <>
+          {resolvedText ? (
+            resolvedText
+          ) : resolvedImageSrc ? (
+            <img
+              src={resolvedImageSrc}
+              alt={resolvedAlt ?? "image"}
+              onError={handleDesignerImageFallback}
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                objectFit: "cover",
+              }}
+            />
+          ) : null}
+
+          {renderChildren()}
+        </>
+      );
+
+      if (isDesignerHeaderLink) {
+        return (
+          <div style={wrapperStyle} {...commonHoverProps}>
+            <span
+              aria-disabled="true"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                display: "block",
+                width: "100%",
+                height: "100%",
+                cursor: "default",
+                pointerEvents: "none",
+              }}
+            >
+              {renderLinkContent()}
+            </span>
+
+            {renderAddChildControl()}
+          </div>
+        );
+      }
+
+      if (isHeaderAuthLink && authStatus === "authenticated") {
+        const normalizedLabel = String(resolvedText ?? text)
+          .trim()
+          .toLowerCase();
+
+        if (normalizedLabel === "sign up") {
+          return (
+            <div>
+              <a
+                href="/customer/dashboard"
+                style={{
+                  color: "inherit",
+                  textDecoration: "none",
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    ...wrapperStyle,
+                  }}
+                >
+                  Dashboard
+                </span>
+              </a>
+              {renderAddChildControl()}
+            </div>
+          );
+        }
+
+        const handleLogout = async () => {
+          try {
+            await dispatch(logout({ redirectTo: "/signin" })).unwrap();
+            if (typeof window !== "undefined") {
+              window.location.assign("/signin");
+            }
+          } catch {
+            // auth slice already carries the failure state
+          }
+        };
+
+        return (
+          <div>
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              style={{
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontWeight: 600,
+                backgroundColor: component.style?.backgroundColor ?? "#111",
+                color: component.style?.textColor ?? "#fff",
+                ...wrapperStyle,
+              }}
+            >
+              Logout
+            </button>
+            {renderAddChildControl()}
+          </div>
+        );
+      }
 
       return (
         <div style={wrapperStyle} {...commonHoverProps}>
@@ -1044,23 +1499,7 @@ function RenderComponentInner({
               height: "100%",
             }}
           >
-            {resolvedText ? (
-              resolvedText
-            ) : resolvedImageSrc ? (
-              <img
-                src={resolvedImageSrc}
-                alt={resolvedAlt ?? "image"}
-                onError={handleDesignerImageFallback}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "block",
-                  objectFit: "cover",
-                }}
-              />
-            ) : null}
-
-            {renderChildren()}
+            {renderLinkContent()}
           </a>
 
           {renderAddChildControl()}
@@ -1072,7 +1511,8 @@ function RenderComponentInner({
       const src = hasSrc(component.props) ? component.props.src : undefined;
       const resolvedSrc = resolveValue("src", src);
       const resolvedImageSrc =
-        resolveImageSrc(resolvedSrc) ?? (hasResourceIntent ? DESIGNER_IMAGE_SRC : undefined);
+        resolveImageSrc(resolvedSrc) ??
+        (hasResourceIntent ? DESIGNER_IMAGE_SRC : undefined);
       const resolvedAlt = resolveValue("alt", component.name ?? "image");
       if (!resolvedImageSrc) return null;
 
@@ -1181,8 +1621,12 @@ function RenderComponentInner({
       return <FormRenderer>{renderChildren()}</FormRenderer>;
 
     default:
-      if (!isDesigner && (isContactMessageBox(component) || isTripRequestTextarea(component))) {
-        const placeholder = extractTextValue(component) ?? "Tell us about your trip.";
+      if (
+        !isDesigner &&
+        (isContactMessageBox(component) || isTripRequestTextarea(component))
+      ) {
+        const placeholder =
+          extractTextValue(component) ?? "Tell us about your trip.";
 
         return (
           <div style={wrapperStyle} {...commonHoverProps}>
@@ -1239,9 +1683,12 @@ function RenderComponentInner({
           )}
 
           {isDesigner && isResourceContainer && isDataBindingContainer ? (
-            hasChildren ? renderRepeatedChildren(designerPreviewItems) : null
+            hasChildren ? (
+              renderRepeatedChildren(designerPreviewItems)
+            ) : null
           ) : repeatable.enabled && isResourceContainer ? (
-            repeatable.loading ? null : (repeatable.items?.length ?? 0) === 0 ? (
+            repeatable.loading ? null : (repeatable.items?.length ?? 0) ===
+              0 ? (
               <div style={noDataStyle}>No data found</div>
             ) : (
               renderRepeatedChildren(repeatable.items ?? [])
@@ -1287,6 +1734,7 @@ export default function RenderComponent({
   setDesignerState,
   tenantKey,
   pageSlug,
+  contentDatas,
 }: {
   component: ComponentNode;
   isDesigner: boolean;
@@ -1296,22 +1744,25 @@ export default function RenderComponent({
   setDesignerState: Dispatch<SetStateAction<DesignerState>>;
   tenantKey?: string;
   pageSlug?: string;
+  contentDatas?: ContentDataSnapshot[];
 }) {
   const [hoveredId, setHoveredId] = React.useState<string | null>(null);
 
   return (
-    <HoverContext.Provider value={{ hoveredId, setHoveredId }}>
-      <RenderComponentInner
-        component={component}
-        isDesigner={isDesigner}
-        isRoot={isRoot}
-        parentId={null}
-        section={section}
-        setShowComponentModal={setShowComponentModal}
-        setDesignerState={setDesignerState}
-        tenantKey={tenantKey}
-        pageSlug={pageSlug}
-      />
-    </HoverContext.Provider>
+    <ContentDataContext.Provider value={contentDatas ?? null}>
+      <HoverContext.Provider value={{ hoveredId, setHoveredId }}>
+        <RenderComponentInner
+          component={component}
+          isDesigner={isDesigner}
+          isRoot={isRoot}
+          parentId={null}
+          section={section}
+          setShowComponentModal={setShowComponentModal}
+          setDesignerState={setDesignerState}
+          tenantKey={tenantKey}
+          pageSlug={pageSlug}
+        />
+      </HoverContext.Provider>
+    </ContentDataContext.Provider>
   );
 }

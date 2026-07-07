@@ -19,15 +19,14 @@ export default function AuthGuard({
   const searchParams = useSearchParams();
 
   const status = useSelector((s: RootState) => s.auth.authStatus) as
-    | "idle"
-    | "loading"
+    | "unknown"
     | "authenticated"
-    | "unauthenticated"
+    | "guest"
     | undefined;
 
   const isAuthenticated = status === "authenticated";
-  const isUnauthed = status === "unauthenticated";
-  const isChecking = status === "idle" || status === "loading" || !status;
+  const isUnauthed = status === "guest";
+  const isChecking = status === "unknown" || !status;
   const normalizedPath = (pathname || "/").toLowerCase();
   const isPublicTenantPath = normalizedPath === "/" || normalizedPath === "/customer-intake";
 

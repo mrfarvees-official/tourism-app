@@ -876,6 +876,7 @@ export default function MainPanel() {
           open={open}
           setOpen={setOpen}
           showComponentModel={showComponentModel}
+          tenantKey={tenantKey}
           headerNode={headerNode}
           setHeaderNode={setHeaderNode}
           templateNode={templateNode}

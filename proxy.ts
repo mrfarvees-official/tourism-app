@@ -44,6 +44,10 @@ function normalizeTenantScopedAppPath(pathname: string, tenant: string) {
   const first = parts[0]?.toLowerCase();
   const second = parts[1]?.toLowerCase();
 
+  if (first === "signin" || first === "signup") {
+    return `/_sites/${tenant}/${first}`;
+  }
+
   if (first === tenant && second === "designer") {
     return `/designer/${tenant}`;
   }

@@ -1,0 +1,12 @@
+import { http } from "../config/http";
+
+export const bookingService = {
+  createPublic: (tenantKey: string, payload: unknown) =>
+    http.post(`/api/public/${tenantKey}/bookings`, payload),
+  listCustomer: () => http.get("/api/customer/bookings"),
+  showCustomer: (bookingId: string | number) => http.get(`/api/customer/bookings/${bookingId}`),
+  listAdmin: (tenantKey: string) =>
+    http.get("/api/admin/bookings", { params: { tenantKey } }),
+  showAdmin: (tenantKey: string, bookingId: string | number) =>
+    http.get(`/api/admin/bookings/${bookingId}`, { params: { tenantKey } }),
+};

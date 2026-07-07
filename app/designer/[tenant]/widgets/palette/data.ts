@@ -1,5 +1,4 @@
 import { ComponentList, ComponentNode } from "./types";
-import { FaBullseye, FaHeart, FaChessPawn } from "react-icons/fa";
 
 // Tourism-focused component data. Product-style blocks are modeled as tour packages,
 // and collection-style blocks are modeled as destination/travel-style collections.
@@ -94,10 +93,11 @@ export const header: ComponentNode = {
           parentId: "site_nav",
           props: {
             text: "Home",
-            href: "#home",
+            href: "/",
           },
           layout: {},
           style: { textColor: "#cbd5e1", fontSize: 14 },
+          locked: true,
           children: [],
         },
         {
@@ -106,31 +106,72 @@ export const header: ComponentNode = {
           parentId: "site_nav",
           props: {
             text: "Destinations",
-            href: "#destinations",
+            href: "/destinations",
           },
           layout: {},
           style: { textColor: "#cbd5e1", fontSize: 14 },
+          locked: true,
           children: [],
         },
         {
-          id: "site_nav_stories",
+          id: "site_nav_packages",
           type: "Link",
           parentId: "site_nav",
           props: {
-            text: "Stories",
-            href: "#stories",
+            text: "Packages",
+            href: "/packages",
           },
           layout: {},
           style: { textColor: "#cbd5e1", fontSize: 14 },
+          locked: true,
           children: [],
         },
         {
-          id: "site_nav_cta",
+          id: "site_nav_services",
           type: "Link",
           parentId: "site_nav",
           props: {
-            text: "Start Planning",
-            href: "#plan",
+            text: "Services",
+            href: "/services",
+          },
+          layout: {},
+          style: { textColor: "#cbd5e1", fontSize: 14 },
+          locked: true,
+          children: [],
+        },
+        {
+          id: "site_nav_activities",
+          type: "Link",
+          parentId: "site_nav",
+          props: {
+            text: "Activities",
+            href: "/activities",
+          },
+          layout: {},
+          style: { textColor: "#cbd5e1", fontSize: 14 },
+          locked: true,
+          children: [],
+        },
+        {
+          id: "site_nav_contact",
+          type: "Link",
+          parentId: "site_nav",
+          props: {
+            text: "Contact",
+            href: "/contact",
+          },
+          layout: {},
+          style: { textColor: "#cbd5e1", fontSize: 14 },
+          locked: true,
+          children: [],
+        },
+        {
+          id: "site_nav_signin",
+          type: "Link",
+          parentId: "site_nav",
+          props: {
+            text: "Sign In",
+            href: "/signin",
           },
           layout: {
             padding: { top: 10, right: 14, bottom: 10, left: 14 },
@@ -143,6 +184,29 @@ export const header: ComponentNode = {
             fontSize: 13,
             textAlign: "center",
           },
+          locked: true,
+          children: [],
+        },
+        {
+          id: "site_nav_signup",
+          type: "Link",
+          parentId: "site_nav",
+          props: {
+            text: "Sign Up",
+            href: "/signup",
+          },
+          layout: {
+            padding: { top: 10, right: 14, bottom: 10, left: 14 },
+          },
+          style: {
+            backgroundColor: "#e2e8f0",
+            textColor: "#0f172a",
+            borderRadius: 8,
+            fontWeight: 700,
+            fontSize: 13,
+            textAlign: "center",
+          },
+          locked: true,
           children: [],
         },
       ],
@@ -263,7 +327,7 @@ export const template: ComponentNode = {
                   parentId: "hero_actions",
                   props: {
                     text: "Explore Destinations",
-                    href: "#destinations",
+                    href: "/destinations",
                   },
                   layout: {
                     padding: { top: 13, right: 18, bottom: 13, left: 18 },
@@ -282,8 +346,8 @@ export const template: ComponentNode = {
                   type: "Link",
                   parentId: "hero_actions",
                   props: {
-                    text: "Read Traveler Stories",
-                    href: "#stories",
+                    text: "Contact Us",
+                    href: "/contact",
                   },
                   layout: {
                     padding: { top: 13, right: 18, bottom: 13, left: 18 },
@@ -325,8 +389,8 @@ export const template: ComponentNode = {
           parentId: "destinations_section",
           props: {},
           layout: {
-            width: { value: 1120, unit: "px" },
-            maxWidth: { value: 100, unit: "%" },
+            width: { value: 100, unit: "%" },
+            maxWidth: { value: 1180, unit: "px" },
             display: "flex",
             flexDirection: "column",
             gap: 24,
@@ -357,12 +421,11 @@ export const template: ComponentNode = {
               props: {},
               layout: {
                 width: { value: 100, unit: "%" },
-                display: "flex",
+                display: "grid",
+                columns: 3,
                 gap: 20,
-                wrap: true,
               },
               style: {},
-              dataBinding: { source: "destination" },
               runtime: {
                 repeat: {
                   enabled: true,
@@ -375,12 +438,12 @@ export const template: ComponentNode = {
               },
               children: [
                 {
-                  id: "destination_card_ella",
+                  id: "destination_card_template",
                   type: "Frame",
                   parentId: "destinations_grid",
                   props: {},
                   layout: {
-                    width: { value: 360, unit: "px" },
+                    width: { value: 100, unit: "%" },
                     maxWidth: { value: 100, unit: "%" },
                     display: "flex",
                     flexDirection: "column",
@@ -394,12 +457,12 @@ export const template: ComponentNode = {
                   },
                   children: [
                     {
-                      id: "destination_card_ella_image",
+                      id: "destination_card_image",
                       type: "Image",
-                      parentId: "destination_card_ella",
+                      parentId: "destination_card_template",
                       props: {
                         src: "/no-image.jpg",
-                        alt: "Ella",
+                        alt: "Destination",
                         objectFit: "cover",
                       },
                       layout: {
@@ -418,10 +481,13 @@ export const template: ComponentNode = {
                       children: [],
                     },
                     {
-                      id: "destination_card_ella_title",
+                      id: "destination_card_title",
                       type: "Text",
-                      parentId: "destination_card_ella",
-                      props: { text: "Destination 1", tag: "h3" },
+                      parentId: "destination_card_template",
+                      props: {
+                        text: "Destination",
+                        tag: "h3",
+                      },
                       layout: {},
                       style: {
                         textColor: "#0f172a",
@@ -436,11 +502,11 @@ export const template: ComponentNode = {
                       children: [],
                     },
                     {
-                      id: "destination_card_ella_copy",
+                      id: "destination_card_copy",
                       type: "Text",
-                      parentId: "destination_card_ella",
+                      parentId: "destination_card_template",
                       props: {
-                        text: "Description 1",
+                        text: "Description",
                         tag: "p",
                       },
                       layout: {},
@@ -453,142 +519,6 @@ export const template: ComponentNode = {
                         columnMap: {
                           text: "description",
                         },
-                      },
-                      children: [],
-                    },
-                  ],
-                },
-                {
-                  id: "destination_card_galle",
-                  type: "Frame",
-                  parentId: "destinations_grid",
-                  props: {},
-                  layout: {
-                    width: { value: 360, unit: "px" },
-                    maxWidth: { value: 100, unit: "%" },
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 12,
-                    padding: { top: 14, right: 14, bottom: 14, left: 14 },
-                  },
-                  style: {
-                    backgroundColor: "#ffffff",
-                    borderRadius: 14,
-                    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
-                  },
-                  children: [
-                    {
-                      id: "destination_card_galle_image",
-                      type: "Image",
-                      parentId: "destination_card_galle",
-                      props: {
-                        src: "/no-image.jpg",
-                        alt: "Galle",
-                        objectFit: "cover",
-                      },
-                      layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 200, unit: "px" },
-                      },
-                      style: {
-                        borderRadius: 10,
-                      },
-                      children: [],
-                    },
-                    {
-                      id: "destination_card_galle_title",
-                      type: "Text",
-                      parentId: "destination_card_galle",
-                      props: { text: "Destination 2", tag: "h3" },
-                      layout: {},
-                      style: {
-                        textColor: "#0f172a",
-                        fontSize: 22,
-                        fontWeight: 700,
-                      },
-                      children: [],
-                    },
-                    {
-                      id: "destination_card_galle_copy",
-                      type: "Text",
-                      parentId: "destination_card_galle",
-                      props: {
-                        text: "Description 2",
-                        tag: "p",
-                      },
-                      layout: {},
-                      style: {
-                        textColor: "#475569",
-                        fontSize: 14,
-                        lineHeight: 1.5,
-                      },
-                      children: [],
-                    },
-                  ],
-                },
-                {
-                  id: "destination_card_sigiriya",
-                  type: "Frame",
-                  parentId: "destinations_grid",
-                  props: {},
-                  layout: {
-                    width: { value: 360, unit: "px" },
-                    maxWidth: { value: 100, unit: "%" },
-                    display: "flex",
-                    padding: { top: 14, right: 14, bottom: 14, left: 14 },
-                    flexDirection: "column",
-                    gap: 12,
-                  },
-                  style: {
-                    backgroundColor: "#ffffff",
-                    borderRadius: 14,
-                    boxShadow: "0 10px 28px rgba(15,23,42,0.08)",
-                  },
-                  children: [
-                    {
-                      id: "destination_card_sigiriya_image",
-                      type: "Image",
-                      parentId: "destination_card_sigiriya",
-                      props: {
-                        src: "/no-image.jpg",
-                        alt: "Sigiriya",
-                        objectFit: "cover",
-                      },
-                      layout: {
-                        width: { value: 100, unit: "%" },
-                        height: { value: 200, unit: "px" },
-                      },
-                      style: {
-                        borderRadius: 10,
-                      },
-                      children: [],
-                    },
-                    {
-                      id: "destination_card_sigiriya_title",
-                      type: "Text",
-                      parentId: "destination_card_sigiriya",
-                      props: { text: "Destination 3", tag: "h3" },
-                      layout: {},
-                      style: {
-                        textColor: "#0f172a",
-                        fontSize: 22,
-                        fontWeight: 700,
-                      },
-                      children: [],
-                    },
-                    {
-                      id: "destination_card_sigiriya_copy",
-                      type: "Text",
-                      parentId: "destination_card_sigiriya",
-                      props: {
-                        text: "Description 3",
-                        tag: "p",
-                      },
-                      layout: {},
-                      style: {
-                        textColor: "#475569",
-                        fontSize: 14,
-                        lineHeight: 1.5,
                       },
                       children: [],
                     },
@@ -653,8 +583,8 @@ export const template: ComponentNode = {
               type: "Link",
               parentId: "plan_cta_inner",
               props: {
-                text: "Create My Itinerary",
-                href: "#plan",
+                text: "Sign Up",
+                href: "/signup",
               },
               layout: {
                 padding: { top: 14, right: 20, bottom: 14, left: 20 },
@@ -786,7 +716,7 @@ export const footer: ComponentNode = {
               id: "site_footer_link_1",
               type: "Link",
               parentId: "site_footer_links",
-              props: { text: "Destinations", href: "#destinations" },
+              props: { text: "Destinations", href: "/destinations" },
               layout: {},
               style: { textColor: "#94a3b8", fontSize: 14 },
               children: [],
@@ -795,7 +725,7 @@ export const footer: ComponentNode = {
               id: "site_footer_link_2",
               type: "Link",
               parentId: "site_footer_links",
-              props: { text: "Traveler Stories", href: "#stories" },
+              props: { text: "Packages", href: "/packages" },
               layout: {},
               style: { textColor: "#94a3b8", fontSize: 14 },
               children: [],
@@ -804,7 +734,16 @@ export const footer: ComponentNode = {
               id: "site_footer_link_3",
               type: "Link",
               parentId: "site_footer_links",
-              props: { text: "Plan Builder", href: "#plan" },
+              props: { text: "Services", href: "/services" },
+              layout: {},
+              style: { textColor: "#94a3b8", fontSize: 14 },
+              children: [],
+            },
+            {
+              id: "site_footer_link_4",
+              type: "Link",
+              parentId: "site_footer_links",
+              props: { text: "Activities", href: "/activities" },
               layout: {},
               style: { textColor: "#94a3b8", fontSize: 14 },
               children: [],
@@ -922,8 +861,8 @@ export const components: ComponentList[] = [
                   type: "Link",
                   parentId: "banner_hero_primary_left",
                   props: {
-                    text: "Start Planning",
-                    href: "?page=getStarted",
+                    text: "Sign In",
+                    href: "/signin",
                   },
                   layout: {
                     width: { value: 140, unit: "px" },
@@ -1021,7 +960,11 @@ export const components: ComponentList[] = [
                     tag: "p",
                   },
                   layout: {},
-                  style: { fontSize: 15, lineHeight: 1.5, textColor: "#dbeafe" },
+                  style: {
+                    fontSize: 15,
+                    lineHeight: 1.5,
+                    textColor: "#dbeafe",
+                  },
                   children: [],
                 },
               ],
@@ -1057,7 +1000,10 @@ export const components: ComponentList[] = [
               id: "banner_hero_marquee_headline",
               parentId: "banner_hero_marquee",
               type: "Text",
-              props: { text: "Your Sri Lanka adventure starts here", tag: "h2" },
+              props: {
+                text: "Your Sri Lanka adventure starts here",
+                tag: "h2",
+              },
               layout: {},
               style: {
                 fontSize: 44,
@@ -1081,7 +1027,11 @@ export const components: ComponentList[] = [
                   type: "Text",
                   props: { text: "HILL COUNTRY", tag: "span" },
                   layout: {},
-                  style: { fontSize: 48, fontWeight: 700, textColor: "#22c55e" },
+                  style: {
+                    fontSize: 48,
+                    fontWeight: 700,
+                    textColor: "#22c55e",
+                  },
                   children: [],
                 },
                 {
@@ -1090,7 +1040,11 @@ export const components: ComponentList[] = [
                   type: "Text",
                   props: { text: "•", tag: "span" },
                   layout: {},
-                  style: { fontSize: 48, fontWeight: 700, textColor: "#38bdf8" },
+                  style: {
+                    fontSize: 48,
+                    fontWeight: 700,
+                    textColor: "#38bdf8",
+                  },
                   children: [],
                 },
                 {
@@ -1099,7 +1053,11 @@ export const components: ComponentList[] = [
                   type: "Text",
                   props: { text: "WILDLIFE PARKS", tag: "span" },
                   layout: {},
-                  style: { fontSize: 48, fontWeight: 700, textColor: "#f59e0b" },
+                  style: {
+                    fontSize: 48,
+                    fontWeight: 700,
+                    textColor: "#f59e0b",
+                  },
                   children: [],
                 },
               ],
@@ -1150,7 +1108,10 @@ export const components: ComponentList[] = [
                     alt: "logo",
                     objectFit: "contain",
                   },
-                  layout: { width: { value: 130, unit: "px" }, height: { value: 130, unit: "px" } },
+                  layout: {
+                    width: { value: 130, unit: "px" },
+                    height: { value: 130, unit: "px" },
+                  },
                   style: {},
                   children: [],
                 },
@@ -1160,7 +1121,11 @@ export const components: ComponentList[] = [
                   type: "Text",
                   props: { text: "TrailNest Sri Lanka Tours", tag: "h2" },
                   layout: {},
-                  style: { fontSize: 34, fontWeight: 800, textColor: "#0f172a" },
+                  style: {
+                    fontSize: 34,
+                    fontWeight: 800,
+                    textColor: "#0f172a",
+                  },
                   children: [],
                 },
               ],
@@ -1195,7 +1160,10 @@ export const components: ComponentList[] = [
                 alt: "slide",
                 objectFit: "cover",
               },
-              layout: { width: { value: 100, unit: "%" }, height: { value: 100, unit: "%" } },
+              layout: {
+                width: { value: 100, unit: "%" },
+                height: { value: 100, unit: "%" },
+              },
               style: { opacity: 0.35, borderRadius: 8 },
               children: [],
             },
@@ -1215,7 +1183,10 @@ export const components: ComponentList[] = [
                 width: { value: 340, unit: "px" },
                 height: { value: 220, unit: "px" },
               },
-              style: { borderRadius: 8, boxShadow: "0 12px 24px rgba(0,0,0,0.3)" },
+              style: {
+                borderRadius: 8,
+                boxShadow: "0 12px 24px rgba(0,0,0,0.3)",
+              },
               children: [],
             },
             {
@@ -1234,7 +1205,10 @@ export const components: ComponentList[] = [
                 width: { value: 380, unit: "px" },
                 height: { value: 250, unit: "px" },
               },
-              style: { borderRadius: 8, boxShadow: "0 12px 24px rgba(0,0,0,0.3)" },
+              style: {
+                borderRadius: 8,
+                boxShadow: "0 12px 24px rgba(0,0,0,0.3)",
+              },
               children: [],
             },
           ],
@@ -1266,7 +1240,10 @@ export const components: ComponentList[] = [
                 alt: "hero",
                 objectFit: "cover",
               },
-              layout: { width: { value: 100, unit: "%" }, height: { value: 100, unit: "%" } },
+              layout: {
+                width: { value: 100, unit: "%" },
+                height: { value: 100, unit: "%" },
+              },
               style: {},
               children: [],
             },
@@ -1274,7 +1251,10 @@ export const components: ComponentList[] = [
               id: "banner_slideshow_full_caption",
               parentId: "banner_slideshow_full",
               type: "Text",
-              props: { text: "Golden beaches. Misty hills. Ancient kingdoms.", tag: "h3" },
+              props: {
+                text: "Golden beaches. Misty hills. Ancient kingdoms.",
+                tag: "h3",
+              },
               layout: { position: "absolute", left: 28, bottom: 28 },
               style: { fontSize: 30, fontWeight: 700, textColor: "#ffffff" },
               children: [],
@@ -1324,7 +1304,10 @@ export const components: ComponentList[] = [
                     alt: "inset",
                     objectFit: "cover",
                   },
-                  layout: { width: { value: 100, unit: "%" }, height: { value: 100, unit: "%" } },
+                  layout: {
+                    width: { value: 100, unit: "%" },
+                    height: { value: 100, unit: "%" },
+                  },
                   style: { borderRadius: 8 },
                   children: [],
                 },
@@ -1361,7 +1344,10 @@ export const components: ComponentList[] = [
                 alt: "left",
                 objectFit: "cover",
               },
-              layout: { width: { value: 50, unit: "%" }, height: { value: 460, unit: "px" } },
+              layout: {
+                width: { value: 50, unit: "%" },
+                height: { value: 460, unit: "px" },
+              },
               style: { borderRadius: 8 },
               children: [],
             },
@@ -1385,7 +1371,10 @@ export const components: ComponentList[] = [
                   id: "banner_split_title",
                   parentId: "banner_split_right_wrap",
                   type: "Text",
-                  props: { text: "Find your next unforgettable Sri Lanka journey", tag: "h2" },
+                  props: {
+                    text: "Find your next unforgettable Sri Lanka journey",
+                    tag: "h2",
+                  },
                   layout: {},
                   style: {
                     fontSize: 34,
@@ -1404,7 +1393,11 @@ export const components: ComponentList[] = [
                     tag: "p",
                   },
                   layout: {},
-                  style: { fontSize: 15, lineHeight: 1.6, textColor: "#cbd5e1" },
+                  style: {
+                    fontSize: 15,
+                    lineHeight: 1.6,
+                    textColor: "#cbd5e1",
+                  },
                   children: [],
                 },
               ],
@@ -1550,12 +1543,12 @@ export const components: ComponentList[] = [
                             objectFit: "cover",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                              alt: "name|title|tour_name|destination|collection_name",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1584,11 +1577,11 @@ export const components: ComponentList[] = [
                             tag: "span",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1631,12 +1624,12 @@ export const components: ComponentList[] = [
                             objectFit: "cover",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                              alt: "name|title|tour_name|destination|collection_name",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1665,11 +1658,11 @@ export const components: ComponentList[] = [
                             tag: "span",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1712,12 +1705,12 @@ export const components: ComponentList[] = [
                             objectFit: "cover",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                              alt: "name|title|tour_name|destination|collection_name",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1746,11 +1739,11 @@ export const components: ComponentList[] = [
                             tag: "span",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1814,12 +1807,12 @@ export const components: ComponentList[] = [
                             objectFit: "cover",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                              alt: "name|title|tour_name|destination|collection_name",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1848,11 +1841,11 @@ export const components: ComponentList[] = [
                             tag: "span",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1895,12 +1888,12 @@ export const components: ComponentList[] = [
                             objectFit: "cover",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                              alt: "name|title|tour_name|destination|collection_name",
+                            },
+                          },
 
                           children: [],
                         },
@@ -1929,11 +1922,11 @@ export const components: ComponentList[] = [
                             tag: "span",
                           },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                          runtime: {
+                            columnMap: {
+                              text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                            },
+                          },
 
                           children: [],
                         },
@@ -2022,8 +2015,8 @@ export const components: ComponentList[] = [
               layout: {
                 width: { value: 100, unit: "%" },
                 height: { value: 210, unit: "px" },
-                display: "flex",
-                flexDirection: "row",
+                display: "grid",
+                columns: 3,
                 gap: 12,
                 overflow: "hidden",
               },
@@ -3094,11 +3087,11 @@ export const components: ComponentList[] = [
                 tag: "h2",
               },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+              runtime: {
+                columnMap: {
+                  text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                },
+              },
 
               children: [],
             },
@@ -3601,11 +3594,11 @@ export const components: ComponentList[] = [
                 tag: "h2",
               },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+              runtime: {
+                columnMap: {
+                  text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                },
+              },
 
               children: [],
             },
@@ -3619,10 +3612,8 @@ export const components: ComponentList[] = [
               layout: {
                 width: { value: 100, unit: "%" },
 
-                display: "flex",
-                flexDirection: "row",
-
-                wrap: true,
+                display: "grid",
+                columns: 2,
                 gap: 32,
               },
 
@@ -4120,12 +4111,12 @@ export const components: ComponentList[] = [
                     objectFit: "cover",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                      alt: "name|title|tour_name|destination|collection_name",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4177,11 +4168,11 @@ export const components: ComponentList[] = [
                     tag: "h2",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4207,11 +4198,11 @@ export const components: ComponentList[] = [
                     tag: "span",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          text: "price|starting_price|package_price|rate|from_price",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      text: "price|starting_price|package_price|rate|from_price",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4374,12 +4365,12 @@ export const components: ComponentList[] = [
                     objectFit: "cover",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                      alt: "name|title|tour_name|destination|collection_name",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4424,12 +4415,12 @@ export const components: ComponentList[] = [
                     objectFit: "cover",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                      alt: "name|title|tour_name|destination|collection_name",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4459,11 +4450,11 @@ export const components: ComponentList[] = [
                     tag: "span",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4493,11 +4484,11 @@ export const components: ComponentList[] = [
                     tag: "span",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          text: "price|starting_price|package_price|rate|from_price",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      text: "price|starting_price|package_price|rate|from_price",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4603,11 +4594,11 @@ export const components: ComponentList[] = [
                 tag: "h2",
               },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+              runtime: {
+                columnMap: {
+                  text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                },
+              },
 
               children: [],
             },
@@ -4650,12 +4641,12 @@ export const components: ComponentList[] = [
                     objectFit: "cover",
                   },
 
-                      runtime: {
-                        columnMap: {
-                          src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
-                          alt: "name|title|tour_name|destination|collection_name",
-                        },
-                      },
+                  runtime: {
+                    columnMap: {
+                      src: "image|image_url|thumbnail|cover|tour_image|destination_image|collection_image",
+                      alt: "name|title|tour_name|destination|collection_name",
+                    },
+                  },
 
                   children: [],
                 },
@@ -4823,11 +4814,11 @@ export const components: ComponentList[] = [
                 tag: "h2",
               },
 
-                      runtime: {
-                        columnMap: {
-                          text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
-                        },
-                      },
+              runtime: {
+                columnMap: {
+                  text: "name|title|tour_name|destination|package_name|collection_name|travel_style",
+                },
+              },
 
               children: [],
             },
@@ -4842,10 +4833,8 @@ export const components: ComponentList[] = [
                 width: { value: 100, unit: "%" },
                 height: { value: 360, unit: "px" },
 
-                display: "flex",
-                flexDirection: "row",
-
-                alignItems: "start",
+                display: "grid",
+                columns: 3,
 
                 gap: 24,
                 overflow: "hidden",
@@ -5655,7 +5644,10 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
+                      props: {
+                        text: "Travel Guide   |   TrailNest",
+                        tag: "span",
+                      },
                       children: [],
                     },
                     {
@@ -5740,7 +5732,10 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
+                      props: {
+                        text: "Travel Guide   |   TrailNest",
+                        tag: "span",
+                      },
                       children: [],
                     },
                     {
@@ -5825,7 +5820,10 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
+                      props: {
+                        text: "Travel Guide   |   TrailNest",
+                        tag: "span",
+                      },
                       children: [],
                     },
                     {
@@ -5910,7 +5908,10 @@ export const components: ComponentList[] = [
                         lineHeight: 1.2,
                         textAlign: "left",
                       },
-                      props: { text: "Travel Guide   |   TrailNest", tag: "span" },
+                      props: {
+                        text: "Travel Guide   |   TrailNest",
+                        tag: "span",
+                      },
                       children: [],
                     },
                     {
@@ -6365,8 +6366,8 @@ export const components: ComponentList[] = [
                 width: { value: 100, unit: "%" },
                 height: { value: 360, unit: "px" },
 
-                display: "flex",
-                flexDirection: "row",
+                display: "grid",
+                columns: 3,
 
                 gap: 12,
               },
@@ -7494,7 +7495,10 @@ export const components: ComponentList[] = [
                   id: "compare_body",
                   type: "Text",
                   parentId: "compare_text",
-                  props: { text: "Compare culture, coast, wildlife, and hill-country experiences", tag: "p" },
+                  props: {
+                    text: "Compare culture, coast, wildlife, and hill-country experiences",
+                    tag: "p",
+                  },
                   layout: {},
                   style: {
                     fontSize: 13,

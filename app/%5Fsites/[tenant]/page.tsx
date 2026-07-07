@@ -1,5 +1,7 @@
 import SitePageClient from "./SitePageClient";
 import CustomerIntakePortal from "./CustomerIntakePortal";
+import TenantBusinessPortal from "./TenantBusinessPortal";
+import TenantCustomerAuthPage from "./TenantCustomerAuthPage";
 import { ComponentNode } from "@/app/designer/[tenant]/widgets/palette/types";
 
 type PageSchema = {
@@ -31,6 +33,21 @@ const normalizePath = (value: string | string[] | undefined) => {
   }
 
   return trimmed.replace(/^\/+/, "").replace(/\/+$/, "") || "home";
+};
+
+const businessRouteRoots = new Set([
+  "destinations",
+  "packages",
+  "services",
+  "activities",
+  "customer",
+  "booking",
+  "contact",
+]);
+
+const isBusinessRoute = (path: string) => {
+  const root = path.split("/").filter(Boolean)[0] ?? "";
+  return businessRouteRoots.has(root);
 };
 
 const resolveSchema = (record?: PageRecord | null): PageSchema | null => {
@@ -135,6 +152,19 @@ export default async function Site({ params, searchParams }: Props) {
       : resolvedSearchParams?.token;
 
     return <CustomerIntakePortal tenant={resolvedParams.tenant} token={token} />;
+  }
+
+  if (path === "signin" || path === "signup") {
+    return (
+      <TenantCustomerAuthPage
+        tenant={resolvedParams.tenant}
+        mode={path === "signin" ? "signin" : "signup"}
+      />
+    );
+  }
+
+  if (isBusinessRoute(path)) {
+    return <TenantBusinessPortal tenant={resolvedParams.tenant} path={path} />;
   }
 
   const page = await fetchTenantPage(resolvedParams.tenant, path);

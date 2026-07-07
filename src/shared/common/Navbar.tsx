@@ -8,18 +8,25 @@ import Container from "../ui/Container";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../redux/store/authSlice";
-import { useAppSelector } from "../redux/store/hooks";
+import type { AppDispatch, RootState } from "../redux/store";
 
 export const Navbar = () => {
-  const dispatch = useDispatch();
-  
-  const status = useSelector((state: any) => state.auth.authStatus);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const status = useSelector((state: RootState) => state.auth.authStatus);
   const [open, setOpen] = useState(false); // mobile menu
   const [userMenuOpen, setUserMenuOpen] = useState(false); // user dropdown
 
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const isAuthenticated = status === "authenticated";
+  const publicLinks = [
+    { href: "/destinations", label: "Destinations" },
+    { href: "/packages", label: "Packages" },
+    { href: "/services", label: "Services" },
+    { href: "/activities", label: "Activities" },
+    { href: "/contact", label: "Contact" },
+  ];
 
   // Close menus on ESC
   useEffect(() => {
@@ -60,7 +67,14 @@ export const Navbar = () => {
   const handleLogout = async () => {
     setUserMenuOpen(false);
     setOpen(false);
-    dispatch(logout() as any);
+    try {
+      await dispatch(logout({ redirectTo: "/SignIn" })).unwrap();
+      if (typeof window !== "undefined") {
+        window.location.assign("/SignIn");
+      }
+    } catch {
+      // keep the existing UI state; auth slice already records the failure
+    }
   };
 
   return (
@@ -79,12 +93,11 @@ export const Navbar = () => {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-2 sm:flex sm:gap-3">
-            <a className="text-sm hover:underline" href="#">
-              Docs
-            </a>
-            <a className="text-sm hover:underline" href="#">
-              Pricing
-            </a>
+            {publicLinks.map((item) => (
+              <Link key={item.href} className="text-sm hover:underline" href={item.href}>
+                {item.label}
+              </Link>
+            ))}
 
             {/* <ToggleTheme tenantDefault={modeDefault}/> */}
 
@@ -131,14 +144,17 @@ export const Navbar = () => {
             ) : (
               <>
                 <Link
-                  href={"/SignIn"}
+                  href="/SignIn"
                   className="rounded-md px-3 py-2 text-sm text-center font-semibold text-primary border border-primary"
                 >
                   Sign in
                 </Link>
-                <button className="rounded-md bg-primary px-3 py-2 text-sm text-center font-semibold text-white">
+                <Link
+                  href="/SignUp"
+                  className="rounded-md bg-primary px-3 py-2 text-sm text-center font-semibold text-white"
+                >
                   Sign up
-                </button>
+                </Link>
               </>
             )}
           </nav>
@@ -179,20 +195,16 @@ export const Navbar = () => {
               </div>
 
               <nav className="flex h-[calc(100%-3.5rem)] flex-col gap-1 px-4 py-4">
-                <a
-                  className="w-full rounded-lg px-3 py-3 text-sm hover:bg-muted"
-                  href="#"
-                  onClick={() => setOpen(false)}
-                >
-                  Docs
-                </a>
-                <a
-                  className="w-full rounded-lg px-3 py-3 text-sm hover:bg-muted"
-                  href="#"
-                  onClick={() => setOpen(false)}
-                >
-                  Pricing
-                </a>
+                {publicLinks.map((item) => (
+                  <Link
+                    key={item.href}
+                    className="w-full rounded-lg px-3 py-3 text-sm hover:bg-muted"
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
 
                 <div className="my-3 h-px bg-border" />
 
@@ -202,18 +214,19 @@ export const Navbar = () => {
 
                 <div className="mt-auto grid gap-2 pt-4">
                   <Link
-                    href={"/SignIn"}
+                    href="/SignIn"
                     className="w-full rounded-lg px-3 py-3 border border-primary text-sm text-center font-semibold text-primary hover:bg-muted"
                     onClick={() => setOpen(false)}
                   >
                     Sign in
                   </Link>
-                  <button
+                  <Link
+                    href="/SignUp"
                     className="w-full rounded-lg bg-primary px-3 py-3 text-sm text-center font-semibold text-white"
                     onClick={() => setOpen(false)}
                   >
                     Sign up
-                  </button>
+                  </Link>
                 </div>
               </nav>
             </div>

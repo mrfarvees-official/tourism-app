@@ -24,7 +24,21 @@ export function AuthBootstrapper() {
 
   const isPublicTenantPath = (value: string) => {
     const normalized = (value || "/").toLowerCase();
-    return normalized === "/" || normalized === "/customer-intake";
+    const root = normalized.split("/").filter(Boolean)[0] ?? "";
+
+    return (
+      normalized === "/" ||
+      normalized === "/customer-intake" ||
+      [
+        "destinations",
+        "packages",
+        "services",
+        "activities",
+        "contact",
+        "booking",
+        "customer",
+      ].includes(root)
+    );
   };
 
   useEffect(() => {
