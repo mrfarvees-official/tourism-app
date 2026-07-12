@@ -364,6 +364,7 @@ function getTenantKeyFromLocation(): string | null {
   if (typeof window === "undefined") return null;
   const parts = window.location.pathname.split("/").filter(Boolean);
   if (parts[0] === "admin" || parts[0] === "designer") return parts[1] ?? null;
+  if (parts[0] === "sites") return parts[1] ?? null;
   if (parts[0] === "_sites") return parts[1] ?? null;
   const hostParts = window.location.hostname.split(".").filter(Boolean);
   if (hostParts.length > 2) {
@@ -384,6 +385,38 @@ function getTenantKeyFromLocation(): string | null {
     }
   }
   return null;
+}
+
+function getTenantBasePath(tenantKey: string | null): string {
+  if (typeof window === "undefined" || !tenantKey) {
+    return "";
+  }
+
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  if ((parts[0] === "sites" || parts[0] === "_sites") && parts[1] === tenantKey) {
+    return `/sites/${tenantKey}`;
+  }
+
+  return "";
+}
+
+function prefixTenantBasePath(basePath: string, href: string): string {
+  if (!basePath) {
+    return href;
+  }
+
+  if (
+    /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(href) ||
+    href.startsWith("/api/") ||
+    href.startsWith("/_next/") ||
+    href.startsWith("/sites/") ||
+    href.startsWith("/_sites/")
+  ) {
+    return href;
+  }
+
+  const normalizedHref = href.startsWith("/") ? href : `/${href}`;
+  return `${basePath}${normalizedHref}`;
 }
 
 function buildTargetEndpoint({
@@ -1521,7 +1554,7 @@ function RenderComponentInner({
       const resolvedText = resolveValue("text", text);
       const resolvedSrc = resolveValue("src", src);
       const resolvedImageSrc = resolveImageSrc(resolvedSrc);
-      const resolvedHref = resolveValue("href", href);
+      const resolvedHref = prefixTenantBasePath(getTenantBasePath(tenantKey), resolveValue("href", href) ?? "#");
       const resolvedAlt = resolveValue("alt", component.name ?? "image");
       const isHeaderAuthLink =
         section === "header" && isAuthLinkLabel(resolvedText ?? text ?? "");

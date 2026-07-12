@@ -67,6 +67,29 @@ function normalizeTenantScopedAppPath(pathname: string, tenant: string) {
   return null;
 }
 
+function rewriteTenantSitePath(req: NextRequest, tenant: string, pathname: string) {
+  const parts = pathname.split("/").filter(Boolean);
+  const basePath = parts[0]?.toLowerCase();
+
+  if (basePath !== "sites" && basePath !== "_sites") {
+    return null;
+  }
+
+  if (parts[1]?.toLowerCase() !== tenant) {
+    return null;
+  }
+
+  const rewriteUrl = req.nextUrl.clone();
+  rewriteUrl.pathname = `/_sites/${tenant}`;
+
+  const tail = parts.slice(2).join("/");
+  if (tail) {
+    rewriteUrl.searchParams.set("path", `/${tail}`);
+  }
+
+  return NextResponse.rewrite(rewriteUrl);
+}
+
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -83,10 +106,19 @@ export function proxy(req: NextRequest) {
   }
 
   const hostname = getHostname(req);
-  const tenant = extractSubdomain(hostname);
+  const pathParts = pathname.split("/").filter(Boolean);
+  const tenantFromPath = pathParts[0]?.toLowerCase() === "sites"
+    ? pathParts[1]?.toLowerCase() ?? null
+    : null;
+  const tenant = tenantFromPath ?? extractSubdomain(hostname);
 
   if (!tenant) {
     return NextResponse.next();
+  }
+
+  const tenantSiteRewrite = rewriteTenantSitePath(req, tenant, pathname);
+  if (tenantSiteRewrite) {
+    return tenantSiteRewrite;
   }
 
   const rewriteUrl = req.nextUrl.clone();

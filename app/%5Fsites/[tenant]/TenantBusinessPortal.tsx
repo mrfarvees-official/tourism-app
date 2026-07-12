@@ -91,8 +91,8 @@ function getTenantBasePath(tenant: string) {
   }
 
   const parts = window.location.pathname.split("/").filter(Boolean);
-  if (parts[0] === "_sites" && parts[1] === tenant) {
-    return `/_sites/${tenant}`;
+  if ((parts[0] === "sites" || parts[0] === "_sites") && parts[1] === tenant) {
+    return `/sites/${tenant}`;
   }
 
   return "";
