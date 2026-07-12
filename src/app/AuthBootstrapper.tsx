@@ -30,6 +30,7 @@ export function AuthBootstrapper() {
       normalized === "/" ||
       normalized === "/customer-intake" ||
       [
+        "sites",
         "destinations",
         "packages",
         "services",
@@ -59,7 +60,8 @@ export function AuthBootstrapper() {
     if (redirected.current) return;
 
     const normalizedPath = (pathname || "/").toLowerCase();
-    const isTenantPath = normalizedPath.startsWith("/_sites/");
+    const isTenantPath =
+      normalizedPath.startsWith("/_sites/") || normalizedPath.startsWith("/sites/");
     const isBaseHome = isBaseHost() && normalizedPath === "/";
     const isAuthPage = normalizedPath === "/signin" || normalizedPath === "/signup";
     const isPublicRoute = isPublicPath(normalizedPath) || isTenantPath;

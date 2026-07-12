@@ -93,6 +93,24 @@ function rewriteTenantSitePath(req: NextRequest, tenant: string, pathname: strin
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  const pathParts = pathname.split("/").filter(Boolean);
+  const isTenantSitePath =
+    (pathParts[0]?.toLowerCase() === "sites" || pathParts[0]?.toLowerCase() === "_sites") &&
+    !!pathParts[1];
+
+  if (isTenantSitePath) {
+    const tenant = pathParts[1].toLowerCase();
+    const rewriteUrl = req.nextUrl.clone();
+    rewriteUrl.pathname = `/_sites/${tenant}`;
+
+    const tail = pathParts.slice(2).join("/");
+    if (tail) {
+      rewriteUrl.searchParams.set("path", `/${tail}`);
+    }
+
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
@@ -106,7 +124,6 @@ export function proxy(req: NextRequest) {
   }
 
   const hostname = getHostname(req);
-  const pathParts = pathname.split("/").filter(Boolean);
   const tenantFromPath = pathParts[0]?.toLowerCase() === "sites"
     ? pathParts[1]?.toLowerCase() ?? null
     : null;
@@ -114,11 +131,6 @@ export function proxy(req: NextRequest) {
 
   if (!tenant) {
     return NextResponse.next();
-  }
-
-  const tenantSiteRewrite = rewriteTenantSitePath(req, tenant, pathname);
-  if (tenantSiteRewrite) {
-    return tenantSiteRewrite;
   }
 
   const rewriteUrl = req.nextUrl.clone();

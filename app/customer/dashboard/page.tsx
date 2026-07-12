@@ -126,6 +126,14 @@ function formatMoney(value: number, currency: string) {
   }).format(value);
 }
 
+function buildTenantHref(tenantKey: string, href: string) {
+  if (!href.startsWith("/")) {
+    return href;
+  }
+
+  return `/sites/${tenantKey}${href}`;
+}
+
 function badgeClass(status: string) {
   switch (status) {
     case "confirmed":
@@ -317,14 +325,14 @@ export default function CustomerDashboardPage() {
 
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/booking/start"
+              href={buildTenantHref(tenantKey, "/booking/start")}
               className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
             >
               Start new booking
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/customer/bookings"
+              href={buildTenantHref(tenantKey, "/customer/bookings")}
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
             >
               View bookings
@@ -397,7 +405,7 @@ export default function CustomerDashboardPage() {
                 </div>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
-                    href={`/customer/bookings/${dashboard.nextTrip.reference}`}
+                    href={buildTenantHref(tenantKey, `/customer/bookings/${dashboard.nextTrip.reference}`)}
                     className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white"
                   >
                     Open booking
@@ -479,7 +487,7 @@ export default function CustomerDashboardPage() {
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">Bookings</p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-title">Recent trips</h2>
             </div>
-            <Link href="/customer/bookings" className="text-sm font-semibold text-primary">
+            <Link href={buildTenantHref(tenantKey, "/customer/bookings")} className="text-sm font-semibold text-primary">
               View all
             </Link>
           </div>

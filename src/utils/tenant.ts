@@ -109,7 +109,7 @@ export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path
   const currentPath = window.location.pathname;
   const canAccessAdmin = hasAdminAccess(user);
   const isAdminPath = currentPath.startsWith("/admin");
-  const isTenantPath = currentPath.startsWith("/_sites/");
+  const isTenantPath = currentPath.startsWith("/_sites/") || currentPath.startsWith("/sites/");
 
   // allow designer tenant pages to stay
   if (currentPath.startsWith("/designer/")) return;
@@ -165,7 +165,7 @@ export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   const target = USE_SUBDOMAIN_ROUTING
     ? `${window.location.protocol}//${tenantKey}.${ROOT_DOMAIN}${portPart()}${cleanPath}`
-    : `${window.location.origin}/_sites/${tenantKey}${cleanPath}`;
+    : `${window.location.origin}/sites/${tenantKey}${cleanPath}`;
 
   if (window.location.href !== target) {
     window.location.replace(target);

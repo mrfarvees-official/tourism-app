@@ -35,7 +35,7 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
 
     const pathParts = window.location.pathname.split("/").filter(Boolean);
 
-    if (pathParts[0] === "_sites" && pathParts[1]) return pathParts[1];
+    if ((pathParts[0] === "_sites" || pathParts[0] === "sites") && pathParts[1]) return pathParts[1];
     if (pathParts[0] === "admin" && pathParts[1]) return pathParts[1];
 
     return "";
