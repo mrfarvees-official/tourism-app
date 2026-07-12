@@ -531,7 +531,13 @@ function useRepeatableData({
           return true;
         }
 
-        return sourceKeys.has(snapshot.content_schema_menu.trim());
+        const snapshotMenu = normalizePublicResourceKey(
+          snapshot.content_schema_menu.trim(),
+        );
+        return (
+          sourceKeys.has(snapshot.content_schema_menu.trim()) ||
+          (snapshotMenu ? sourceKeys.has(snapshotMenu) : false)
+        );
       }) ?? null
     );
   }, [
@@ -638,7 +644,9 @@ function useRepeatableData({
               payload)
             : payload;
         const scoped = dataPath
-          ? (readPath(basePayload, dataPath) ?? readPath(payload, dataPath))
+          ? (readPath(basePayload, dataPath) ??
+            readPath(payload, dataPath) ??
+            basePayload)
           : basePayload;
         const policyCandidate = policyPath
           ? readPath(basePayload, policyPath)

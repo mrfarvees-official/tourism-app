@@ -150,19 +150,19 @@ const buildDestinationSnapshots = (items: DestinationRow[]): ContentDataSnapshot
 
   return [
     {
-      content_schema_menu: "destination",
+      content_schema_menu: "destinations",
       data: {
         source: "destinations",
-        content_schema_menu: "destination",
+        content_schema_menu: "destinations",
         total: items.length,
       },
       children,
     },
     {
-      content_schema_menu: "destination_collection",
+      content_schema_menu: "destinations",
       data: {
         source: "destinations",
-        content_schema_menu: "destination_collection",
+        content_schema_menu: "destinations",
         total: items.length,
       },
       children,
