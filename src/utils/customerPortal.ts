@@ -1,3 +1,5 @@
+import { USE_SUBDOMAIN_ROUTING } from "@/src/utils/tenant";
+
 type CustomerPortalSessionInput = {
   tenantKey: string;
   customerName?: string;
@@ -176,11 +178,11 @@ export function buildPublicTenantUrl(tenantKey: string, path: string, params?: R
     .trim();
   const appPort = (process.env.NEXT_PUBLIC_APP_PORT || "").trim();
 
-  if (!rootDomain) {
-    return `${window.location.origin}${suffix}`;
+  const reserved = new Set(["www", "api"]);
+  if (!rootDomain || !USE_SUBDOMAIN_ROUTING) {
+    return `${window.location.origin}/_sites/${tenantKey}${suffix}`;
   }
 
-  const reserved = new Set(["www", "api"]);
   if (reserved.has(tenantKey.toLowerCase())) {
     return `${window.location.origin}${suffix}`;
   }

@@ -20,6 +20,16 @@ const ROOT_DOMAIN = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || "")
 
 const APP_PORT = (process.env.NEXT_PUBLIC_APP_PORT || "").trim();
 
+function isIpLikeHost(value: string) {
+  return (
+    /^(\d{1,3}\.){3}\d{1,3}$/.test(value) ||
+    /^[0-9a-f:]+$/i.test(value) ||
+    value.includes(":")
+  );
+}
+
+export const USE_SUBDOMAIN_ROUTING = Boolean(ROOT_DOMAIN) && !isIpLikeHost(ROOT_DOMAIN);
+
 const RESERVED = new Set(
   (process.env.NEXT_PUBLIC_RESERVED_SUBDOMAINS || "www,api")
     .split(",")
@@ -57,11 +67,15 @@ export function hasAdminAccess(user: UserLike | null | undefined): boolean {
 }
 
 function getCustomerDashboardTarget() {
+  if (!USE_SUBDOMAIN_ROUTING) {
+    return `${window.location.origin}/customer/dashboard`;
+  }
+
   return `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}/customer/dashboard`;
 }
 
 function getSubdomain(hostname: string) {
-  if (!ROOT_DOMAIN) return null;
+  if (!USE_SUBDOMAIN_ROUTING) return null;
 
   if (hostname === ROOT_DOMAIN) return null;
 
@@ -83,7 +97,7 @@ function portPart() {
 
 export function isBaseHost() {
   if (typeof window === "undefined") return false;
-  if (!ROOT_DOMAIN) return false;
+  if (!ROOT_DOMAIN || !USE_SUBDOMAIN_ROUTING) return true;
 
   const host = window.location.hostname.toLowerCase();
   return host === ROOT_DOMAIN || host === `www.${ROOT_DOMAIN}`;
@@ -91,14 +105,11 @@ export function isBaseHost() {
 
 export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path = "/") {
   if (typeof window === "undefined") return;
-  if (!ROOT_DOMAIN) return;
-
-  const hostname = window.location.hostname.toLowerCase();
-  const sub = getSubdomain(hostname);
   const tenantKey = getTenantKey(user);
   const currentPath = window.location.pathname;
   const canAccessAdmin = hasAdminAccess(user);
   const isAdminPath = currentPath.startsWith("/admin");
+  const isTenantPath = currentPath.startsWith("/_sites/");
 
   // allow designer tenant pages to stay
   if (currentPath.startsWith("/designer/")) return;
@@ -118,7 +129,9 @@ export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path
   // non-customer/admin/owner -> tenant site
   if (canAccessAdmin) {
     const adminPath = tenantKey ? `/admin/${tenantKey}` : "/admin";
-    const adminTarget = `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}${adminPath}`;
+    const adminTarget = USE_SUBDOMAIN_ROUTING
+      ? `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}${adminPath}`
+      : `${window.location.origin}${adminPath}`;
 
     if (window.location.href !== adminTarget) {
       window.location.replace(adminTarget);
@@ -136,7 +149,12 @@ export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path
     return;
   }
 
+  // already on tenant page, stay there
+  if (isTenantPath) return;
+
   // already on tenant subdomain, stay there
+  const hostname = window.location.hostname.toLowerCase();
+  const sub = getSubdomain(hostname);
   if (sub) return;
 
   // only redirect from base host
@@ -145,7 +163,9 @@ export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path
   if (RESERVED.has(tenantKey.toLowerCase())) return;
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  const target = `${window.location.protocol}//${tenantKey}.${ROOT_DOMAIN}${portPart()}${cleanPath}`;
+  const target = USE_SUBDOMAIN_ROUTING
+    ? `${window.location.protocol}//${tenantKey}.${ROOT_DOMAIN}${portPart()}${cleanPath}`
+    : `${window.location.origin}/_sites/${tenantKey}${cleanPath}`;
 
   if (window.location.href !== target) {
     window.location.replace(target);
@@ -154,10 +174,11 @@ export function redirectToTenantIfNeeded(user: UserLike | null | undefined, path
 
 export function redirectToBase(path = "/") {
   if (typeof window === "undefined") return;
-  if (!ROOT_DOMAIN) return;
 
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  const target = `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}${cleanPath}`;
+  const target = USE_SUBDOMAIN_ROUTING
+    ? `${window.location.protocol}//${ROOT_DOMAIN}${portPart()}${cleanPath}`
+    : `${window.location.origin}${cleanPath}`;
 
   if (window.location.href !== target) {
     window.location.replace(target);
