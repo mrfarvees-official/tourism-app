@@ -85,6 +85,32 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 const resolveImage = (item?: TourismItem & { image?: string; imageUrl?: string; image_url?: string }) =>
   item?.image ?? item?.imageUrl ?? item?.image_url ?? "/no-image.jpg";
 
+function getTenantBasePath(tenant: string) {
+  if (typeof window === "undefined" || !tenant) {
+    return "";
+  }
+
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  if (parts[0] === "_sites" && parts[1] === tenant) {
+    return `/_sites/${tenant}`;
+  }
+
+  return "";
+}
+
+function prefixTenantBasePath(basePath: string, href: string) {
+  if (!basePath) {
+    return href;
+  }
+
+  if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(href)) {
+    return href;
+  }
+
+  const normalizedHref = href.startsWith("/") ? href : `/${href}`;
+  return `${basePath}${normalizedHref}`;
+}
+
 const unwrapPayload = (value: unknown): unknown => {
   let current = value;
 
@@ -211,7 +237,15 @@ function Status({ value }: { value: string }) {
   );
 }
 
-function ItemGrid({ title, items }: { title: string; items: TourismItem[] }) {
+function ItemGrid({
+  title,
+  items,
+  basePath,
+}: {
+  title: string;
+  items: TourismItem[];
+  basePath: string;
+}) {
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
       <div className="mb-5 flex items-end justify-between gap-4">
@@ -223,7 +257,7 @@ function ItemGrid({ title, items }: { title: string; items: TourismItem[] }) {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <Link
-            href={`/${title.toLowerCase()}/${item.slug}`}
+            href={prefixTenantBasePath(basePath, `/${title.toLowerCase()}/${item.slug}`)}
             key={item.id}
             className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
           >
@@ -253,7 +287,7 @@ function ItemGrid({ title, items }: { title: string; items: TourismItem[] }) {
   );
 }
 
-function normalizeDestinationRecord(item: Record<string, unknown>): DestinationRecord {
+function normalizeDestinationRecord(item: Record<string, unknown>, basePath: string): DestinationRecord {
   const getString = (key: string, fallback = "") => {
     const value = item[key];
     return typeof value === "string" ? value : fallback;
@@ -285,7 +319,10 @@ function normalizeDestinationRecord(item: Record<string, unknown>): DestinationR
     image: getString("image", getString("imageUrl", getString("image_url", "/no-image.jpg"))),
     imageUrl: getString("imageUrl", getString("image_url", getString("image", "/no-image.jpg"))),
     image_url: getString("image_url", getString("imageUrl", getString("image", "/no-image.jpg"))),
-    href: getString("href", `/destinations/${getString("slug", `destination-${item.id ?? "item"}`)}`),
+    href: prefixTenantBasePath(
+      basePath,
+      getString("href", `/destinations/${getString("slug", `destination-${item.id ?? "item"}`)}`),
+    ),
     meta: getString("meta"),
     fields,
     allowed_fields: allowedFields,
@@ -294,6 +331,7 @@ function normalizeDestinationRecord(item: Record<string, unknown>): DestinationR
 
 function DestinationGrid({ tenant }: { tenant: string }) {
   const [items, setItems] = useState<DestinationRecord[]>([]);
+  const basePath = getTenantBasePath(tenant);
 
   useEffect(() => {
     let active = true;
@@ -308,7 +346,7 @@ function DestinationGrid({ tenant }: { tenant: string }) {
             ? payload.items
             : [];
         if (active) {
-          setItems(records.map((item: Record<string, unknown>) => normalizeDestinationRecord(item)));
+          setItems(records.map((item: Record<string, unknown>) => normalizeDestinationRecord(item, basePath)));
         }
       } catch {
         if (active) {
@@ -322,7 +360,7 @@ function DestinationGrid({ tenant }: { tenant: string }) {
     return () => {
       active = false;
     };
-  }, [tenant]);
+  }, [basePath, tenant]);
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
@@ -348,6 +386,7 @@ function DestinationGrid({ tenant }: { tenant: string }) {
 
 function ConnectedItemGrid({ tenant, section }: { tenant: string; section: SectionKey }) {
   const [items, setItems] = useState<TourismItem[]>([]);
+  const basePath = getTenantBasePath(tenant);
 
   useEffect(() => {
     let active = true;
@@ -366,11 +405,12 @@ function ConnectedItemGrid({ tenant, section }: { tenant: string; section: Secti
     };
   }, [section, tenant]);
 
-  return <ItemGrid title={sections[section].title} items={items} />;
+  return <ItemGrid title={sections[section].title} items={items} basePath={basePath} />;
 }
 
 function Detail({ tenant, section, slug }: { tenant: string; section: SectionKey; slug: string }) {
   const [items, setItems] = useState<TourismItem[]>([]);
+  const basePath = getTenantBasePath(tenant);
 
   useEffect(() => {
     let active = true;
@@ -390,13 +430,15 @@ function Detail({ tenant, section, slug }: { tenant: string; section: SectionKey
   }, [section, tenant]);
 
   const item = items.find((row) => row.slug === slug) ?? items[0];
-  const bookingHref = item?.slug ? `/booking/start?item=${encodeURIComponent(item.slug)}` : "/booking/start";
+  const bookingHref = item?.slug
+    ? prefixTenantBasePath(basePath, `/booking/start?item=${encodeURIComponent(item.slug)}`)
+    : prefixTenantBasePath(basePath, "/booking/start");
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <main>
-          <Link href={`/${section}`} className="text-sm font-semibold text-slate-500 hover:text-slate-950">
+          <Link href={prefixTenantBasePath(basePath, `/${section}`)} className="text-sm font-semibold text-slate-500 hover:text-slate-950">
             Back to {sections[section].title}
           </Link>
           <h1 className="mt-4 text-4xl font-semibold text-slate-950">{item?.title ?? "Details"}</h1>
@@ -459,6 +501,7 @@ function CustomerDashboard() {
 }
 
 function BookingStart({ tenant }: { tenant: string }) {
+  const basePath = getTenantBasePath(tenant);
   const [items, setItems] = useState<{
     destinations: TourismItem[];
     packages: TourismItem[];
@@ -521,7 +564,7 @@ function BookingStart({ tenant }: { tenant: string }) {
             <label className="grid gap-2 text-sm font-medium">Travelers<input type="number" min="1" defaultValue="2" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
             <label className="grid gap-2 text-sm font-medium lg:col-span-2">Notes<textarea className="min-h-28 rounded-xl border border-slate-300 px-3 py-2" /></label>
             <div className="lg:col-span-2">
-              <Link href="/booking/confirmation" className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
+              <Link href={prefixTenantBasePath(basePath, "/booking/confirmation")} className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
                 Submit booking request
               </Link>
             </div>

@@ -377,6 +377,12 @@ function getTenantKeyFromLocation(): string | null {
       return tenantKey;
     }
   }
+  if (hostParts.length === 2 && hostParts[1] === "localhost") {
+    const tenantKey = hostParts[0];
+    if (tenantKey && tenantKey !== "www" && tenantKey !== "127") {
+      return tenantKey;
+    }
+  }
   return null;
 }
 
