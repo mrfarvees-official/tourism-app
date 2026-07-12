@@ -387,7 +387,7 @@ function getTenantKeyFromLocation(): string | null {
   return null;
 }
 
-function getTenantBasePath(tenantKey: string | null): string {
+function getTenantBasePath(tenantKey: string | null | undefined): string {
   if (typeof window === "undefined" || !tenantKey) {
     return "";
   }
