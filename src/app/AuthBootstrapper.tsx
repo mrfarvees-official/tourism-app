@@ -22,7 +22,7 @@ export function AuthBootstrapper() {
   const redirected = useRef(false);
   const markedReady = useRef(false);
 
-  const isPublicTenantPath = (value: string) => {
+  const isPublicPath = (value: string) => {
     const normalized = (value || "/").toLowerCase();
     const root = normalized.split("/").filter(Boolean)[0] ?? "";
 
@@ -58,19 +58,17 @@ export function AuthBootstrapper() {
     if (!meChecked) return;
     if (redirected.current) return;
 
-    const isTenantSubdomain = typeof window !== "undefined" && !isBaseHost();
     const normalizedPath = (pathname || "/").toLowerCase();
     const isBaseHome = isBaseHost() && normalizedPath === "/";
     const isAuthPage = normalizedPath === "/signin" || normalizedPath === "/signup";
+    const isPublicRoute = isPublicPath(normalizedPath);
 
-    // allow tenant root to stay unauthenticated
-    if ((authStatus !== "authenticated" || !user)) {
-      if (isTenantSubdomain && isPublicTenantPath(normalizedPath)) return;
+    // allow public site routes to stay unauthenticated
+    if (authStatus !== "authenticated" || !user) {
+      if (isPublicRoute) return;
 
-      if (!isAuthPage) {
-        redirected.current = true;
-        router.replace("/SignIn");
-      }
+      redirected.current = true;
+      router.replace("/SignIn");
       return;
     }
 

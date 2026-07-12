@@ -9,13 +9,9 @@ import { sitePage } from "@/app/designer/[tenant]/widgets/palette/data";
 import type { ComponentNode, DesignerState } from "@/app/designer/[tenant]/widgets/palette/types";
 import { DestinationCard } from "@/src/shared/components/tourism";
 import {
-  activities,
   bookings,
-  destinations,
   inquiries,
-  packages,
   reviews,
-  services,
   type TourismItem,
 } from "@/src/shared/tourism/demoData";
 import { http } from "@/src/api/config/http";
@@ -41,6 +37,8 @@ type DestinationRecord = TourismItem & {
   href?: string;
   meta?: string;
   image?: string;
+  imageUrl?: string;
+  image_url?: string;
   fields?: Record<string, unknown>;
   allowed_fields?: Array<{
     name: string;
@@ -51,11 +49,11 @@ type DestinationRecord = TourismItem & {
   }>;
 };
 
-const sections: Record<SectionKey, { title: string; items: TourismItem[] }> = {
-  destinations: { title: "Destinations", items: destinations },
-  packages: { title: "Packages", items: packages },
-  services: { title: "Services", items: services },
-  activities: { title: "Activities", items: activities },
+const sections: Record<SectionKey, { title: string }> = {
+  destinations: { title: "Destinations" },
+  packages: { title: "Packages" },
+  services: { title: "Services" },
+  activities: { title: "Activities" },
 };
 
 const fallbackSchema: PageSchema = {
@@ -83,6 +81,9 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 
   return value as Record<string, unknown>;
 };
+
+const resolveImage = (item?: TourismItem & { image?: string; imageUrl?: string; image_url?: string }) =>
+  item?.image ?? item?.imageUrl ?? item?.image_url ?? "/no-image.jpg";
 
 const unwrapPayload = (value: unknown): unknown => {
   let current = value;
@@ -122,6 +123,48 @@ const unwrapRecord = (value: unknown): PageRecord | null => {
 
   return null;
 };
+
+function readCollection(payload: unknown): TourismItem[] {
+  if (Array.isArray(payload)) {
+    return payload as TourismItem[];
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const record = payload as { data?: unknown; items?: unknown };
+  if (Array.isArray(record.data)) {
+    return record.data as TourismItem[];
+  }
+  if (Array.isArray(record.items)) {
+    return record.items as TourismItem[];
+  }
+
+  const nested = record.data && typeof record.data === "object" ? (record.data as { data?: unknown; items?: unknown }) : null;
+  if (nested) {
+    if (Array.isArray(nested.data)) {
+      return nested.data as TourismItem[];
+    }
+    if (Array.isArray(nested.items)) {
+      return nested.items as TourismItem[];
+    }
+  }
+
+  return [];
+}
+
+async function loadCollection(
+  tenant: string,
+  section: SectionKey,
+): Promise<TourismItem[]> {
+  try {
+    const response = await http.get(`/api/public/${tenant}/${section}`);
+    return readCollection(response.data?.data);
+  } catch {
+    return [];
+  }
+}
 
 function getApiOrigin() {
   return (process.env.NEXT_PUBLIC_API_ORIGIN ?? process.env.API_ORIGIN ?? "").replace(/\/+$/, "");
@@ -182,17 +225,27 @@ function ItemGrid({ title, items }: { title: string; items: TourismItem[] }) {
           <Link
             href={`/${title.toLowerCase()}/${item.slug}`}
             key={item.id}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+            className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg"
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="relative h-52 bg-slate-100">
+              <img
+                src={resolveImage(item)}
+                alt={item.title}
+                className="h-full w-full object-cover transition duration-700 hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+              <div className="absolute left-4 top-4">
+                <Status value={item.status} />
+              </div>
+            </div>
+            <div className="space-y-3 p-5">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">{item.title}</h2>
                 <p className="mt-1 text-sm font-medium text-slate-500">{item.subtitle}</p>
               </div>
-              <Status value={item.status} />
+              <p className="text-sm leading-6 text-slate-600">{item.description}</p>
+              {item.amount ? <p className="text-sm font-semibold text-slate-950">{item.amount}</p> : null}
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-600">{item.description}</p>
-            {item.amount ? <p className="mt-4 text-sm font-semibold text-slate-950">{item.amount}</p> : null}
           </Link>
         ))}
       </div>
@@ -229,7 +282,9 @@ function normalizeDestinationRecord(item: Record<string, unknown>): DestinationR
     description: getString("description"),
     status: getString("status", "active") as DestinationRecord["status"],
     amount: typeof item.amount === "string" ? item.amount : undefined,
-    image: getString("image", "/no-image.jpg"),
+    image: getString("image", getString("imageUrl", getString("image_url", "/no-image.jpg"))),
+    imageUrl: getString("imageUrl", getString("image_url", getString("image", "/no-image.jpg"))),
+    image_url: getString("image_url", getString("imageUrl", getString("image", "/no-image.jpg"))),
     href: getString("href", `/destinations/${getString("slug", `destination-${item.id ?? "item"}`)}`),
     meta: getString("meta"),
     fields,
@@ -238,7 +293,7 @@ function normalizeDestinationRecord(item: Record<string, unknown>): DestinationR
 }
 
 function DestinationGrid({ tenant }: { tenant: string }) {
-  const [items, setItems] = useState<DestinationRecord[]>(destinations as DestinationRecord[]);
+  const [items, setItems] = useState<DestinationRecord[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -253,11 +308,11 @@ function DestinationGrid({ tenant }: { tenant: string }) {
             ? payload.items
             : [];
         if (active) {
-          setItems(records.map((item) => normalizeDestinationRecord(item as Record<string, unknown>)));
+          setItems(records.map((item: Record<string, unknown>) => normalizeDestinationRecord(item)));
         }
       } catch {
         if (active) {
-          setItems(destinations as DestinationRecord[]);
+          setItems([]);
         }
       }
     };
@@ -275,7 +330,7 @@ function DestinationGrid({ tenant }: { tenant: string }) {
         <div>
           <h1 className="text-3xl font-semibold text-slate-950">Destinations</h1>
           <p className="mt-1 text-sm text-slate-600">
-            Hydrated from the tenant content schema and rendered with every allowed field.
+            {tenant.split('-').map((w) => w.replace(/^\w/, (char) => char.toUpperCase()))} all destionatons across Sri Lanka.
           </p>
         </div>
       </div>
@@ -292,23 +347,15 @@ function DestinationGrid({ tenant }: { tenant: string }) {
 }
 
 function ConnectedItemGrid({ tenant, section }: { tenant: string; section: SectionKey }) {
-  const fallback = sections[section].items;
-  const [items, setItems] = useState<TourismItem[]>(fallback);
+  const [items, setItems] = useState<TourismItem[]>([]);
 
   useEffect(() => {
     let active = true;
 
     const load = async () => {
-      try {
-        const response = await http.get(`/api/public/${tenant}/${section}`);
-        const payload = response.data?.data;
-        if (active && Array.isArray(payload)) {
-          setItems(payload as TourismItem[]);
-        }
-      } catch {
-        if (active) {
-          setItems(fallback);
-        }
+      const next = await loadCollection(tenant, section);
+      if (active) {
+        setItems(next);
       }
     };
 
@@ -317,13 +364,33 @@ function ConnectedItemGrid({ tenant, section }: { tenant: string; section: Secti
     return () => {
       active = false;
     };
-  }, [fallback, section, tenant]);
+  }, [section, tenant]);
 
   return <ItemGrid title={sections[section].title} items={items} />;
 }
 
-function Detail({ section, slug }: { section: SectionKey; slug: string }) {
-  const item = sections[section].items.find((row) => row.slug === slug) ?? sections[section].items[0];
+function Detail({ tenant, section, slug }: { tenant: string; section: SectionKey; slug: string }) {
+  const [items, setItems] = useState<TourismItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      const next = await loadCollection(tenant, section);
+      if (active) {
+        setItems(next);
+      }
+    };
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+  }, [section, tenant]);
+
+  const item = items.find((row) => row.slug === slug) ?? items[0];
+  const bookingHref = item?.slug ? `/booking/start?item=${encodeURIComponent(item.slug)}` : "/booking/start";
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
@@ -332,12 +399,21 @@ function Detail({ section, slug }: { section: SectionKey; slug: string }) {
           <Link href={`/${section}`} className="text-sm font-semibold text-slate-500 hover:text-slate-950">
             Back to {sections[section].title}
           </Link>
-          <h1 className="mt-4 text-4xl font-semibold text-slate-950">{item.title}</h1>
-          <p className="mt-2 text-base text-slate-600">{item.subtitle}</p>
-          <p className="mt-6 max-w-3xl text-sm leading-7 text-slate-700">{item.description}</p>
+          <h1 className="mt-4 text-4xl font-semibold text-slate-950">{item?.title ?? "Details"}</h1>
+          <p className="mt-2 text-base text-slate-600">{item?.subtitle ?? "Live content"}</p>
+          {item ? (
+            <div className="mt-6 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+              <img
+                src={resolveImage(item)}
+                alt={item.title}
+                className="h-[22rem] w-full object-cover"
+              />
+            </div>
+          ) : null}
+          <p className="mt-6 max-w-3xl text-sm leading-7 text-slate-700">{item?.description ?? "This item will load from the associated table."}</p>
           <div className="mt-6 flex items-center gap-3">
-            <Status value={item.status} />
-            {item.amount ? <span className="text-sm font-semibold text-slate-950">{item.amount}</span> : null}
+            {item ? <Status value={item.status} /> : null}
+            {item?.amount ? <span className="text-sm font-semibold text-slate-950">{item.amount}</span> : null}
           </div>
         </main>
         <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -345,7 +421,7 @@ function Detail({ section, slug }: { section: SectionKey; slug: string }) {
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Submit a booking request and the team will confirm availability and payment.
           </p>
-          <Link href={`/booking/start?item=${item.slug}`} className="mt-5 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
+          <Link href={bookingHref} className="mt-5 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
             Start booking
           </Link>
         </aside>
@@ -382,22 +458,94 @@ function CustomerDashboard() {
   );
 }
 
-function BookingStart() {
+function BookingStart({ tenant }: { tenant: string }) {
+  const [items, setItems] = useState<{
+    destinations: TourismItem[];
+    packages: TourismItem[];
+    services: TourismItem[];
+    activities: TourismItem[];
+  }>({
+    destinations: [],
+    packages: [],
+    services: [],
+    activities: [],
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      const [destinationsNext, packagesNext, servicesNext, activitiesNext] = await Promise.all([
+        loadCollection(tenant, "destinations"),
+        loadCollection(tenant, "packages"),
+        loadCollection(tenant, "services"),
+        loadCollection(tenant, "activities"),
+      ]);
+
+      if (active) {
+        setItems({
+          destinations: destinationsNext,
+          packages: packagesNext,
+          services: servicesNext,
+          activities: activitiesNext,
+        });
+      }
+    };
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+  }, [tenant]);
+
+  const destination = items.destinations[0];
+  const pkg = items.packages[0];
+  const service = items.services[0];
+  const activity = items.activities[0];
+
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
-      <h1 className="text-3xl font-semibold text-slate-950">Start booking</h1>
-      <form className="mt-6 grid gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm lg:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium">Full name<input className="rounded-md border border-slate-300 px-3 py-2" /></label>
-        <label className="grid gap-2 text-sm font-medium">Email<input type="email" className="rounded-md border border-slate-300 px-3 py-2" /></label>
-        <label className="grid gap-2 text-sm font-medium">Travel date<input type="date" className="rounded-md border border-slate-300 px-3 py-2" /></label>
-        <label className="grid gap-2 text-sm font-medium">Travelers<input type="number" min="1" defaultValue="2" className="rounded-md border border-slate-300 px-3 py-2" /></label>
-        <label className="grid gap-2 text-sm font-medium lg:col-span-2">Notes<textarea className="min-h-28 rounded-md border border-slate-300 px-3 py-2" /></label>
-        <div className="lg:col-span-2">
-          <Link href="/booking/confirmation" className="inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
-            Submit booking request
-          </Link>
+      <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Customer portal</p>
+          <h1 className="mt-3 text-4xl font-semibold text-slate-950">Start booking</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+            Start with the trip story, then capture the booking details. The flow below mirrors the public start booking page so customers and staff see the same context.
+          </p>
+
+          <form className="mt-6 grid gap-5 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-2">
+            <label className="grid gap-2 text-sm font-medium">Full name<input className="rounded-xl border border-slate-300 px-3 py-2" /></label>
+            <label className="grid gap-2 text-sm font-medium">Email<input type="email" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
+            <label className="grid gap-2 text-sm font-medium">Travel date<input type="date" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
+            <label className="grid gap-2 text-sm font-medium">Travelers<input type="number" min="1" defaultValue="2" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
+            <label className="grid gap-2 text-sm font-medium lg:col-span-2">Notes<textarea className="min-h-28 rounded-xl border border-slate-300 px-3 py-2" /></label>
+            <div className="lg:col-span-2">
+              <Link href="/booking/confirmation" className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
+                Submit booking request
+              </Link>
+            </div>
+          </form>
         </div>
-      </form>
+
+        <div className="space-y-4">
+          <div className="rounded-[2rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-lg">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/60">Trip preview</p>
+            <h2 className="mt-3 text-2xl font-semibold">A guided booking story</h2>
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              {destination?.description ?? "Live destination details will appear here."} {pkg?.description ?? "Live package details will appear here."}
+            </p>
+          </div>
+
+          {[destination, pkg, service, activity].map((item, index) => (
+            <div key={index} className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{item?.subtitle ?? "Loading"}</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950">{item?.title ?? "Live record"}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item?.description ?? "This card is sourced from the associated table."}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
@@ -405,10 +553,10 @@ function BookingStart() {
 function BookingConfirmation() {
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
         <Status value="pending" />
         <h1 className="mt-4 text-3xl font-semibold text-slate-950">Booking request received</h1>
-        <p className="mt-2 text-sm text-slate-600">Our team will contact you to confirm availability and payment.</p>
+        <p className="mt-2 text-sm text-slate-600">Our team will contact you to confirm availability, payment, and the final journey setup.</p>
         <dl className="mt-6 grid gap-3 sm:grid-cols-2">
           <div><dt className="text-xs uppercase text-slate-500">Reference</dt><dd className="font-semibold">TBK-2026-000001</dd></div>
           <div><dt className="text-xs uppercase text-slate-500">Status</dt><dd className="font-semibold">Pending</dd></div>
@@ -482,9 +630,9 @@ export default function TenantBusinessPortal({ tenant, path }: Props) {
       ) : null}
       {section === "destinations" && !slug ? <DestinationGrid tenant={resolvedTenant} /> : null}
       {section in sections && section !== "destinations" && !slug ? <ConnectedItemGrid tenant={tenant} section={section as SectionKey} /> : null}
-      {section in sections && slug ? <Detail section={section as SectionKey} slug={slug} /> : null}
+      {section in sections && slug ? <Detail tenant={resolvedTenant} section={section as SectionKey} slug={slug} /> : null}
       {section === "customer" ? <CustomerDashboard /> : null}
-      {section === "booking" && slug === "start" ? <BookingStart /> : null}
+      {section === "booking" && slug === "start" ? <BookingStart tenant={resolvedTenant} /> : null}
       {section === "booking" && slug === "confirmation" ? <BookingConfirmation /> : null}
       {section === "contact" ? <Contact /> : null}
       {schema.footer ? (

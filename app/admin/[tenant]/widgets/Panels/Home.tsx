@@ -18,7 +18,7 @@ export default function HomePanel({ tenant, dashboard, loading, onOpenContentStu
   const activity = dashboard?.activity ?? [];
 
   return (
-    <div className="min-h-[calc(100vh-2px)] bg-bg text-fg">
+    <div className="min-h-[calc(100vh-2px)] bg-white text-fg">
       <div className="mx-auto max-w-7xl p-6 lg:p-8">
         <div className="border-b border-border pb-6">
           <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.35em] text-muted">

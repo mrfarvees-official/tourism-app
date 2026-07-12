@@ -156,7 +156,7 @@ export default function CustomerDashboardCmsShell({ tenantKey, pageSlug = "custo
   }, [resolvedTenantKey]);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       {schema.header ? (
         <RenderComponent
           component={schema.header}
@@ -170,7 +170,7 @@ export default function CustomerDashboardCmsShell({ tenantKey, pageSlug = "custo
           contentDatas={contentDatas}
         />
       ) : null}
-      <div className="w-full">{children}</div>
+      <div className="flex w-full flex-1 flex-col">{children}</div>
       {schema.footer ? (
         <RenderComponent
           component={schema.footer}

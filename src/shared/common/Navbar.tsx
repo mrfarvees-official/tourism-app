@@ -80,7 +80,7 @@ export const Navbar = () => {
   return (
     <header className="w-full bg-nav text-fg boder border-b">
       <Container>
-        <div className="mx-auto flex h-14 items-center justify-between max-sm:px-4 sm:h-16">
+        <div className="mx-12 flex h-14 items-center justify-between max-sm:px-4 sm:h-16">
           {/* Brand */}
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-lg font-bold text-white">
@@ -93,11 +93,11 @@ export const Navbar = () => {
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-2 sm:flex sm:gap-3">
-            {publicLinks.map((item) => (
+            {/* {publicLinks.map((item) => (
               <Link key={item.href} className="text-sm hover:underline" href={item.href}>
                 {item.label}
               </Link>
-            ))}
+            ))} */}
 
             {/* <ToggleTheme tenantDefault={modeDefault}/> */}
 

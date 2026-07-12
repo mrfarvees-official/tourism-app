@@ -23,6 +23,11 @@ export const destinations: TourismItem[] = [
       region: "Central Province",
       best_for: "Heritage travel",
       highlights: "Rock fortress, village lunches, day tours",
+      story:
+        "Wake up near the ancient rock fortress, spend the morning with a local guide, and finish with a village lunch before a slow sunset drive through the paddy fields.",
+      pace: "Balanced",
+      best_time: "May to September",
+      experience: "Heritage, culture, and soft adventure",
     },
   },
   {
@@ -37,6 +42,11 @@ export const destinations: TourismItem[] = [
       region: "Uva Province",
       best_for: "Scenic trips",
       highlights: "Tea estates, train rides, viewpoints",
+      story:
+        "This is the hill-country chapter of the journey: train windows, tea terraces, waterfall stops, and boutique stays with long valley views.",
+      pace: "Leisurely",
+      best_time: "December to April",
+      experience: "Rail journeys, tea trails, and viewpoints",
     },
   },
   {
@@ -51,6 +61,11 @@ export const destinations: TourismItem[] = [
       region: "Southern Province",
       best_for: "Beach escapes",
       highlights: "Whale watching, sunsets, seafood",
+      story:
+        "The coast closes the trip with ocean light, seafood dinners, and a chance to swap the road for a boat before heading back inland.",
+      pace: "Relaxed",
+      best_time: "November to April",
+      experience: "Beach stays and marine experiences",
     },
   },
 ];
@@ -64,6 +79,14 @@ export const packages: TourismItem[] = [
     description: "Culture, tea country, wildlife, and coast in one practical itinerary.",
     status: "active",
     amount: "LKR 185,000",
+    fields: {
+      story:
+        "Built for travelers who want one clean route with cultural depth, scenic travel, and enough breathing room to enjoy each stop instead of rushing through it.",
+      includes: "Private transfers, guide support, selected stays",
+      route: "Sigiriya, Kandy, Ella, Mirissa",
+      pace: "Comfortable",
+      travelers: "Best for couples, families, and first-time visitors",
+    },
   },
   {
     id: 2,
@@ -73,6 +96,14 @@ export const packages: TourismItem[] = [
     description: "A compact private trip with train scenery, hikes, and tea estates.",
     status: "active",
     amount: "LKR 72,000",
+    fields: {
+      story:
+        "A short mountain reset focused on cool air, rail views, and a couple of unhurried experiences that feel premium without becoming overly complex.",
+      includes: "Rail-side stays, scenic drives, tea tastings",
+      route: "Kandy, Nuwara Eliya, Ella",
+      pace: "Leisurely",
+      travelers: "Ideal for quick escapes and anniversary trips",
+    },
   },
   {
     id: 3,
@@ -82,6 +113,14 @@ export const packages: TourismItem[] = [
     description: "Flexible routing, private driver, child-friendly stays, and easy pacing.",
     status: "draft",
     amount: "Custom",
+    fields: {
+      story:
+        "Designed around family rhythm, this package keeps transfers short, adds flexible meal timing, and leaves room for rest, pools, and optional activities.",
+      includes: "Private driver, family rooms, flexible pacing",
+      route: "Custom route",
+      pace: "Flexible",
+      travelers: "Best for multi-generation families",
+    },
   },
 ];
 
@@ -94,6 +133,13 @@ export const services: TourismItem[] = [
     description: "Private airport pickup and drop-off with vehicle size options.",
     status: "active",
     amount: "LKR 14,500",
+    fields: {
+      story:
+        "A simple arrival or departure transfer with a driver waiting at the terminal, so the trip starts and ends without friction.",
+      coverage: "Colombo airport and nearby city hotels",
+      vehicle: "Sedan, van, or family-size vehicle",
+      response: "Flight-aware pickup coordination",
+    },
   },
   {
     id: 2,
@@ -103,6 +149,13 @@ export const services: TourismItem[] = [
     description: "Full-day driver service for multi-stop routes and custom itineraries.",
     status: "active",
     amount: "LKR 22,000",
+    fields: {
+      story:
+        "Use this when the route changes by the day. The driver stays with the trip, making it easy to add stops, switch timings, and keep the day calm.",
+      coverage: "Island-wide day support",
+      vehicle: "Private car or van",
+      response: "Flexible routing with local coordination",
+    },
   },
 ];
 
@@ -115,6 +168,13 @@ export const activities: TourismItem[] = [
     description: "Guided estate walk with tea tasting and local host storytelling.",
     status: "active",
     amount: "LKR 8,500",
+    fields: {
+      story:
+        "A host-led walk through the estate, ending with tea tasting and a short conversation about picking, processing, and the local community.",
+      includes: "Guide, tasting, light refreshments",
+      best_for: "Hill-country itineraries and day visitors",
+      pace: "Easy",
+    },
   },
   {
     id: 2,
@@ -124,6 +184,13 @@ export const activities: TourismItem[] = [
     description: "Seasonal ocean experience with pickup support from south coast stays.",
     status: "active",
     amount: "LKR 18,000",
+    fields: {
+      story:
+        "An early-morning boat departure timed around calmer seas, with support for pickup and a realistic seasonal expectation message.",
+      includes: "Boat ride, guide, pickup support",
+      best_for: "Coastal stays and marine travel",
+      pace: "Moderate",
+    },
   },
 ];
 

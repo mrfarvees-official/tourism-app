@@ -1,31 +1,10 @@
 import { PackageCard } from "@/src/shared/components/tourism";
 import { PublicTourismPage } from "@/src/shared/components/publicTourismPage";
+import { loadPublicCollection } from "@/src/server/tourismCollections";
 
-const packages = [
-  {
-    title: "Sri Lanka Highlights",
-    subtitle: "7 days",
-    description: "A balanced package covering culture, hills, and coast with flexible add-ons.",
-    meta: "From LKR",
-    href: "/packages/sri-lanka-highlights",
-  },
-  {
-    title: "Adventure Escape",
-    subtitle: "5 days",
-    description: "For travelers who want hiking, waterfalls, and active experiences.",
-    meta: "Active",
-    href: "/packages/adventure-escape",
-  },
-  {
-    title: "Luxury Private Tour",
-    subtitle: "Custom",
-    description: "Premium itineraries with private drivers, selected stays, and curated service.",
-    meta: "Private",
-    href: "/packages/luxury-private-tour",
-  },
-];
+export default async function PackagesPage() {
+  const packages = await loadPublicCollection("packages", "lanka-trails");
 
-export default function PackagesPage() {
   return (
     <PublicTourismPage
       eyebrow="Packages"
@@ -33,7 +12,16 @@ export default function PackagesPage() {
       description="Publish private, group, or custom packages with itineraries, pricing, and booking-ready details."
     >
       {packages.map((pkg) => (
-        <PackageCard key={pkg.title} {...pkg} />
+        <PackageCard
+          key={`${pkg.slug}-${pkg.id}`}
+          title={pkg.title}
+          subtitle={pkg.subtitle}
+          description={pkg.description}
+          meta={pkg.amount ?? pkg.status}
+          image={pkg.image}
+          href={`/packages/${pkg.slug}`}
+          fields={pkg.fields}
+        />
       ))}
     </PublicTourismPage>
   );

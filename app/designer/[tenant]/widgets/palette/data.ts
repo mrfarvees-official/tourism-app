@@ -429,7 +429,7 @@ export const template: ComponentNode = {
               runtime: {
                 repeat: {
                   enabled: true,
-                  targetResource: "destination",
+                  targetResource: "destinations",
                   menu: "destinations",
                   dataPath: "data.items",
                   policyPath: "meta.resourcePolicy",
@@ -1436,11 +1436,11 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "destination_collection" },
+          dataBinding: { source: "destinations" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "destination_collection",
+              targetResource: "destinations",
               menu: "tourism-collections",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -1965,11 +1965,11 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "destination_collection" },
+          dataBinding: { source: "destinations" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "destination_collection",
+              targetResource: "destinations",
               menu: "tourism-collections",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -3053,11 +3053,11 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "tour_package" },
+          dataBinding: { source: "tour_packages" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "tour_package",
+              targetResource: "tour_packages:featured",
               menu: "featured-tour-packages",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -3561,11 +3561,11 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "tour_package" },
+          dataBinding: { source: "tour_packages" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "tour_package",
+              targetResource: "tour_packages:featured",
               menu: "featured-tour-packages",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -4052,11 +4052,11 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
-          dataBinding: { source: "tour_package" },
+          dataBinding: { source: "tour_packages" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "tour_package",
+              targetResource: "tour_packages:featured",
               menu: "featured-tour-package",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -4308,11 +4308,11 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
-          dataBinding: { source: "tour_package" },
+          dataBinding: { source: "tour_packages" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "tour_package",
+              targetResource: "tour_packages",
               menu: "tour-highlight",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -4558,11 +4558,11 @@ export const components: ComponentList[] = [
             borderRadius: 8,
             boxShadow: "0 2px 10px rgba(0,0,0,0.14)",
           },
-          dataBinding: { source: "tour_package" },
+          dataBinding: { source: "tour_packages" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "tour_package",
+              targetResource: "tour_packages",
               menu: "trip-hotspots",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",
@@ -4780,11 +4780,11 @@ export const components: ComponentList[] = [
           },
 
           props: {},
-          dataBinding: { source: "tour_package" },
+          dataBinding: { source: "tour_packages" },
           runtime: {
             repeat: {
               enabled: true,
-              targetResource: "tour_package",
+              targetResource: "tour_packages",
               menu: "recommended-tours",
               dataPath: "data.items",
               policyPath: "meta.resourcePolicy",

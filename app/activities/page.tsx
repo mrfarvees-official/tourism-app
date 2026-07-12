@@ -1,31 +1,10 @@
 import { ActivityCard } from "@/src/shared/components/tourism";
 import { PublicTourismPage } from "@/src/shared/components/publicTourismPage";
+import { loadPublicCollection } from "@/src/server/tourismCollections";
 
-const activities = [
-  {
-    title: "Whale Watching",
-    subtitle: "Half day",
-    description: "Seasonal activity pages can be promoted with destination content and add-ons.",
-    meta: "Popular",
-    href: "/activities/whale-watching",
-  },
-  {
-    title: "Tea Estate Walk",
-    subtitle: "2 hours",
-    description: "A scenic experience for hill country itineraries and small groups.",
-    meta: "Nature",
-    href: "/activities/tea-estate-walk",
-  },
-  {
-    title: "Village Cooking",
-    subtitle: "Hands-on",
-    description: "A cultural add-on with local host storytelling and practical booking info.",
-    meta: "Culture",
-    href: "/activities/village-cooking",
-  },
-];
+export default async function ActivitiesPage() {
+  const activities = await loadPublicCollection("activities", "lanka-trails");
 
-export default function ActivitiesPage() {
   return (
     <PublicTourismPage
       eyebrow="Activities"
@@ -33,7 +12,16 @@ export default function ActivitiesPage() {
       description="Manage destination experiences, short tours, and add-ons in the same tourism platform."
     >
       {activities.map((activity) => (
-        <ActivityCard key={activity.title} {...activity} />
+        <ActivityCard
+          key={`${activity.slug}-${activity.id}`}
+          title={activity.title}
+          subtitle={activity.subtitle}
+          description={activity.description}
+          meta={activity.amount ?? activity.status}
+          image={activity.image}
+          href={`/activities/${activity.slug}`}
+          fields={activity.fields}
+        />
       ))}
     </PublicTourismPage>
   );

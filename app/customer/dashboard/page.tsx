@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Container from "@/src/shared/ui/Container";
 import { http } from "@/src/api/config/http";
+import { activityService } from "@/src/api/services/activityService";
+import { packageService } from "@/src/api/services/packageService";
+import { tourismServiceService } from "@/src/api/services/tourismServiceService";
 import CustomerDashboardCmsShell from "./CustomerDashboardCmsShell";
 import {
   ArrowRight,
@@ -16,6 +19,19 @@ import {
   ShieldCheck,
   PhoneCall,
 } from "lucide-react";
+
+type TourismCollectionItem = {
+  id: number;
+  slug: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  status: string;
+  amount?: string;
+  image?: string;
+  fields?: Record<string, unknown>;
+  href?: string;
+};
 
 type DashboardBooking = {
   id: string;
@@ -85,6 +101,12 @@ type DashboardData = {
   }>;
 };
 
+type CatalogCollections = {
+  packages: TourismCollectionItem[];
+  services: TourismCollectionItem[];
+  activities: TourismCollectionItem[];
+};
+
 function formatDate(value: string) {
   if (!value) return "Not set";
   const date = new Date(value);
@@ -123,8 +145,52 @@ function badgeClass(status: string) {
   }
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function readCollectionItems(payload: unknown): TourismCollectionItem[] {
+  const record = asRecord(payload);
+  const candidates = [
+    Array.isArray(payload) ? payload : null,
+    record?.data,
+    record?.items,
+    payload,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate as TourismCollectionItem[];
+    }
+
+    const nested = asRecord(candidate);
+    if (!nested) {
+      continue;
+    }
+
+    if (Array.isArray(nested.data)) {
+      return nested.data as TourismCollectionItem[];
+    }
+
+    if (Array.isArray(nested.items)) {
+      return nested.items as TourismCollectionItem[];
+    }
+  }
+
+  return [];
+}
+
 export default function CustomerDashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [collections, setCollections] = useState<CatalogCollections>({
+    packages: [],
+    services: [],
+    activities: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,16 +202,32 @@ export default function CustomerDashboardPage() {
         setLoading(true);
         setError(null);
 
-        const response = await http.get("/api/customer/dashboard", {
-          params: { tenantKey: "lanka-trails" },
-        });
+        const [dashboardResponse, packagesResponse, servicesResponse, activitiesResponse] = await Promise.all([
+          http.get("/api/customer/dashboard", {
+            params: { tenantKey: "lanka-trails" },
+          }),
+          packageService.list("lanka-trails"),
+          tourismServiceService.list("lanka-trails"),
+          activityService.list("lanka-trails"),
+        ]);
+
         if (active) {
-          setDashboard((response.data?.data ?? null) as DashboardData | null);
+          setDashboard((dashboardResponse.data?.data ?? null) as DashboardData | null);
+          setCollections({
+            packages: readCollectionItems(packagesResponse.data),
+            services: readCollectionItems(servicesResponse.data),
+            activities: readCollectionItems(activitiesResponse.data),
+          });
         }
       } catch (loadError) {
         if (active) {
           setError(loadError instanceof Error ? loadError.message : "Failed to load your dashboard.");
           setDashboard(null);
+          setCollections({
+            packages: [],
+            services: [],
+            activities: [],
+          });
         }
       } finally {
         if (active) {
@@ -188,10 +270,36 @@ export default function CustomerDashboardPage() {
   );
 
   const tenantKey = dashboard?.tenant.key ?? "lanka-trails";
+  const collectionGroups = [
+    {
+      key: "packages",
+      title: "Packages",
+      description: "Live package records from the public API.",
+      href: "/packages",
+      items: collections.packages,
+      emptyText: "No active packages are published yet.",
+    },
+    {
+      key: "services",
+      title: "Services",
+      description: "Active transport and support services pulled from the backend.",
+      href: "/services",
+      items: collections.services,
+      emptyText: "No active services are published yet.",
+    },
+    {
+      key: "activities",
+      title: "Activities",
+      description: "Curated experiences available through the public endpoint.",
+      href: "/activities",
+      items: collections.activities,
+      emptyText: "No active activities are published yet.",
+    },
+  ];
 
   return (
     <CustomerDashboardCmsShell tenantKey={tenantKey} pageSlug="customer-dashboard">
-      <Container className="py-8 sm:py-12">
+      <Container className="flex min-h-screen flex-col py-8 sm:py-12">
       <section className="overflow-hidden rounded-[2.25rem] border border-border bg-gradient-to-br from-slate-950 via-slate-900 to-primary p-6 text-white shadow-2xl sm:p-8">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
@@ -486,6 +594,80 @@ export default function CustomerDashboardPage() {
           </section>
         </div>
       </div>
+
+      <section className="mt-6 min-h-screen rounded-[1.75rem] border border-border bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">Catalog</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-title">
+              Packages, services, and activities
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              These sections now load directly from the public backend index routes and only show active records.
+            </p>
+          </div>
+          <div className="text-sm text-slate-500">
+            Source: public API
+          </div>
+        </div>
+
+        <div className="mt-6 grid min-h-[calc(100vh-14rem)] gap-5 xl:grid-cols-3">
+          {collectionGroups.map((group) => (
+            <section
+              key={group.key}
+              className="flex h-full min-h-full flex-col rounded-[1.5rem] border border-border bg-slate-50 p-5"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-semibold text-title">{group.title}</h3>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">{group.description}</p>
+                </div>
+                <Link href={group.href} className="text-sm font-semibold text-primary">
+                  View all
+                </Link>
+              </div>
+
+              <div className="mt-5 flex flex-1 flex-col gap-4">
+                {group.items.length ? (
+                  group.items.slice(0, 3).map((item) => (
+                    <article
+                      key={`${group.key}-${item.slug}-${item.id}`}
+                      className="rounded-2xl border border-border bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                            {item.subtitle}
+                          </p>
+                          <h4 className="mt-2 text-lg font-semibold text-title">{item.title}</h4>
+                          <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+                        </div>
+                        {item.amount ? (
+                          <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            {item.amount}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass(item.status)}`}>
+                          {item.status}
+                        </span>
+                        <Link href={`/${group.key}/${item.slug}`} className="text-sm font-semibold text-primary">
+                          Open detail
+                        </Link>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="flex min-h-full flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-white p-6 text-center text-sm text-slate-500">
+                    {group.emptyText}
+                  </div>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
       </Container>
     </CustomerDashboardCmsShell>
   );

@@ -112,7 +112,7 @@ export default function SideNavbar({
   onSelectContentSchema,
   onOpenContentStudio,
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     const keyDown = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -147,7 +147,10 @@ export default function SideNavbar({
           className="p-2 rounded-md hover:bg-hover group"
           aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
         >
-          <TiThMenu size={20} className="group-hover:text-hover_text text-icons" />
+          <TiThMenu
+            size={20}
+            className="group-hover:text-hover_text text-icons"
+          />
         </button>
       </div>
 
@@ -173,45 +176,78 @@ export default function SideNavbar({
               Icon={FaInbox}
             />
           </li>
-
-          {/* <li>
+          <li>
             <NavItem
-              active={currentMenu === "tours"}
+              active={currentMenu === "packages"}
               open={open}
-              label="Tours"
-              onClick={() => onChangeMenu("tours")}
+              label="Packages"
+              onClick={() => onChangeMenu("packages")}
               Icon={BiSolidPlaneAlt}
             />
+          </li>
+          <li>
+            <NavItem
+              active={currentMenu === "destinations"}
+              open={open}
+              label="Destinations"
+              onClick={() => onChangeMenu("destinations")}
+              Icon={FaMapLocationDot}
+            />
+          </li>
+          <li>
+            <NavItem
+              active={currentMenu === "services"}
+              open={open}
+              label="Services"
+              onClick={() => onChangeMenu("services")}
+              Icon={FaTags}
+            />
+          </li>
+          <li>
+            <NavItem
+              active={currentMenu === "activities"}
+              open={open}
+              label="Activities"
+              onClick={() => onChangeMenu("activities")}
+              Icon={FaBullhorn}
+            />
+          </li>
+          <li>
+            <NavItem
+              active={currentMenu === "accommodations"}
+              open={open}
+              label="Stays"
+              onClick={() => onChangeMenu("accommodations")}
+              Icon={FaHotel}
+            />
+          </li>
+          <li>
+            <NavItem
+              active={currentMenu === "transport"}
+              open={open}
+              label="Transport"
+              onClick={() => onChangeMenu("transport")}
+              Icon={FaCar}
+            />
+          </li>
+          <li>
+            <NavItem
+              active={currentMenu === "bookings"}
+              open={open}
+              label="Bookings"
+              onClick={() => onChangeMenu("bookings")}
+              Icon={FaCalendarCheck}
+            />
+          </li>
+          {/* <li>
+            <NavItem
+              active={currentMenu === "inquiries"}
+              open={open}
+              label="Inquiries"
+              onClick={() => onChangeMenu("inquiries")}
+              Icon={FaInbox}
+            />
           </li> */}
-
-          <li>
-            <NavItem active={currentMenu === "destinations"} open={open} label="Destinations" onClick={() => onChangeMenu("destinations")} Icon={FaMapLocationDot} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "packages"} open={open} label="Packages" onClick={() => onChangeMenu("packages")} Icon={BiSolidPlaneAlt} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "services"} open={open} label="Services" onClick={() => onChangeMenu("services")} Icon={FaTags} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "activities"} open={open} label="Activities" onClick={() => onChangeMenu("activities")} Icon={FaBullhorn} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "accommodations"} open={open} label="Stays" onClick={() => onChangeMenu("accommodations")} Icon={FaHotel} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "transport"} open={open} label="Transport" onClick={() => onChangeMenu("transport")} Icon={FaCar} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "bookings"} open={open} label="Bookings" onClick={() => onChangeMenu("bookings")} Icon={FaCalendarCheck} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "inquiries"} open={open} label="Inquiries" onClick={() => onChangeMenu("inquiries")} Icon={FaInbox} />
-          </li>
-          <li>
-            <NavItem active={currentMenu === "reviews"} open={open} label="Reviews" onClick={() => onChangeMenu("reviews")} Icon={FaStar} />
-          </li>
-
           <li>
             <NavItem
               active={currentMenu === "customers"}
@@ -221,7 +257,15 @@ export default function SideNavbar({
               Icon={FaUser}
             />
           </li>
-
+          <li>
+            <NavItem
+              active={currentMenu === "reviews"}
+              open={open}
+              label="Reviews"
+              onClick={() => onChangeMenu("reviews")}
+              Icon={FaStar}
+            />
+          </li>
           <li>
             <NavItem
               active={currentMenu === "analytics"}
@@ -231,17 +275,6 @@ export default function SideNavbar({
               Icon={MdBarChart}
             />
           </li>
-
-          <li>
-            <NavItem
-              active={currentMenu === "settings"}
-              open={open}
-              label="Settings"
-              onClick={() => onChangeMenu("settings")}
-              Icon={FaGear}
-            />
-          </li>
-
           <li>
             <NavItem
               active={currentMenu === "media"}
@@ -251,42 +284,15 @@ export default function SideNavbar({
               Icon={FaPhotoFilm}
             />
           </li>
-
-          {/* <li>
+          <li>
             <NavItem
-              active={currentMenu === "content" && selectedContentSchemaId === null}
+              active={currentMenu === "settings"}
               open={open}
-              label="Content Studio"
-              onClick={() => {
-                onChangeMenu("content");
-                onOpenContentStudio();
-              }}
-              Icon={MdSchema}
+              label="Settings"
+              onClick={() => onChangeMenu("settings")}
+              Icon={FaGear}
             />
           </li>
-          {contentSchemas.map((schema) => {
-            const active = schema.id === selectedContentSchemaId;
-            const sourceKey = schema.menu?.trim() || schema.source_key?.trim();
-            const sourceLabel = sourceKey
-              ? sourceKey.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
-              : schema.name ?? `Schema #${schema.id}`;
-
-            return (
-              <li key={schema.id}>
-                <NavItem
-                  active={active}
-                  open={open}
-                  label={sourceLabel}
-                  onClick={() => {
-                    onChangeMenu("content");
-                    onSelectContentSchema(schema.id);
-                  }}
-                  Icon={FaDatabase}
-                />
-              </li>
-            );
-          })} */}
-
         </ul>
       </nav>
     </motion.aside>

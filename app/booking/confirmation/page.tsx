@@ -27,10 +27,13 @@ export default async function BookingConfirmationPage({
   const packageName = firstValue(params.packageName) ?? "Custom Booking";
   const destination = firstValue(params.destination) ?? "Sri Lanka";
   const travelDate = firstValue(params.travelDate) ?? "";
+  const returnDate = firstValue(params.returnDate) ?? "";
   const totalAmount = firstValue(params.totalAmount) ?? "0";
   const paidAmount = firstValue(params.paidAmount) ?? "0";
   const bookingStatus = firstValue(params.bookingStatus) ?? "pending";
   const paymentStatus = firstValue(params.paymentStatus) ?? "unpaid";
+  const routeSummary = firstValue(params.routeSummary) ?? "";
+  const tripStory = firstValue(params.tripStory) ?? "";
 
   return (
     <Container className="py-10 sm:py-14">
@@ -43,6 +46,14 @@ export default async function BookingConfirmationPage({
           Your booking was sent to the backend API and the reference below can be used for follow-up.
         </p>
 
+        {routeSummary || tripStory ? (
+          <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Journey summary</p>
+            {routeSummary ? <p className="mt-2 text-sm font-semibold text-title">{routeSummary}</p> : null}
+            {tripStory ? <p className="mt-3 text-sm leading-6 text-slate-600">{tripStory}</p> : null}
+          </div>
+        ) : null}
+
         <div className="mt-6 flex flex-wrap gap-3">
           <BookingStatusBadge value={bookingStatus} tone="warning" />
           <PaymentStatusBadge value={paymentStatus} tone="danger" />
@@ -54,6 +65,7 @@ export default async function BookingConfirmationPage({
             ["Customer", customerName],
             ["Email", customerEmail],
             ["Travel date", travelDate || "Not set"],
+            ["Return date", returnDate || "Not set"],
             ["Package", packageName],
             ["Destination", destination],
             ["Total", formatMoney(totalAmount)],
@@ -78,4 +90,3 @@ export default async function BookingConfirmationPage({
     </Container>
   );
 }
-

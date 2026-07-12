@@ -84,7 +84,9 @@ const DESIGNER_IMAGE_SRC = "/no-image.jpg";
 const RESOURCE_SOURCES = new Set([
   "product",
   "collection",
-  "destination",
+  "destinations",
+  "packages",
+  "services",
   "customer",
   "cart",
   "form",
@@ -92,6 +94,117 @@ const RESOURCE_SOURCES = new Set([
 ]);
 const RESOURCE_HINTS = ["product", "collection", "destination"];
 const DESIGNER_REPEAT_PREVIEW_COUNT = 3;
+
+type ResourceSpec = {
+  resource: string;
+  variant?: string;
+  raw: string;
+};
+
+function parseResourceSpec(value?: string | null): ResourceSpec | null {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  let resource = trimmed;
+  let variant: string | undefined;
+
+  const slashIndex = resource.lastIndexOf("/");
+  if (slashIndex >= 0) {
+    const base = resource.slice(0, slashIndex).trim();
+    const suffix = resource.slice(slashIndex + 1).trim();
+    if (base) {
+      resource = base;
+    }
+    if (suffix) {
+      variant = suffix;
+    }
+  }
+
+  const colonIndex = resource.lastIndexOf(":");
+  if (colonIndex >= 0) {
+    const base = resource.slice(0, colonIndex).trim();
+    const suffix = resource.slice(colonIndex + 1).trim();
+    if (base) {
+      resource = base;
+    }
+    if (suffix) {
+      variant = suffix;
+    }
+  }
+
+  if (variant?.includes(":")) {
+    const variantParts = variant.split(":").filter(Boolean);
+    variant = variantParts[variantParts.length - 1] ?? variant;
+  }
+
+  return {
+    resource,
+    variant: variant || undefined,
+    raw: trimmed,
+  };
+}
+
+function resolveResourceSpec(
+  ...values: Array<string | null | undefined>
+): ResourceSpec | null {
+  const parsed = values
+    .map((value) => parseResourceSpec(value))
+    .filter((value): value is ResourceSpec => value !== null);
+
+  if (parsed.length === 0) {
+    return null;
+  }
+
+  return (
+    parsed.find((value) => !!value.variant) ?? parsed[0] ?? null
+  );
+}
+
+function normalizePublicResourceKey(value?: string | null): string | null {
+  const parsed = parseResourceSpec(value);
+  const resource = parsed?.resource.toLowerCase();
+  if (!resource) {
+    return null;
+  }
+
+  if (["destination", "destinations", "destination_collection"].includes(resource)) {
+    return "destinations";
+  }
+
+  if (
+    [
+      "tour_package",
+      "tour-packages",
+      "package",
+      "packages",
+      "featured-tour-packages",
+      "featured-tour-package",
+      "tour-highlight",
+      "trip-hotspots",
+      "recommended-tours",
+    ].includes(resource)
+  ) {
+    return "packages";
+  }
+
+  if (
+    [
+      "service",
+      "services",
+      "tourism-service",
+      "tourism-services",
+      "service-categories",
+      "accommodations",
+      "transport-options",
+    ].includes(resource)
+  ) {
+    return "services";
+  }
+
+  return resource;
+}
 
 export type ContentDataChildFieldSnapshot = {
   field_key: string;
@@ -280,43 +393,50 @@ function buildTargetEndpoint({
   limit?: number;
   tenantKey?: string | null;
 }): string {
-  if (
-    targetResource === "destination" ||
-    targetResource === "destination_collection"
-  ) {
+  if (endpoint) {
+    const compiled = endpoint.replaceAll(":tenantKey", tenantKey ?? "");
+    return compiled;
+  }
+
+  const parsed = parseResourceSpec(targetResource);
+  const resourceKey = normalizePublicResourceKey(parsed?.resource ?? targetResource);
+  if (resourceKey === "destinations" || resourceKey === "packages" || resourceKey === "services") {
     const params = new URLSearchParams();
+    if (parsed?.variant) {
+      params.set("variant", parsed.variant);
+    }
     if (typeof limit === "number" && Number.isFinite(limit)) {
       params.set("limit", String(limit));
     }
 
     const qs = params.toString();
     const base = tenantKey
-      ? `/api/public/${encodeURIComponent(tenantKey)}/destinations`
-      : "/api/public/destinations";
+      ? `/api/public/${encodeURIComponent(tenantKey)}/${resourceKey}`
+      : `/api/public/${resourceKey}`;
     return qs ? `${base}?${qs}` : base;
-  }
-
-  if (endpoint) {
-    const compiled = endpoint.replaceAll(":tenantKey", tenantKey ?? "");
-    return compiled;
   }
 
   const baseMap: Record<string, string> = {
     product: "/api/content",
     collection: "/api/content",
-    destination: "/api/content",
     customer: "/api/content",
     cart: "/api/content",
     form: "/api/content",
     custom: "/api/content",
   };
 
-  const base = baseMap[targetResource ?? ""] ?? "/api/content";
+  const base = baseMap[resourceKey ?? ""] ?? "/api/content";
   const params = new URLSearchParams();
   if (tenantKey) params.set("tenantKey", tenantKey);
   if (menu) params.set("menu", menu);
-  if (targetResource && targetResource !== "custom")
+  if (parsed?.resource && parsed.resource !== "custom") {
+    params.set("resource", parsed.resource);
+  } else if (targetResource && targetResource !== "custom") {
     params.set("resource", targetResource);
+  }
+  if (parsed?.variant) {
+    params.set("variant", parsed.variant);
+  }
   if (typeof limit === "number" && Number.isFinite(limit))
     params.set("limit", String(limit));
 
@@ -367,8 +487,11 @@ function useRepeatableData({
         policyPath?: string;
       }
     | undefined;
-  const sourceFallback =
-    component.dataBinding?.source ?? component.runtime?.repeat?.targetResource;
+  const sourceSpec = resolveResourceSpec(
+    component.runtime?.repeat?.targetResource,
+    component.dataBinding?.source,
+  );
+  const sourceFallback = sourceSpec?.raw;
   const tenantKey = getTenantKeyFromLocation();
   const matchingSnapshot = React.useMemo(() => {
     if (isDesigner || !contentSnapshots?.length) {
@@ -376,18 +499,26 @@ function useRepeatableData({
     }
 
     const componentId = component.id.trim();
-    const sourceKeys = new Set(
-      [
-        component.runtime?.repeat?.menu,
-        component.runtime?.repeat?.targetResource,
-        component.dataBinding?.source,
-      ]
-        .filter(
-          (value): value is string =>
-            typeof value === "string" && value.trim() !== "",
-        )
-        .map((value) => value.trim()),
-    );
+    const sourceKeys = new Set<string>();
+    for (const value of [
+      component.runtime?.repeat?.menu,
+      component.runtime?.repeat?.targetResource,
+      component.dataBinding?.source,
+    ]) {
+      const parsed = parseResourceSpec(value);
+      if (!parsed) {
+        continue;
+      }
+
+      sourceKeys.add(parsed.resource.trim());
+      const normalized = normalizePublicResourceKey(parsed.resource);
+      if (normalized) {
+        sourceKeys.add(normalized);
+      }
+      if (parsed.variant) {
+        sourceKeys.add(`${parsed.resource.trim()}:${parsed.variant}`);
+      }
+    }
 
     return (
       contentSnapshots.find((snapshot) => {
@@ -443,7 +574,10 @@ function useRepeatableData({
     contentSnapshots?.length,
   ]);
   const resolvedEndpoint = buildTargetEndpoint({
-    targetResource: cfgWithTarget?.targetResource ?? sourceFallback,
+    targetResource:
+      resolveResourceSpec(cfgWithTarget?.targetResource, sourceFallback)?.raw ??
+      cfgWithTarget?.targetResource ??
+      sourceFallback,
     endpoint: cfgWithTarget?.endpoint,
     menu: cfgWithTarget?.menu,
     limit: cfgWithTarget?.limit,
@@ -794,11 +928,9 @@ function RenderComponentInner({
         .split("|")
         .map((item) => item.trim())
         .filter(Boolean);
-      const isDestinationResource =
-        component.dataBinding?.source === "destination" ||
-        component.dataBinding?.source === "destination_collection" ||
-        component.runtime?.repeat?.targetResource === "destination" ||
-        component.runtime?.repeat?.targetResource === "destination_collection";
+      const isDestinationResource = String(
+        component.runtime?.repeat?.targetResource ?? "",
+      ).startsWith("destination");
       const configuredVisibility =
         component.runtime?.repeat?.policy?.columnVisibility ?? {};
       const isVisible =
@@ -836,11 +968,15 @@ function RenderComponentInner({
   const maxHeight = getSize(component.layout?.maxHeight);
   const componentTargetResource =
     component.runtime?.repeat?.targetResource ?? component.dataBinding?.source;
+  const normalizedComponentTargetResource = normalizePublicResourceKey(
+    parseResourceSpec(componentTargetResource)?.resource ?? componentTargetResource,
+  );
   const hasResourceIntent =
     !!resourceIntent ||
     (typeof componentTargetResource === "string" &&
-      RESOURCE_SOURCES.has(componentTargetResource) &&
-      componentTargetResource !== "static") ||
+      normalizedComponentTargetResource !== null &&
+      RESOURCE_SOURCES.has(normalizedComponentTargetResource) &&
+      normalizedComponentTargetResource !== "static") ||
     hasResourceHint(component);
   const backgroundImageSrc =
     isDesigner && hasResourceIntent && component.style?.backgroundImage

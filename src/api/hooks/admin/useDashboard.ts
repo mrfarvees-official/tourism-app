@@ -45,6 +45,7 @@ export type DashboardData = {
   members: Array<Record<string, unknown>>;
   invites: Array<Record<string, unknown>>;
   records: Array<Record<string, unknown>>;
+  inbox: Array<Record<string, unknown>>;
   categories: Record<string, Array<Record<string, unknown>>>;
   activity: Array<Record<string, unknown>>;
 };

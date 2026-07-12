@@ -1,4 +1,5 @@
 import { PublicDetailPage } from "@/src/shared/components/publicTourismPage";
+import { loadPublicItem } from "@/src/server/tourismCollections";
 
 export default async function ServiceDetail({
   params,
@@ -6,13 +7,18 @@ export default async function ServiceDetail({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const item = await loadPublicItem("services", slug, "lanka-trails");
 
   return (
     <PublicDetailPage
       eyebrow="Service"
-      title="Service details"
+      title={item?.title ?? "Service details"}
       slug={slug}
-      description="This service route is prepared for live service category and pricing data."
+      image={item?.image}
+      meta={item?.amount ?? item?.status}
+      fields={item?.fields}
+      description={item?.description ?? "This service route is prepared for live service category and pricing data."}
+      actionNote="Pick the support layer you need, then move into booking."
     />
   );
 }

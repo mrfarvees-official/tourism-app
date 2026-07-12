@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['lvh.me', '*.lvh.me', 'localhost', '*.localhost'],
+  allowedDevOrigins: [
+    "lvh.me",
+    "*.lvh.me",
+    "localhost",
+    "*.localhost",
+    "lankatrails.com",
+    "www.lankatrails.com",
+  ],
   images: {
     remotePatterns: [
       {

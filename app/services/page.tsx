@@ -1,31 +1,10 @@
 import { ServiceCard } from "@/src/shared/components/tourism";
 import { PublicTourismPage } from "@/src/shared/components/publicTourismPage";
+import { loadPublicCollection } from "@/src/server/tourismCollections";
 
-const services = [
-  {
-    title: "Airport Transfer",
-    subtitle: "Fixed pricing",
-    description: "Reliable airport pickup and drop-off with vehicle options for all group sizes.",
-    meta: "Transport",
-    href: "/services/airport-transfer",
-  },
-  {
-    title: "Guided City Tour",
-    subtitle: "Per person",
-    description: "A flexible city experience for guests who want an easy add-on to a package.",
-    meta: "Guided",
-    href: "/services/guided-city-tour",
-  },
-  {
-    title: "Private Chauffeur",
-    subtitle: "Custom",
-    description: "Full-day private transport support for premium travelers and multi-stop itineraries.",
-    meta: "Premium",
-    href: "/services/private-chauffeur",
-  },
-];
+export default async function ServicesPage() {
+  const services = await loadPublicCollection("services", "lanka-trails");
 
-export default function ServicesPage() {
   return (
     <PublicTourismPage
       eyebrow="Services"
@@ -33,7 +12,16 @@ export default function ServicesPage() {
       description="Offer fixed, per-person, per-day, or custom services alongside packages and experiences."
     >
       {services.map((service) => (
-        <ServiceCard key={service.title} {...service} />
+        <ServiceCard
+          key={`${service.slug}-${service.id}`}
+          title={service.title}
+          subtitle={service.subtitle}
+          description={service.description}
+          meta={service.amount ?? service.status}
+          image={service.image}
+          href={`/services/${service.slug}`}
+          fields={service.fields}
+        />
       ))}
     </PublicTourismPage>
   );

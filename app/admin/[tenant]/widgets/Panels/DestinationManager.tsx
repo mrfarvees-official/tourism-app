@@ -327,9 +327,9 @@ export default function DestinationManager({ tenant, title, description }: Props
   }, [media, mediaSearch]);
 
   return (
-    <div className="min-h-[calc(100vh-2px)] bg-bg text-fg">
+    <div className="min-h-[calc(100vh-2px)] bg-white text-fg">
       <div className="mx-auto max-w-7xl p-6 lg:p-8">
-        <div className="rounded-3xl border border-border bg-menu p-6 shadow-sm">
+        <div className="shadow-sm">
           <div className="flex flex-col gap-4 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-muted">{tenant}</p>

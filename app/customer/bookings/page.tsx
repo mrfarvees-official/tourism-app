@@ -5,6 +5,7 @@ import Link from "next/link";
 import Container from "@/src/shared/ui/Container";
 import { http } from "@/src/api/config/http";
 import { ArrowRight, CalendarDays, CreditCard, Search } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 type Booking = {
   id: string;
@@ -115,6 +116,12 @@ export default function CustomerBookingsPage() {
     [bookings],
   );
 
+  const stats: Array<{ label: string; value: string; Icon: LucideIcon }> = [
+    { label: "Bookings", value: loading ? "..." : String(bookings.length), Icon: CalendarDays },
+    { label: "Paid", value: loading ? "..." : String(totals.paid), Icon: CreditCard },
+    { label: "Revenue", value: loading ? "..." : formatMoney(totals.revenue, "LKR"), Icon: CreditCard },
+  ];
+
   return (
     <Container className="py-8 sm:py-12">
       <section className="rounded-[2rem] border border-border bg-white p-6 shadow-sm">
@@ -135,16 +142,12 @@ export default function CustomerBookingsPage() {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {[
-            ["Bookings", loading ? "..." : String(bookings.length), CalendarDays],
-            ["Paid", loading ? "..." : String(totals.paid), CreditCard],
-            ["Revenue", loading ? "..." : formatMoney(totals.revenue, "LKR"), CreditCard],
-          ].map(([label, value, Icon]) => (
-            <div key={label as string} className="rounded-2xl border border-border bg-slate-50 p-4">
+          {stats.map(({ label, value, Icon }) => (
+            <div key={label} className="rounded-2xl border border-border bg-slate-50 p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-title">{value as string}</p>
+                  <p className="mt-2 text-2xl font-semibold text-title">{value}</p>
                 </div>
                 <div className="rounded-2xl bg-white p-3 text-slate-700">
                   <Icon className="h-5 w-5" />

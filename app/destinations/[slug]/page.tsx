@@ -14,9 +14,17 @@ export default async function DestinationDetail({
       eyebrow="Destination"
       title={destination?.title ?? "Destination details"}
       slug={slug}
+      image={destination?.image}
+      meta={destination?.meta}
+      fields={destination?.fields}
       description={
         destination?.description ??
         "This route is ready for live destination content from the tourism CMS and API."
+      }
+      actionNote={
+        destination?.fields?.story
+          ? "Use the booking flow to request this route with your preferred dates, travelers, and transfer needs."
+          : "Review the destination and start a booking request when you are ready."
       }
     />
   );
