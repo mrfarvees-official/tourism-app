@@ -80,6 +80,8 @@ jobs:
           test -f .env.docker
           git fetch origin ${BRANCH_NAME}
           git reset --hard origin/${BRANCH_NAME}
+          docker compose --env-file .env.docker -f docker-compose.ip.yml down --remove-orphans || true
+          docker ps -q --filter "publish=3000" | xargs -r docker stop
           docker compose --env-file .env.docker -f docker-compose.ip.yml up -d --build --remove-orphans
           docker image prune -f"
 
