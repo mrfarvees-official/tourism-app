@@ -110,8 +110,11 @@ const unwrapRecord = (value: unknown): PageRecord | null => {
   return null;
 };
 
+const getApiOrigin = () =>
+  (process.env.NEXT_PUBLIC_API_ORIGIN ?? process.env.API_ORIGIN ?? "").replace(/\/+$/, "");
+
 async function fetchTenantPage(tenant: string, slug: string): Promise<PageRecord | null> {
-  const apiOrigin = (process.env.API_ORIGIN ?? process.env.NEXT_PUBLIC_API_ORIGIN ?? "").replace(/\/+$/, "");
+  const apiOrigin = getApiOrigin();
   if (!apiOrigin) {
     return null;
   }
@@ -123,18 +126,27 @@ async function fetchTenantPage(tenant: string, slug: string): Promise<PageRecord
   ];
 
   for (const candidate of candidates) {
-    const response = await fetch(new URL(candidate, baseUrl), {
-      cache: "no-store",
-    });
+    try {
+      const response = await fetch(new URL(candidate, baseUrl), {
+        cache: "no-store",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      });
 
-    if (!response.ok) {
-      continue;
-    }
+      if (!response.ok) {
+        continue;
+      }
 
-    const payload = (await response.json()) as unknown;
-    const record = unwrapRecord(payload);
-    if (record?.schema) {
-      return record;
+      const payload = (await response.json()) as unknown;
+      const record = unwrapRecord(payload);
+      if (record?.schema) {
+        return record;
+      }
+    } catch {
+      return null;
     }
   }
 

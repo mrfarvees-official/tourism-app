@@ -28,15 +28,18 @@ export default function AuthGuard({
   const isUnauthed = status === "guest";
   const isChecking = status === "unknown" || !status;
   const normalizedPath = (pathname || "/").toLowerCase();
-  const isPublicTenantPath = normalizedPath === "/" || normalizedPath === "/customer-intake";
+  const isPublicTenantPath =
+    normalizedPath === "/" ||
+    normalizedPath === "/customer-intake" ||
+    normalizedPath.startsWith("/_sites/");
 
   useEffect(() => {
     if (isChecking) return;
 
-    const isTenantSubdomain = typeof window !== "undefined" && !isBaseHost();
+    const isTenantContext = typeof window !== "undefined" && (!isBaseHost() || normalizedPath.startsWith("/_sites/"));
 
     // allow unauthenticated tenant homepage
-    if (isUnauthed && isTenantSubdomain && isPublicTenantPath) {
+    if (isUnauthed && isTenantContext && isPublicTenantPath) {
       return;
     }
 
@@ -49,7 +52,7 @@ export default function AuthGuard({
 
   if (isChecking) return null;
 
-  if (isUnauthed && typeof window !== "undefined" && !isBaseHost() && isPublicTenantPath) {
+  if (isUnauthed && typeof window !== "undefined" && (!isBaseHost() || normalizedPath.startsWith("/_sites/")) && isPublicTenantPath) {
     return <>{children}</>;
   }
 

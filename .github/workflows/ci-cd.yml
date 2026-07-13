@@ -1,0 +1,84 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ci:
+    name: Test and build
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_ROOT_DOMAIN: localhost
+      NEXT_PUBLIC_APP_PORT: "3001"
+      NEXT_PUBLIC_API_ORIGIN: http://127.0.0.1:8000
+      NEXT_PUBLIC_RESERVED_SUBDOMAINS: www,api
+      PLATFORM_ROOT_DOMAIN: localhost
+      INTERNAL_API_ORIGIN: http://127.0.0.1:8000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build application
+        run: npm run build
+
+      - name: Verify Docker build
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_ROOT_DOMAIN="${NEXT_PUBLIC_ROOT_DOMAIN}" \
+            --build-arg NEXT_PUBLIC_APP_PORT="${NEXT_PUBLIC_APP_PORT}" \
+            --build-arg NEXT_PUBLIC_API_ORIGIN="${NEXT_PUBLIC_API_ORIGIN}" \
+            --build-arg NEXT_PUBLIC_RESERVED_SUBDOMAINS="${NEXT_PUBLIC_RESERVED_SUBDOMAINS}" \
+            --build-arg PLATFORM_ROOT_DOMAIN="${PLATFORM_ROOT_DOMAIN}" \
+            --build-arg INTERNAL_API_ORIGIN="${INTERNAL_API_ORIGIN}" \
+            -t tourism-app:ci .
+
+  deploy:
+    name: Deploy to server
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SSH_PORT || '22' }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SERVER_PATH: ${{ secrets.SERVER_PATH }}
+          BRANCH_NAME: main
+        run: |
+          ssh -p "${SSH_PORT:-22}" "${SSH_USER}@${SSH_HOST}" "set -e
+          cd '${SERVER_PATH}'
+          test -f .env.docker
+          git fetch origin ${BRANCH_NAME}
+          git reset --hard origin/${BRANCH_NAME}
+          docker compose --env-file .env.docker -f docker-compose.ip.yml up -d --build --remove-orphans
+          docker image prune -f"
