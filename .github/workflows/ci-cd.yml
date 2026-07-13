@@ -82,3 +82,4 @@ jobs:
           git reset --hard origin/${BRANCH_NAME}
           docker compose --env-file .env.docker -f docker-compose.ip.yml up -d --build --remove-orphans
           docker image prune -f"
+
