@@ -20,8 +20,6 @@ export default function TenantPanels({
   selectedStudioSchemaId,
   onSelectStudioSchema,
   selectedContentSchemaId,
-  onOpenContentStudio,
-  onJumpToMenu,
 }: {
   currentMenu: MenuKey;
   tenant: string;
@@ -30,8 +28,6 @@ export default function TenantPanels({
   selectedStudioSchemaId: number | null;
   onSelectStudioSchema: (schemaId: number | null) => void;
   selectedContentSchemaId: number | null;
-  onOpenContentStudio: () => void;
-  onJumpToMenu: (menu: MenuKey) => void;
 }) {
   return (
     <div className="flex-1 min-w-0 bg-bg">
@@ -48,8 +44,6 @@ export default function TenantPanels({
               tenant={tenant}
               dashboard={dashboard}
               loading={dashboardLoading}
-              onOpenContentStudio={onOpenContentStudio}
-              onJumpToMenu={onJumpToMenu}
             />
           )}
           {currentMenu === "inbox" && (

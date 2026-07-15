@@ -89,7 +89,6 @@ export default function MainPanel({ tenant }: { tenant: string }) {
         contentSchemas={contentSchemas}
         selectedContentSchemaId={selectedContentSchemaId}
         onSelectContentSchema={setSelectedContentSchemaId}
-        onOpenContentStudio={() => setSelectedContentSchemaId(null)}
       />
       
       {/* only content scrolls */}
@@ -102,8 +101,6 @@ export default function MainPanel({ tenant }: { tenant: string }) {
           selectedStudioSchemaId={selectedStudioSchemaId}
           onSelectStudioSchema={setSelectedStudioSchemaId}
           selectedContentSchemaId={selectedContentSchemaId}
-          onOpenContentStudio={() => setSelectedContentSchemaId(null)}
-          onJumpToMenu={onChangeMenu}
         />
       </div>
     </div>
