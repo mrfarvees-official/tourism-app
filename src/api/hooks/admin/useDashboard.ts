@@ -36,14 +36,12 @@ export type DashboardData = {
     records_total: number;
     members_total: number;
     owners_total: number;
-    invites_total: number;
     updated_at?: string | null;
   };
   pages: Array<Record<string, unknown>>;
   media: Array<Record<string, unknown>>;
   schemas: Array<Record<string, unknown>>;
   members: Array<Record<string, unknown>>;
-  invites: Array<Record<string, unknown>>;
   records: Array<Record<string, unknown>>;
   inbox: Array<Record<string, unknown>>;
   categories: Record<string, Array<Record<string, unknown>>>;

@@ -112,7 +112,7 @@ export default function HomePanel({ tenant, dashboard, loading }: Props) {
           <StatCard
             label="Records"
             value={loading ? "..." : String(summary?.records_total ?? 0)}
-            caption={`${summary?.invites_total ?? 0} invites`}
+            caption="Workspace records"
             icon={<FaClockRotateLeft />}
           />
           <StatCard
