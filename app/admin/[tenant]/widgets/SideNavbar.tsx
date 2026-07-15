@@ -59,7 +59,6 @@ type Props = {
   }>;
   selectedContentSchemaId: number | null;
   onSelectContentSchema: (schemaId: number | null) => void;
-  onOpenContentStudio: () => void;
 };
 
 type NavItemProps = {
@@ -110,7 +109,6 @@ export default function SideNavbar({
   contentSchemas,
   selectedContentSchemaId,
   onSelectContentSchema,
-  onOpenContentStudio,
 }: Props) {
   const [open, setOpen] = useState(true);
 
