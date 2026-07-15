@@ -1559,6 +1559,29 @@ function RenderComponentInner({
       const isHeaderAuthLink =
         section === "header" && isAuthLinkLabel(resolvedText ?? text ?? "");
       const isDesignerHeaderLink = isDesigner && section === "header";
+      const inlineLinkDisplay =
+        wrapperStyle.display === "flex" || wrapperStyle.display === "inline-flex"
+          ? wrapperStyle.display
+          : "block";
+      const inlineLinkStyle: React.CSSProperties = {
+        color: "inherit",
+        textDecoration: "none",
+        display: inlineLinkDisplay,
+        alignItems:
+          inlineLinkDisplay === "flex" || inlineLinkDisplay === "inline-flex"
+            ? wrapperStyle.alignItems ?? "center"
+            : undefined,
+        justifyContent:
+          inlineLinkDisplay === "flex" || inlineLinkDisplay === "inline-flex"
+            ? wrapperStyle.justifyContent
+            : undefined,
+        gap:
+          inlineLinkDisplay === "flex" || inlineLinkDisplay === "inline-flex"
+            ? wrapperStyle.gap
+            : undefined,
+        width: "100%",
+        height: "100%",
+      };
 
       const renderLinkContent = () => (
         <>
@@ -1588,11 +1611,7 @@ function RenderComponentInner({
             <span
               aria-disabled="true"
               style={{
-                color: "inherit",
-                textDecoration: "none",
-                display: "block",
-                width: "100%",
-                height: "100%",
+                ...inlineLinkStyle,
                 cursor: "default",
                 pointerEvents: "none",
               }}
@@ -1611,22 +1630,16 @@ function RenderComponentInner({
           .toLowerCase();
 
         if (normalizedLabel === "sign up") {
-          return (
-            <div>
-              <a
-                href="/customer/dashboard"
+        return (
+          <div>
+            <a
+              href="/customer/dashboard"
+              style={inlineLinkStyle}
+            >
+              <span
                 style={{
-                  color: "inherit",
-                  textDecoration: "none",
                   display: "block",
-                  width: "100%",
-                  height: "100%",
-                }}
-              >
-                <span
-                  style={{
-                    display: "block",
-                    ...wrapperStyle,
+                  ...wrapperStyle,
                   }}
                 >
                   Dashboard
@@ -1674,13 +1687,7 @@ function RenderComponentInner({
         <div style={wrapperStyle} {...commonHoverProps}>
           <a
             href={resolvedHref ?? "#"}
-            style={{
-              color: "inherit",
-              textDecoration: "none",
-              display: "block",
-              width: "100%",
-              height: "100%",
-            }}
+            style={inlineLinkStyle}
           >
             {renderLinkContent()}
           </a>

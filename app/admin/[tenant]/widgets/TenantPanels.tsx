@@ -59,7 +59,7 @@ export default function TenantPanels({
             <CustomersPanel tenant={tenant} />
           )}
           {currentMenu === "analytics" && (
-            <AnalyticsPanel tenant={tenant} dashboard={dashboard} />
+            <AnalyticsPanel tenant={tenant} />
           )}
           {currentMenu === "content" &&
             (selectedContentSchemaId === null ? (
