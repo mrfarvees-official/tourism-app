@@ -1,20 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
+import { useSearchParams } from "next/navigation";
 import RenderComponent, {
   type ContentDataSnapshot,
 } from "@/app/designer/[tenant]/widgets/palette/RenderComponent";
 import { sitePage } from "@/app/designer/[tenant]/widgets/palette/data";
 import type { ComponentNode, DesignerState } from "@/app/designer/[tenant]/widgets/palette/types";
 import { DestinationCard } from "@/src/shared/components/tourism";
-import {
-  bookings,
-  inquiries,
-  reviews,
-  type TourismItem,
-} from "@/src/shared/tourism/demoData";
+import type { TourismItem } from "@/src/shared/tourism/demoData";
 import { http } from "@/src/api/config/http";
+import {
+  ClipboardList,
+  CreditCard,
+  MapPinned,
+  MessageSquareText,
+  PhoneCall,
+  ShieldCheck,
+  Star,
+  Ticket,
+} from "lucide-react";
 
 type Props = {
   tenant: string;
@@ -46,6 +52,76 @@ type DestinationRecord = TourismItem & {
     type?: string;
     visible?: boolean;
     required?: boolean;
+  }>;
+};
+
+type DashboardBooking = {
+  id: string;
+  reference: string;
+  packageName: string;
+  destination: string;
+  serviceName?: string;
+  activityName?: string;
+  travelDate: string;
+  returnDate: string;
+  travelersCount: number;
+  totalAmount: number;
+  paidAmount: number;
+  currency: string;
+  bookingStatus: string;
+  paymentStatus: string;
+  paymentDueDate?: string;
+  notes: string;
+  supportContact: string;
+  itinerary: string[];
+};
+
+type DashboardReview = {
+  id: string;
+  title: string;
+  message: string;
+  rating: number;
+  status: string;
+  createdAt: string;
+};
+
+type DashboardData = {
+  tenant: {
+    key: string;
+    name: string;
+    supportEmail: string;
+  };
+  profile: {
+    name: string;
+    email: string;
+    phone: string;
+    loyaltyTier: string;
+    updatedAt: string;
+  };
+  summary: {
+    upcomingTrips: number;
+    completedTrips: number;
+    pendingPayments: number;
+    totalSpent: string;
+    reviewCount: number;
+    loyaltyTier: string;
+  };
+  nextTrip: DashboardBooking | null;
+  bookings: DashboardBooking[];
+  reviews: DashboardReview[];
+  tasks: Array<{
+    id: string;
+    title: string;
+    detail: string;
+    status: "open" | "in_progress" | "done" | "attention";
+    actionLabel?: string;
+    href?: string;
+  }>;
+  support: Array<{
+    id: string;
+    title: string;
+    detail: string;
+    updatedAt: string;
   }>;
 };
 
@@ -84,6 +160,46 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 
 const resolveImage = (item?: TourismItem & { image?: string; imageUrl?: string; image_url?: string }) =>
   item?.image ?? item?.imageUrl ?? item?.image_url ?? "/no-image.jpg";
+
+function formatDate(value: string) {
+  if (!value) return "Not set";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatMoney(value: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function badgeClass(status: string) {
+  switch (status) {
+    case "confirmed":
+    case "paid":
+    case "done":
+      return "bg-emerald-100 text-emerald-700";
+    case "pending":
+    case "partial":
+    case "open":
+      return "bg-amber-100 text-amber-800";
+    case "attention":
+      return "bg-rose-100 text-rose-700";
+    case "completed":
+      return "bg-sky-100 text-sky-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
 
 function getTenantBasePath(tenant: string) {
   if (typeof window === "undefined" || !tenant) {
@@ -472,31 +588,453 @@ function Detail({ tenant, section, slug }: { tenant: string; section: SectionKey
   );
 }
 
-function CustomerDashboard() {
+function CustomerDashboard({ tenant }: { tenant: string }) {
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDashboard() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await http.get("/api/customer/dashboard", {
+          params: { tenantKey: tenant },
+        });
+
+        if (active) {
+          setDashboard((response.data?.data ?? null) as DashboardData | null);
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : "Failed to load your dashboard.");
+          setDashboard(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      active = false;
+    };
+  }, [tenant]);
+
+  const tenantKey = dashboard?.tenant.key ?? tenant;
+  const basePath = getTenantBasePath(tenantKey);
+  const summaryCards = [
+    {
+      label: "Upcoming trips",
+      value: String(dashboard?.summary.upcomingTrips ?? 0),
+      detail: "Trips already booked and still ahead.",
+      icon: MapPinned,
+    },
+    {
+      label: "Pending payments",
+      value: String(dashboard?.summary.pendingPayments ?? 0),
+      detail: "Bookings that need settlement.",
+      icon: CreditCard,
+    },
+    {
+      label: "Completed trips",
+      value: String(dashboard?.summary.completedTrips ?? 0),
+      detail: "Trips that are already finished.",
+      icon: ShieldCheck,
+    },
+    {
+      label: "Reviews shared",
+      value: String(dashboard?.summary.reviewCount ?? 0),
+      detail: "Feedback captured after travel.",
+      icon: Star,
+    },
+  ];
+
+  const upcomingTrips = (dashboard?.bookings ?? []).filter((booking) => {
+    const status = String(booking.bookingStatus).toLowerCase();
+    return ["confirmed", "pending", "checked_in"].includes(status) && status !== "cancelled";
+  });
+  const pendingPayments = (dashboard?.bookings ?? []).filter((booking) => {
+    const paymentStatus = String(booking.paymentStatus).toLowerCase();
+    const bookingStatus = String(booking.bookingStatus).toLowerCase();
+    return paymentStatus !== "paid" && bookingStatus !== "cancelled";
+  });
+  const completedTrips = (dashboard?.bookings ?? []).filter((booking) => String(booking.bookingStatus).toLowerCase() === "completed");
+
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
-      <h1 className="text-3xl font-semibold text-slate-950">Customer dashboard</h1>
-      <p className="mt-1 text-sm text-slate-600">Your booking requests, inquiries, and reviews.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-slate-200 bg-white p-5"><p className="text-sm text-slate-500">Bookings</p><p className="mt-2 text-3xl font-semibold">{bookings.length}</p></div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5"><p className="text-sm text-slate-500">Inquiries</p><p className="mt-2 text-3xl font-semibold">{inquiries.length}</p></div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5"><p className="text-sm text-slate-500">Reviews</p><p className="mt-2 text-3xl font-semibold">{reviews.length}</p></div>
-      </div>
-      <div className="mt-6 rounded-lg border border-slate-200 bg-white">
-        {bookings.map((booking) => (
-          <div key={booking.id} className="flex flex-col gap-3 border-b border-slate-200 p-5 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-semibold text-slate-950">{booking.title}</p>
-              <p className="mt-1 text-sm text-slate-600">{booking.description}</p>
+      <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500">Customer dashboard</p>
+            <h1 className="mt-2 text-3xl font-semibold text-slate-950">Bookings, payments, and reviews</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Live customer data is loaded from the Laravel backend. No seeded portal records remain in this route.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href={prefixTenantBasePath(basePath, "/booking/start")} className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white">
+              Start booking
+            </Link>
+            <Link href={prefixTenantBasePath(basePath, "/customer/bookings")} className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-950">
+              View bookings
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map(({ label, value, detail, icon: Icon }) => (
+            <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">{label}</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-950">{loading ? "..." : value}</p>
+                </div>
+                <div className="rounded-2xl bg-white p-3 text-slate-700">
+                  <Icon className="h-5 w-5" />
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-slate-600">{detail}</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Status value={booking.status} />
-              <span className="text-sm font-semibold">{booking.amount}</span>
+          ))}
+        </div>
+
+        {error ? <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{error}</div> : null}
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Next trip</p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-950">{dashboard?.nextTrip?.packageName ?? "No trip selected"}</h2>
+              </div>
+              {dashboard?.nextTrip ? <Status value={dashboard.nextTrip.bookingStatus} /> : null}
+            </div>
+
+            {dashboard?.nextTrip ? (
+              <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-2xl bg-white p-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <InfoPair label="Reference" value={dashboard.nextTrip.reference} />
+                    <InfoPair label="Travel date" value={formatDate(dashboard.nextTrip.travelDate)} />
+                    <InfoPair label="Destination" value={dashboard.nextTrip.destination} />
+                    <InfoPair label="Travelers" value={String(dashboard.nextTrip.travelersCount)} />
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link href={prefixTenantBasePath(basePath, `/customer/bookings/${dashboard.nextTrip.reference}`)} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white">
+                      Open booking
+                    </Link>
+                    <a
+                      href={`mailto:${dashboard.tenant.supportEmail}?subject=${encodeURIComponent(dashboard.nextTrip.reference)}`}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-title"
+                    >
+                      Contact support
+                    </a>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Payment snapshot</p>
+                  <div className="mt-3 space-y-3 text-sm">
+                    <Row label="Total amount" value={formatMoney(dashboard.nextTrip.totalAmount, dashboard.nextTrip.currency)} />
+                    <Row label="Paid so far" value={formatMoney(dashboard.nextTrip.paidAmount, dashboard.nextTrip.currency)} />
+                    <Row label="Payment status" value={dashboard.nextTrip.paymentStatus} badgeClassName={badgeClass(dashboard.nextTrip.paymentStatus)} />
+                    <Row label="Payment due" value={formatDate(dashboard.nextTrip.paymentDueDate ?? dashboard.nextTrip.travelDate)} />
+                    <Row label="Support contact" value={dashboard.nextTrip.supportContact} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-600">
+                No bookings yet. Start a booking to see trip details and payment tracking here.
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <p className="text-xs uppercase tracking-[0.22em] text-slate-500">To-do list</p>
+            <div className="mt-4 space-y-3">
+              {dashboard?.tasks?.map((task) => (
+                <div key={task.id} className="rounded-2xl border border-slate-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-semibold text-slate-950">{task.title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">{task.detail}</p>
+                    </div>
+                    <Status value={task.status} />
+                  </div>
+                  {task.href && task.actionLabel ? (
+                    <Link href={prefixTenantBasePath(basePath, task.href)} className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      {task.actionLabel}
+                    </Link>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-3">
+          <BookingList
+            title="Upcoming trips"
+            eyebrow="Booked"
+            description="Confirmed or pending bookings that are still ahead of travel."
+            items={upcomingTrips}
+            emptyText="No upcoming trips yet."
+            tenantKey={tenantKey}
+          />
+          <BookingList
+            title="Pending payments"
+            eyebrow="Action needed"
+            description="Bookings that still need a settlement payment."
+            items={pendingPayments}
+            emptyText="No pending payments."
+            tenantKey={tenantKey}
+          />
+          <BookingList
+            title="Completed trips"
+            eyebrow="Done"
+            description="Trips that have already been completed."
+            items={completedTrips}
+            emptyText="No completed trips yet."
+            tenantKey={tenantKey}
+          />
+        </div>
+
+        <section className="mt-6 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Reviews</p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-950">Shared feedback</h2>
+              </div>
+              <Link href={prefixTenantBasePath(basePath, "/customer/reviews")} className="text-sm font-semibold text-slate-700">
+                Leave review
+              </Link>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {dashboard?.reviews?.length ? (
+                dashboard.reviews.slice(0, 3).map((review) => (
+                  <div key={review.id} className="rounded-2xl bg-slate-50 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-950">{review.title}</p>
+                        <p className="mt-1 text-sm text-slate-600">{review.message}</p>
+                      </div>
+                      <Status value={`${review.rating} stars`} />
+                    </div>
+                    <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-400">{formatDate(review.createdAt)}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                  No reviews shared yet.
+                </div>
+              )}
             </div>
           </div>
-        ))}
+
+          <div className="space-y-6">
+            <InfoBlock
+              icon={MapPinned}
+              label="Upcoming trips"
+              value={String(dashboard?.summary.upcomingTrips ?? 0)}
+              detail="Trips already booked and still ahead of travel."
+            />
+            <InfoBlock
+              icon={Ticket}
+              label="Payment balance"
+              value={String(dashboard?.summary.pendingPayments ?? 0)}
+              detail="Bookings that need a settlement payment."
+            />
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="flex items-center gap-3">
+                <ClipboardList className="h-5 w-5 text-slate-700" />
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Account</p>
+                  <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">{dashboard?.profile.name ?? "Guest traveler"}</h2>
+                </div>
+              </div>
+              <dl className="mt-5 grid gap-4 text-sm">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-400">Email</dt>
+                  <dd className="mt-2 font-semibold text-slate-950">{dashboard?.profile.email ?? "Not set"}</dd>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-400">Phone</dt>
+                  <dd className="mt-2 font-semibold text-slate-950">{dashboard?.profile.phone ?? "Not set"}</dd>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-400">Loyalty tier</dt>
+                  <dd className="mt-2 font-semibold text-slate-950">{dashboard?.summary.loyaltyTier ?? "Explorer"}</dd>
+                </div>
+              </dl>
+            </section>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center gap-3">
+            <MessageSquareText className="h-5 w-5 text-slate-700" />
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Support</p>
+              <h2 className="mt-1 text-xl font-semibold text-slate-950">Recent notes</h2>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {dashboard?.support.map((item) => (
+              <div key={item.id} className="rounded-2xl border border-slate-200 p-4">
+                <p className="font-semibold text-slate-950">{item.title}</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{item.detail}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-400">{formatDate(item.updatedAt)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-950 p-5 text-white">
+          <div className="flex items-center gap-3">
+            <PhoneCall className="h-5 w-5 text-white/80" />
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/60">Help</p>
+              <h2 className="mt-1 text-xl font-semibold">Need a quick answer?</h2>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-white/75">
+            Email the support desk directly when you need itinerary changes, payment follow-up, or travel advice.
+          </p>
+          <a
+            href={`mailto:${dashboard?.tenant.supportEmail ?? "support@lankatrails.example"}`}
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950"
+          >
+            {dashboard?.tenant.supportEmail ?? "support@lankatrails.example"}
+          </a>
+        </section>
       </div>
     </section>
+  );
+}
+
+function InfoPair({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="mt-2 font-semibold text-slate-950">{value}</p>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  badgeClassName,
+}: {
+  label: string;
+  value: string;
+  badgeClassName?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-slate-500">{label}</span>
+      <span className={`font-semibold text-slate-950 ${badgeClassName ? `rounded-full px-3 py-1 text-xs ${badgeClassName}` : ""}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function BookingList({
+  title,
+  eyebrow,
+  description,
+  items,
+  emptyText,
+  tenantKey,
+}: {
+  title: string;
+  eyebrow: string;
+  description: string;
+  items: DashboardBooking[];
+  emptyText: string;
+  tenantKey: string;
+}) {
+  return (
+    <section className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{eyebrow}</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-4">
+        {items.length ? (
+          items.slice(0, 3).map((booking) => (
+            <article key={booking.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{booking.reference}</p>
+                  <h3 className="mt-2 text-lg font-semibold text-slate-950">{booking.packageName}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {booking.destination}
+                    {booking.serviceName ? ` · ${booking.serviceName}` : ""}
+                    {booking.activityName ? ` · ${booking.activityName}` : ""}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <Status value={booking.paymentStatus} />
+                  <Link href={prefixTenantBasePath(getTenantBasePath(tenantKey), `/customer/bookings/${booking.reference}`)} className="text-sm font-semibold text-slate-700">
+                    Open
+                  </Link>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+                <span>Travel {formatDate(booking.travelDate)}</span>
+                <span>Paid {formatMoney(booking.paidAmount, booking.currency)}</span>
+                <span>Total {formatMoney(booking.totalAmount, booking.currency)}</span>
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+            {emptyText}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function InfoBlock({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{label}</p>
+          <p className="mt-3 text-3xl font-semibold text-slate-950">{value}</p>
+        </div>
+        <div className="rounded-2xl bg-slate-100 p-3 text-slate-700">
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{detail}</p>
+    </div>
   );
 }
 
@@ -557,18 +1095,20 @@ function BookingStart({ tenant }: { tenant: string }) {
             Start with the trip story, then capture the booking details. The flow below mirrors the public start booking page so customers and staff see the same context.
           </p>
 
-          <form className="mt-6 grid gap-5 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium">Full name<input className="rounded-xl border border-slate-300 px-3 py-2" /></label>
-            <label className="grid gap-2 text-sm font-medium">Email<input type="email" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
-            <label className="grid gap-2 text-sm font-medium">Travel date<input type="date" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
-            <label className="grid gap-2 text-sm font-medium">Travelers<input type="number" min="1" defaultValue="2" className="rounded-xl border border-slate-300 px-3 py-2" /></label>
-            <label className="grid gap-2 text-sm font-medium lg:col-span-2">Notes<textarea className="min-h-28 rounded-xl border border-slate-300 px-3 py-2" /></label>
-            <div className="lg:col-span-2">
-              <Link href={prefixTenantBasePath(basePath, "/booking/confirmation")} className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
-                Submit booking request
+          <section className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Live booking flow</p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-950">Use the Laravel-backed booking page</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  The live booking form already submits to the backend API. This portal route now forwards customers there instead of keeping a separate mock form.
+                </p>
+              </div>
+              <Link href={prefixTenantBasePath(basePath, "/booking/start")} className="inline-flex rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
+                Open live booking form
               </Link>
             </div>
-          </form>
+          </section>
         </div>
 
         <div className="space-y-4">
@@ -594,17 +1134,52 @@ function BookingStart({ tenant }: { tenant: string }) {
 }
 
 function BookingConfirmation() {
+  const params = useSearchParams();
+  const bookingId = params.get("bookingId") ?? params.get("reference") ?? "";
+  const customerName = params.get("customerName") ?? "Customer";
+  const packageName = params.get("packageName") ?? "Booking";
+  const destination = params.get("destination") ?? "Sri Lanka";
+  const totalAmount = params.get("totalAmount") ?? "";
+  const bookingStatus = params.get("bookingStatus") ?? "pending";
+  const paymentStatus = params.get("paymentStatus") ?? "pending";
+
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
       <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-        <Status value="pending" />
+        <Status value={bookingStatus} />
         <h1 className="mt-4 text-3xl font-semibold text-slate-950">Booking request received</h1>
-        <p className="mt-2 text-sm text-slate-600">Our team will contact you to confirm availability, payment, and the final journey setup.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          This confirmation reflects the live booking payload passed through the Laravel backend.
+        </p>
         <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-          <div><dt className="text-xs uppercase text-slate-500">Reference</dt><dd className="font-semibold">TBK-2026-000001</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">Status</dt><dd className="font-semibold">Pending</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">Customer</dt><dd className="font-semibold">Demo Traveler</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">Total</dt><dd className="font-semibold">LKR 185,000</dd></div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Reference</dt>
+            <dd className="font-semibold">{bookingId || "Not supplied yet"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Status</dt>
+            <dd className="font-semibold">{bookingStatus}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Customer</dt>
+            <dd className="font-semibold">{customerName}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Total</dt>
+            <dd className="font-semibold">{totalAmount ? `LKR ${Number(totalAmount).toLocaleString("en-US")}` : "Not supplied yet"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Package</dt>
+            <dd className="font-semibold">{packageName}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Destination</dt>
+            <dd className="font-semibold">{destination}</dd>
+          </div>
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Payment status</dt>
+            <dd className="font-semibold">{paymentStatus}</dd>
+          </div>
         </dl>
       </div>
     </section>
@@ -674,7 +1249,7 @@ export default function TenantBusinessPortal({ tenant, path }: Props) {
       {section === "destinations" && !slug ? <DestinationGrid tenant={resolvedTenant} /> : null}
       {section in sections && section !== "destinations" && !slug ? <ConnectedItemGrid tenant={tenant} section={section as SectionKey} /> : null}
       {section in sections && slug ? <Detail tenant={resolvedTenant} section={section as SectionKey} slug={slug} /> : null}
-      {section === "customer" ? <CustomerDashboard /> : null}
+      {section === "customer" ? <CustomerDashboard tenant={resolvedTenant} /> : null}
       {section === "booking" && slug === "start" ? <BookingStart tenant={resolvedTenant} /> : null}
       {section === "booking" && slug === "confirmation" ? <BookingConfirmation /> : null}
       {section === "contact" ? <Contact /> : null}

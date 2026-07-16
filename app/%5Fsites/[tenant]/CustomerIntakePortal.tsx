@@ -1,13 +1,18 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { bookingService } from "@/src/api/services/bookingService";
+import { activityService } from "@/src/api/services/activityService";
+import { destinationService } from "@/src/api/services/destinationService";
+import { packageService } from "@/src/api/services/packageService";
 import { useContactSettings } from "@/src/api/hooks/settings/useContactSettings";
+import { tourismServiceService } from "@/src/api/services/tourismServiceService";
 import {
-  buildPayPalSandboxUrl,
   decodeCustomerPortalSession,
   isCustomerPortalSessionExpired,
   type CustomerPortalSession,
 } from "@/src/utils/customerPortal";
+import type { TourismItem } from "@/src/shared/tourism/demoData";
 
 type Props = {
   tenant: string;
@@ -34,6 +39,18 @@ type PrimaryContact = {
   notes: string;
 };
 
+type TripCategory = "destination" | "package" | "service" | "activity";
+
+type CardBrand = "visa" | "mastercard" | "credit_card" | "american_express";
+
+type CardDraft = {
+  cardholderName: string;
+  cardNumber: string;
+  expiry: string;
+  cvc: string;
+  brand: CardBrand;
+};
+
 const emptyTraveler = (): TravelerRow => ({
   full_name: "",
   date_of_birth: "",
@@ -53,6 +70,63 @@ const emptyPrimary = (): PrimaryContact => ({
   visa_type: "",
   notes: "",
 });
+
+const initialCardDraft: CardDraft = {
+  cardholderName: "Ayesha Khan",
+  cardNumber: "4111 1111 1111 1111",
+  expiry: "12/29",
+  cvc: "123",
+  brand: "visa",
+};
+
+const categoryLabels: Record<TripCategory, string> = {
+  destination: "Destination",
+  package: "Package",
+  service: "Service",
+  activity: "Activity",
+};
+
+function parseAmount(value?: string | number | null) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  const normalized = String(value ?? "");
+  const amount = Number(normalized.replace(/[^0-9.-]+/g, ""));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function readItems(payload: unknown): TourismItem[] {
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  if (Array.isArray(payload)) {
+    return payload as TourismItem[];
+  }
+
+  const record = payload as { data?: unknown; items?: unknown; destinations?: unknown; packages?: unknown; services?: unknown; activities?: unknown };
+  if (Array.isArray(record.data)) {
+    return record.data as TourismItem[];
+  }
+  if (Array.isArray(record.items)) {
+    return record.items as TourismItem[];
+  }
+  if (Array.isArray(record.destinations)) {
+    return record.destinations as TourismItem[];
+  }
+  if (Array.isArray(record.packages)) {
+    return record.packages as TourismItem[];
+  }
+  if (Array.isArray(record.services)) {
+    return record.services as TourismItem[];
+  }
+  if (Array.isArray(record.activities)) {
+    return record.activities as TourismItem[];
+  }
+
+  return [];
+}
 
 function Field({
   label,
@@ -105,6 +179,53 @@ function TextAreaField({
   );
 }
 
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: TourismItem[];
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-medium text-slate-700">
+      <span>{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+      >
+        {options.length === 0 ? <option value="">No options available</option> : null}
+        {options.map((item) => (
+          <option key={item.slug} value={item.slug}>
+            {item.title}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-white/10 px-4 py-3">
+      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">{label}</p>
+      <p className="mt-1 font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "LKR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function ExpiredView({ tenant }: { tenant: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f4efe7] px-6 text-slate-900">
@@ -136,9 +257,11 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
   const [status, setStatus] = useState<{
     type: "idle" | "saving" | "success" | "error";
     message: string;
-    paymentUrl?: string;
   }>({ type: "idle", message: "" });
-  const [currentUrl, setCurrentUrl] = useState("");
+  const [activeCategory, setActiveCategory] = useState<TripCategory>("package");
+  const [items, setItems] = useState<TourismItem[]>([]);
+  const [cardDraft, setCardDraft] = useState<CardDraft>(initialCardDraft);
+  const [selectedSlug, setSelectedSlug] = useState("");
 
   React.useEffect(() => {
     if (!session) return;
@@ -171,14 +294,55 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
   }, [session?.prefill, session?.note]);
 
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      setCurrentUrl(window.location.href);
-    }
-  }, []);
+    let active = true;
+
+    const loadItems = async () => {
+      try {
+        const response =
+          activeCategory === "destination"
+            ? await destinationService.list(tenant)
+            : activeCategory === "package"
+              ? await packageService.list(tenant)
+              : activeCategory === "service"
+                ? await tourismServiceService.list(tenant)
+                : await activityService.list(tenant);
+
+        if (!active) {
+          return;
+        }
+
+        const nextItems = readItems(response.data?.data ?? response.data);
+        setItems(nextItems);
+        setSelectedSlug(nextItems[0]?.slug ?? "");
+      } catch {
+        if (active) {
+          setItems([]);
+        }
+      }
+    };
+
+    void loadItems();
+
+    return () => {
+      active = false;
+    };
+  }, [activeCategory, tenant]);
 
   if (expired) {
     return <ExpiredView tenant={tenant} />;
   }
+
+  const selectedItem = items.find((item) => item.slug === selectedSlug) ?? items[0];
+  const selectedTotal = Math.max(parseAmount(selectedItem?.amount), 0);
+  const depositAmount = Math.max(Math.round(selectedTotal * 0.1), 0);
+  const cardDigits = cardDraft.cardNumber.replace(/\D/g, "");
+  const paymentReady = Boolean(
+    cardDraft.cardholderName.trim() &&
+      cardDigits.length >= 13 &&
+      cardDraft.expiry.trim() &&
+      cardDraft.cvc.trim().length >= 3 &&
+      selectedTotal > 0,
+  );
 
   const addTraveler = () => setTravelers((current) => [...current, emptyTraveler()]);
   const updateTraveler = (index: number, key: keyof TravelerRow, value: string) => {
@@ -192,24 +356,6 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
     setTravelers((current) => (current.length === 1 ? current : current.filter((_, i) => i !== index)));
   };
 
-  const paymentBusinessEmail = settings.payment_business_email?.trim();
-  const currency = "LKR";
-  const paymentLabel = settings.payment_brand_name?.trim() || session.brandName || tenant;
-
-  const paymentUrl =
-    status.paymentUrl ??
-    (paymentBusinessEmail
-      ? buildPayPalSandboxUrl({
-          businessEmail: paymentBusinessEmail,
-          amount: partialPaymentAmount || settings.payment_partial_amount || "100",
-          currency,
-          itemName: `${paymentLabel} partial payment`,
-          returnUrl: currentUrl || undefined,
-          cancelUrl: currentUrl || undefined,
-          custom: session.sessionId,
-        })
-      : "");
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -220,32 +366,52 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
     setStatus({ type: "saving", message: "Submitting customer details..." });
 
     try {
-      const response = await fetch("/api/customer-intakes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          primaryContact,
-          travelers,
-          paymentUrl,
-          paymentStatus: paymentBusinessEmail ? "pending" : "not_required",
-        }),
+      const response = await bookingService.createPublic(tenant, {
+        customer_name: primaryContact.name || session?.customerName || "Customer",
+        customer_email: primaryContact.email || session?.customerEmail || "",
+        customer_phone: primaryContact.phone || session?.customerPhone || "",
+        destination: activeCategory === "destination" ? (selectedItem?.title ?? "Sri Lanka") : "",
+        destination_slug: activeCategory === "destination" ? (selectedItem?.slug ?? "") : "",
+        package_name: activeCategory === "package" ? (selectedItem?.title ?? "Custom Booking") : "",
+        package_slug: activeCategory === "package" ? (selectedItem?.slug ?? "") : "",
+        service_name: activeCategory === "service" ? (selectedItem?.title ?? "") : "",
+        service_slug: activeCategory === "service" ? (selectedItem?.slug ?? "") : "",
+        activity_name: activeCategory === "activity" ? (selectedItem?.title ?? "") : "",
+        activity_slug: activeCategory === "activity" ? (selectedItem?.slug ?? "") : "",
+        travel_date: session?.createdAt ? new Date(session.createdAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+        return_date: session?.expiresAt ? new Date(session.expiresAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+        adults: travelers.length || 1,
+        children: 0,
+        infants: 0,
+        travelers_count: travelers.length || 1,
+        total_amount: selectedTotal,
+        paid_amount: depositAmount,
+        booking_status: "pending",
+        payment_status: "partial",
+        payment_amount: depositAmount,
+        payment_method: "card",
+        payment_brand: cardDraft.brand,
+        card_last4: cardDigits.slice(-4),
+        card_holder_name: cardDraft.cardholderName,
+        notes: primaryContact.notes || session?.note || "",
+        route_summary: selectedItem?.title ?? "",
+        trip_story: String(selectedItem?.fields?.story ?? ""),
+        trip_highlights: [selectedItem?.fields?.highlights, selectedItem?.fields?.includes, selectedItem?.fields?.coverage].filter(Boolean),
+        add_ons: [selectedItem?.fields?.includes, selectedItem?.fields?.coverage].filter(Boolean),
+        itinerary: [selectedItem?.title].filter((value): value is string => Boolean(value)),
+        destination_story: activeCategory === "destination" ? String(selectedItem?.fields?.story ?? "") : "",
+        package_story: activeCategory === "package" ? String(selectedItem?.fields?.story ?? "") : "",
+        service_story: activeCategory === "service" ? String(selectedItem?.fields?.story ?? "") : "",
+        activity_story: activeCategory === "activity" ? String(selectedItem?.fields?.story ?? "") : "",
+        support_contact: settings.reply_to_email || settings.email || "support@lankatrails.example",
+        token,
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { data?: Record<string, unknown>; error?: string }
-        | null;
-
-      if (!response.ok) {
-        throw new Error(payload?.error ?? "Failed to submit customer details.");
-      }
-
+      const payload = response.data?.data as { reference?: string; booking_reference?: string } | undefined;
+      const bookingReference = payload?.reference ?? payload?.booking_reference ?? "booking";
       setStatus({
         type: "success",
-        message: "Customer information saved. Continue to sandbox payment when ready.",
-        paymentUrl,
+        message: `Booking ${bookingReference} created and deposit recorded.`,
       });
     } catch (error) {
       setStatus({
@@ -266,15 +432,15 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
                 Customer visa intake and partial payment
               </h1>
               <p className="max-w-4xl text-sm leading-7 text-white/70 sm:text-base">
-                Fill in every traveler&apos;s details, then continue to the sandbox payment flow for the partial amount.
+                Fill in every traveler&apos;s details, select the trip components, then complete the dummy card deposit.
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3 lg:max-w-4xl">
               {[
                 ["Session", "24 hours"],
-                ["Gateway", settings.payment_provider ?? "paypal_sandbox"],
-                ["Currency", currency],
+                ["Mode", "Dummy card"],
+                ["Currency", "LKR"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur">
                   <p className="text-[11px] uppercase tracking-[0.25em] text-white/50">{label}</p>
@@ -365,6 +531,75 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
             </section>
 
             <section className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
+              <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold">Trip selection</h2>
+                  <p className="text-sm text-slate-500">
+                    Choose one category, then pick the backend item you want to book.
+                  </p>
+                </div>
+                <div className="rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  10% deposit
+                </div>
+              </div>
+
+              <div className="mb-4 flex flex-wrap gap-2">
+                {(Object.keys(categoryLabels) as TripCategory[]).map((category) => {
+                  const isActive = activeCategory === category;
+
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setActiveCategory(category)}
+                      className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                        isActive
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                      }`}
+                    >
+                      {categoryLabels[category]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                <SelectField
+                  label={categoryLabels[activeCategory]}
+                  value={selectedSlug}
+                  onChange={setSelectedSlug}
+                  options={items}
+                />
+                <div className="rounded-[1.5rem] bg-[#fbfaf7] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Selection summary</p>
+                  <div className="mt-3 space-y-2 text-sm text-slate-700">
+                    <p className="font-medium text-slate-900">{selectedItem?.title ?? "No item selected"}</p>
+                    <p>{selectedItem?.subtitle ?? "Items load directly from the backend for the active category."}</p>
+                    <p className="text-slate-500">
+                      Amount: {selectedItem ? formatMoney(selectedTotal, selectedItem.currency || "USD") : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Selected total</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{formatMoney(selectedTotal)}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Deposit due</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{formatMoney(depositAmount)}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Travelers</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{travelers.length}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-semibold">Travelers</h2>
@@ -450,43 +685,79 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
             <section className="rounded-[1.75rem] border border-[#e7d9c1] bg-[#f8f0df] px-5 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="max-w-3xl">
-                  <h2 className="text-xl font-semibold">Partial payment</h2>
+                  <h2 className="text-xl font-semibold">Card payment</h2>
                   <p className="mt-1 text-sm text-slate-600">
-                    Use the sandbox gateway to collect the deposit after the form is saved.
+                    This is a dummy card checkout. When you press pay, the booking and the 10% deposit are recorded in the backend.
                   </p>
                 </div>
-                <div className="min-w-[240px]">
-                  <Field
-                    label="Amount"
-                    value={partialPaymentAmount}
-                    onChange={setPartialPaymentAmount}
-                    type="number"
-                    placeholder={settings.payment_partial_amount ?? "100"}
-                  />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Stat label="Total" value={formatMoney(selectedTotal)} />
+                  <Stat label="Deposit" value={formatMoney(depositAmount)} />
+                  <Stat label="Status" value="Dummy card" />
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <Field
+                  label="Cardholder name"
+                  value={cardDraft.cardholderName}
+                  onChange={(value) => setCardDraft((current) => ({ ...current, cardholderName: value }))}
+                  placeholder="Name on card"
+                />
+                <Field
+                  label="Card number"
+                  value={cardDraft.cardNumber}
+                  onChange={(value) => setCardDraft((current) => ({ ...current, cardNumber: value }))}
+                  placeholder="4111 1111 1111 1111"
+                />
+                <Field
+                  label="Expiry"
+                  value={cardDraft.expiry}
+                  onChange={(value) => setCardDraft((current) => ({ ...current, expiry: value }))}
+                  placeholder="12/29"
+                />
+                <Field
+                  label="CVC"
+                  value={cardDraft.cvc}
+                  onChange={(value) => setCardDraft((current) => ({ ...current, cvc: value }))}
+                  placeholder="123"
+                />
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-[1fr_180px]">
+                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                  <span>Card brand</span>
+                  <select
+                    value={cardDraft.brand}
+                    onChange={(event) =>
+                      setCardDraft((current) => ({ ...current, brand: event.target.value as CardBrand }))
+                    }
+                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  >
+                    <option value="visa">VISA</option>
+                    <option value="mastercard">MASTER Card</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="american_express">American Express</option>
+                  </select>
+                </label>
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Payment amount</p>
+                  <p className="mt-2 text-lg font-semibold text-slate-900">{formatMoney(depositAmount)}</p>
+                  <p className="mt-1 text-xs text-slate-500">Session hint: {partialPaymentAmount}.</p>
                 </div>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
-                  className="rounded-full bg-[#0f1720] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                  disabled={settingsLoading || !paymentReady}
+                  className="rounded-full bg-[#0f1720] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Save details
+                  Pay and save booking
                 </button>
-                {paymentBusinessEmail ? (
-                  <a
-                    href={paymentUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Continue to sandbox payment
-                  </a>
-                ) : (
-                  <span className="text-sm text-slate-500">
-                    Configure the PayPal sandbox business email first.
-                  </span>
-                )}
+                <span className="text-sm text-slate-500">
+                  Payment is stored as a booking deposit, not charged to a real gateway.
+                </span>
               </div>
 
               {status.type !== "idle" ? (

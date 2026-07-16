@@ -8,6 +8,7 @@ import { authMe } from "@/src/shared/redux/store/authSlice";
 import { redirectToTenantIfNeeded, isBaseHost } from "@/src/utils/tenant";
 import { useBootstrapGate } from "@/src/app/BootstrapGate";
 import { usePathname, useRouter } from "next/navigation";
+import { markAuthCheckedAsGuest } from "@/src/shared/redux/store/authSlice";
 
 export function AuthBootstrapper() {
   const { setAuthReady } = useBootstrapGate();
@@ -44,9 +45,25 @@ export function AuthBootstrapper() {
 
   useEffect(() => {
     if (booted.current) return;
+
+    const normalizedPath = (pathname || "/").toLowerCase();
+    const isTenantPath =
+      normalizedPath.startsWith("/_sites/") || normalizedPath.startsWith("/sites/");
+    const isBaseHome = isBaseHost() && normalizedPath === "/";
+    const isAuthPage = normalizedPath === "/signin" || normalizedPath === "/signup";
+    const isPublicRoute = isPublicPath(normalizedPath) || isTenantPath;
+    const shouldCheckSession =
+      isBaseHome || (isBaseHost() && !isPublicRoute && !isAuthPage);
+
+    if (!shouldCheckSession) {
+      dispatch(markAuthCheckedAsGuest());
+      setAuthReady(true);
+      return;
+    }
+
     booted.current = true;
     dispatch(authMe());
-  }, [dispatch]);
+  }, [dispatch, pathname, setAuthReady]);
 
   useEffect(() => {
     if (!meChecked) return;

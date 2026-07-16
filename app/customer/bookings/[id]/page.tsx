@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Container from "@/src/shared/ui/Container";
 import { ArrowLeft, CalendarDays, Mail, MapPin, Phone } from "lucide-react";
 import { http } from "@/src/api/config/http";
+import BookingSettlementCard from "./BookingSettlementCard";
+import CustomerPortalAuthButton from "@/src/shared/common/CustomerPortalAuthButton";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -40,10 +42,13 @@ function tone(status: string) {
 
 export default async function CustomerBookingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ payment?: string }>;
 }) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const response = await http.get(`/api/customer/bookings/${encodeURIComponent(id)}`, {
     params: { tenantKey: "lanka-trails" },
   });
@@ -66,7 +71,7 @@ export default async function CustomerBookingDetailPage({
         supportContact: string;
         itinerary: string[];
       }
-    | null;
+        | null;
 
   if (!booking) {
     notFound();
@@ -74,10 +79,13 @@ export default async function CustomerBookingDetailPage({
 
   return (
     <Container className="py-8 sm:py-12">
-      <Link href="/customer/bookings" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
-        <ArrowLeft className="h-4 w-4" />
-        Back to bookings
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link href="/customer/bookings" className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+          <ArrowLeft className="h-4 w-4" />
+          Back to bookings
+        </Link>
+        <CustomerPortalAuthButton compact surface="light" />
+      </div>
 
       <section className="mt-4 rounded-[2rem] border border-border bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -138,6 +146,19 @@ export default async function CustomerBookingDetailPage({
                 {booking.notes || "No booking notes recorded."}
               </div>
             </div>
+
+            {booking.paymentStatus !== "paid" ? (
+              <BookingSettlementCard
+                tenantKey="lanka-trails"
+                bookingId={id}
+                reference={booking.reference}
+                amountDue={Math.max(booking.totalAmount - booking.paidAmount, 0)}
+                currency={booking.currency}
+                initialPaidAmount={booking.paidAmount}
+                paymentStatus={booking.paymentStatus}
+                defaultOpen={resolvedSearchParams.payment === "open"}
+              />
+            ) : null}
 
             <div className="rounded-[1.75rem] border border-border bg-white p-5">
               <h2 className="text-xl font-semibold text-title">Quick contacts</h2>

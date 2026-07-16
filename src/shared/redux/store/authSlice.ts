@@ -188,6 +188,13 @@ const authSlice = createSlice({
       // If you want to clear error requestStatus too:
       if (state.requestStatus === "error") state.requestStatus = "idle";
     },
+    markAuthCheckedAsGuest(state) {
+      state.user = null;
+      state.authStatus = "guest";
+      state.requestStatus = "idle";
+      state.error = null;
+      state.meChecked = true;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -276,7 +283,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthError } = authSlice.actions;
+export const { clearAuthError, markAuthCheckedAsGuest } = authSlice.actions;
 export default authSlice.reducer;
 
 /**

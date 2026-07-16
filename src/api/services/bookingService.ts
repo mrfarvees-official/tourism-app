@@ -5,6 +5,8 @@ export const bookingService = {
     http.post(`/api/public/${tenantKey}/bookings`, payload),
   listCustomer: () => http.get("/api/customer/bookings"),
   showCustomer: (bookingId: string | number) => http.get(`/api/customer/bookings/${bookingId}`),
+  settleCustomerPayment: (tenantKey: string, bookingId: string | number, payload: unknown) =>
+    http.post(`/api/customer/bookings/${bookingId}/payments`, { tenantKey, ...payload }),
   listAdmin: (tenantKey: string) =>
     http.get("/api/admin/bookings", { params: { tenantKey } }),
   showAdmin: (tenantKey: string, bookingId: string | number) =>

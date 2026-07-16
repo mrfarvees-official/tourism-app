@@ -5,9 +5,9 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Container from "@/src/shared/ui/Container";
 import { AddonSelector, BookingForm, PriceBreakdown, TravelerForm } from "@/src/shared/components/tourism";
-import { http } from "@/src/api/config/http";
 import { activityService } from "@/src/api/services/activityService";
 import { destinationService } from "@/src/api/services/destinationService";
+import { bookingService } from "@/src/api/services/bookingService";
 import { packageService } from "@/src/api/services/packageService";
 import { tourismServiceService } from "@/src/api/services/tourismServiceService";
 import type { TourismItem } from "@/src/shared/tourism/demoData";
@@ -16,6 +16,7 @@ type BookingDraft = {
   tenantKey: string;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   destinationSlug: string;
   packageSlug: string;
   serviceSlug: string;
@@ -32,6 +33,7 @@ const initialDraft: BookingDraft = {
   tenantKey: "lanka-trails",
   customerName: "Ayesha Khan",
   customerEmail: "ayesha.khan@example.com",
+  customerPhone: "+94 77 123 4567",
   destinationSlug: "",
   packageSlug: "",
   serviceSlug: "",
@@ -77,12 +79,39 @@ type Collections = {
   activities: TourismItem[];
 };
 
+type CardBrand = "visa" | "mastercard" | "credit_card" | "american_express";
+
+type CardDraft = {
+  cardholderName: string;
+  cardNumber: string;
+  expiry: string;
+  cvc: string;
+  postalCode: string;
+  brand: CardBrand;
+};
+
 const emptyCollections: Collections = {
   destinations: [],
   packages: [],
   services: [],
   activities: [],
 };
+
+const initialCardDraft: CardDraft = {
+  cardholderName: "Ayesha Khan",
+  cardNumber: "4111 1111 1111 1111",
+  expiry: "12/29",
+  cvc: "123",
+  postalCode: "",
+  brand: "visa",
+};
+
+const acceptedBrands: Array<{ label: string; value: CardBrand }> = [
+  { label: "VISA", value: "visa" },
+  { label: "MASTER Card", value: "mastercard" },
+  { label: "Credit Card", value: "credit_card" },
+  { label: "American Express", value: "american_express" },
+];
 
 function readItems(payload: unknown): TourismItem[] {
   if (!payload || typeof payload !== "object") {
@@ -104,8 +133,10 @@ export default function BookingStartPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [draft, setDraft] = useState<BookingDraft>(initialDraft);
+  const [cardDraft, setCardDraft] = useState<CardDraft>(initialCardDraft);
   const [collections, setCollections] = useState<Collections>(emptyCollections);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentWorking, setPaymentWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -197,8 +228,14 @@ export default function BookingStartPage() {
   const activityBase = parseAmount(selectedActivity?.amount);
   const journeyPremium = 150000;
   const estimatedTotal = packageBase + serviceBase + activityBase + journeyPremium || 370000;
-  const estimatedDeposit = Math.round(estimatedTotal * 0.5);
   const addonTotal = Math.max(estimatedTotal - packageBase, 0);
+  const cardNumberDigits = cardDraft.cardNumber.replace(/\D/g, "");
+  const paymentReady = Boolean(
+    cardDraft.cardholderName.trim() &&
+      cardNumberDigits.length >= 13 &&
+      cardDraft.expiry.trim() &&
+      cardDraft.cvc.trim().length >= 3,
+  );
 
   const storyCards = [
     {
@@ -246,9 +283,10 @@ export default function BookingStartPage() {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
+    setPaymentWorking(true);
 
     const totalAmount = Math.max(estimatedTotal, 0);
-    const paidAmount = estimatedDeposit;
+    const paidAmount = totalAmount;
     const routeSummary = [
       selectedDestination?.title,
       selectedPackage?.title,
@@ -267,9 +305,21 @@ export default function BookingStartPage() {
       .join(" ");
 
     try {
-      const response = await http.post(`/api/public/${encodeURIComponent(draft.tenantKey)}/bookings`, {
+      if (!paymentReady) {
+        throw new Error("Complete the card payment fields to continue.");
+      }
+
+      const itinerary = [
+        selectedDestination?.title,
+        selectedPackage?.title,
+        selectedService?.title,
+        selectedActivity?.title,
+      ].filter((value): value is string => Boolean(value));
+
+      const response = await bookingService.createPublic(draft.tenantKey, {
         customer_name: draft.customerName,
         customer_email: draft.customerEmail,
+        customer_phone: draft.customerPhone,
         destination: selectedDestination?.title ?? "Sri Lanka",
         destination_slug: selectedDestination?.slug,
         package_name: selectedPackage?.title ?? "Custom Booking",
@@ -286,15 +336,23 @@ export default function BookingStartPage() {
         travelers_count: travelerCount,
         total_amount: totalAmount,
         paid_amount: paidAmount,
+        booking_status: "confirmed",
+        payment_status: "paid",
         notes: draft.notes,
         trip_story: journeyStory,
         journey_story: journeyStory,
         route_summary: routeSummary,
         trip_highlights: tripHighlights,
+        add_ons: tripHighlights,
+        itinerary,
         package_story: getFieldText(selectedPackage, "story"),
         destination_story: getFieldText(selectedDestination, "story"),
         service_story: getFieldText(selectedService, "story"),
         activity_story: getFieldText(selectedActivity, "story"),
+        payment_method: "card",
+        payment_brand: cardDraft.brand,
+        card_last4: cardNumberDigits.slice(-4),
+        card_holder_name: cardDraft.cardholderName,
       });
       const payload = response.data?.data as
         | {
@@ -316,12 +374,13 @@ export default function BookingStartPage() {
         | undefined;
       const bookingId = payload?.reference ?? payload?.booking_reference ?? "";
       router.push(
-        `/booking/confirmation?bookingId=${encodeURIComponent(bookingId)}&customerName=${encodeURIComponent(payload?.customer_name ?? draft.customerName)}&customerEmail=${encodeURIComponent(payload?.customer_email ?? draft.customerEmail)}&packageName=${encodeURIComponent(payload?.package_name ?? selectedPackage?.title ?? "Custom Booking")}&destination=${encodeURIComponent(payload?.destination ?? selectedDestination?.title ?? "Sri Lanka")}&travelDate=${encodeURIComponent(payload?.travel_date ?? draft.travelDate)}&returnDate=${encodeURIComponent(payload?.return_date ?? draft.returnDate)}&totalAmount=${encodeURIComponent(String(payload?.total_amount ?? totalAmount))}&paidAmount=${encodeURIComponent(String(payload?.paid_amount ?? paidAmount))}&bookingStatus=${encodeURIComponent(payload?.status ?? "pending")}&paymentStatus=${encodeURIComponent(payload?.payment_status ?? "unpaid")}&routeSummary=${encodeURIComponent(payload?.route_summary ?? routeSummary)}&tripStory=${encodeURIComponent(payload?.trip_story ?? journeyStory)}`,
+        `/booking/confirmation?bookingId=${encodeURIComponent(bookingId)}&customerName=${encodeURIComponent(payload?.customer_name ?? draft.customerName)}&customerEmail=${encodeURIComponent(payload?.customer_email ?? draft.customerEmail)}&packageName=${encodeURIComponent(payload?.package_name ?? selectedPackage?.title ?? "Custom Booking")}&destination=${encodeURIComponent(payload?.destination ?? selectedDestination?.title ?? "Sri Lanka")}&travelDate=${encodeURIComponent(payload?.travel_date ?? draft.travelDate)}&returnDate=${encodeURIComponent(payload?.return_date ?? draft.returnDate)}&totalAmount=${encodeURIComponent(String(payload?.total_amount ?? totalAmount))}&paidAmount=${encodeURIComponent(String(payload?.paid_amount ?? paidAmount))}&bookingStatus=${encodeURIComponent(payload?.status ?? "confirmed")}&paymentStatus=${encodeURIComponent(payload?.payment_status ?? "paid")}&routeSummary=${encodeURIComponent(payload?.route_summary ?? routeSummary)}&tripStory=${encodeURIComponent(payload?.trip_story ?? journeyStory)}`,
       );
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to create booking.");
     } finally {
       setSubmitting(false);
+      setPaymentWorking(false);
     }
   }
 
@@ -337,6 +396,7 @@ export default function BookingStartPage() {
             <Field label="Tenant key" value={draft.tenantKey} onChange={(value) => setDraft((current) => ({ ...current, tenantKey: value }))} />
             <Field label="Customer name" value={draft.customerName} onChange={(value) => setDraft((current) => ({ ...current, customerName: value }))} />
             <Field label="Customer email" value={draft.customerEmail} onChange={(value) => setDraft((current) => ({ ...current, customerEmail: value }))} />
+            <Field label="Customer phone" value={draft.customerPhone} onChange={(value) => setDraft((current) => ({ ...current, customerPhone: value }))} />
             <SelectField
               label="Destination"
               value={draft.destinationSlug}
@@ -413,15 +473,59 @@ export default function BookingStartPage() {
             </p>
           </AddonSelector>
 
+          <section className="rounded-[1.75rem] border border-border bg-slate-950 p-5 text-white">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-white/55">Card payment</p>
+                <h3 className="mt-2 text-xl font-semibold">Pay the full amount to confirm the booking</h3>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                {acceptedBrands.map((brand) => (
+                  <span key={brand.value} className="rounded-full border border-white/15 bg-white/5 px-3 py-1">
+                    {brand.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              <Field label="Cardholder name" value={cardDraft.cardholderName} onChange={(value) => setCardDraft((current) => ({ ...current, cardholderName: value }))} />
+              <Field label="Card number" value={cardDraft.cardNumber} onChange={(value) => setCardDraft((current) => ({ ...current, cardNumber: value }))} />
+              <Field label="Expiry" value={cardDraft.expiry} onChange={(value) => setCardDraft((current) => ({ ...current, expiry: value }))} />
+              <Field label="CVC" value={cardDraft.cvc} onChange={(value) => setCardDraft((current) => ({ ...current, cvc: value }))} />
+              <Field label="Billing ZIP / postcode" value={cardDraft.postalCode} onChange={(value) => setCardDraft((current) => ({ ...current, postalCode: value }))} />
+              <label className="grid gap-2 text-sm font-medium text-white">
+                <span>Card brand</span>
+                <select
+                  className="h-11 rounded-xl border border-white/10 bg-white/10 px-3 text-white outline-none"
+                  value={cardDraft.brand}
+                  onChange={(event) => setCardDraft((current) => ({ ...current, brand: event.target.value as CardBrand }))}
+                >
+                  {acceptedBrands.map((brand) => (
+                    <option key={brand.value} value={brand.value} className="text-slate-950">
+                      {brand.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <MiniMetric label="Charge" value={currency(estimatedTotal)} />
+              <MiniMetric label="Gateway" value="Backend booking payment" />
+              <MiniMetric label="Outcome" value="Booking confirmed" />
+            </div>
+          </section>
+
           {error ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">{error}</div> : null}
 
           <div className="flex flex-wrap gap-3">
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || paymentWorking}
               className="rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {submitting ? "Submitting..." : "Submit booking"}
+              {paymentWorking ? "Processing payment..." : submitting ? "Submitting..." : "Pay full amount and create booking"}
             </button>
             <Link href="/customer/bookings" className="rounded-xl border border-border px-5 py-3 text-sm font-semibold text-title">
               View bookings
@@ -442,7 +546,7 @@ export default function BookingStartPage() {
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <MiniMetric label="Travelers" value={`${travelerCount}`} />
               <MiniMetric label="Estimated total" value={currency(estimatedTotal)} />
-              <MiniMetric label="Deposit" value={currency(estimatedDeposit)} />
+              <MiniMetric label="Payment" value={currency(estimatedTotal)} />
               <MiniMetric label="Route" value={selectedPackage?.subtitle ?? "Custom"} />
             </div>
           </section>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Container from "@/src/shared/ui/Container";
 import { http } from "@/src/api/config/http";
+import CustomerPortalAuthButton from "@/src/shared/common/CustomerPortalAuthButton";
 import { ArrowRight, CalendarDays, CreditCard, Search } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -135,10 +136,13 @@ export default function CustomerBookingsPage() {
               Check dates, payment status, traveler counts, and notes without opening multiple screens.
             </p>
           </div>
-          <Link href="/booking/start" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white">
-            Start a booking
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <CustomerPortalAuthButton compact surface="light" />
+            <Link href="/booking/start" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white">
+              Start a booking
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -207,6 +211,11 @@ export default function CustomerBookingsPage() {
                   <p className="mt-1 text-sm text-slate-500">
                     Paid {formatMoney(booking.paidAmount, booking.currency)}
                   </p>
+                  {booking.paymentStatus !== "paid" ? (
+                    <p className="mt-1 text-sm text-amber-700">
+                      Due {formatMoney(Math.max(booking.totalAmount - booking.paidAmount, 0), booking.currency)}
+                    </p>
+                  ) : null}
                   <Link
                     href={`/customer/bookings/${booking.reference}`}
                     className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary"
@@ -214,6 +223,15 @@ export default function CustomerBookingsPage() {
                     Open details
                     <ArrowRight className="h-4 w-4" />
                   </Link>
+                  {booking.paymentStatus !== "paid" ? (
+                    <Link
+                      href={`/customer/bookings/${booking.reference}`}
+                      className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-slate-700"
+                    >
+                      Settle payment
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             </article>

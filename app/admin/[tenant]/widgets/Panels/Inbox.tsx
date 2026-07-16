@@ -18,7 +18,11 @@ import {
   readLeadContact,
   type ContactLead,
 } from "./contactLeadUtils";
-import { buildCustomerIntakeLink } from "@/src/utils/customerPortal";
+import {
+  buildCustomerIntakeLink,
+  createCustomerPortalSession,
+  encodeCustomerPortalSession,
+} from "@/src/utils/customerPortal";
 import { sendCustomerIntakeInvite } from "@/src/api/routes/settings/contact";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25];
@@ -90,47 +94,24 @@ export default function InboxPanel({ tenant }: Props) {
       setActionMessage(null);
 
       try {
-        const response = await fetch("/api/customer-intakes/sessions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const session = createCustomerPortalSession({
+          tenantKey: tenant,
+          customerName: lead.name,
+          customerEmail: lead.email,
+          customerPhone: lead.phone,
+          partialPaymentAmount: settings.payment_partial_amount || "100",
+          currency: settings.payment_currency || "LKR",
+          brandName: settings.payment_brand_name || tenant,
+          note: settings.payment_note || lead.message || lead.subject,
+          prefill: {
+            name: lead.name,
+            email: lead.email,
+            phone: lead.phone,
+            subject: lead.subject,
+            message: lead.message,
           },
-          body: JSON.stringify({
-            tenantKey: tenant,
-            customerName: lead.name,
-            customerEmail: lead.email,
-            customerPhone: lead.phone,
-            partialPaymentAmount: settings.payment_partial_amount || "100",
-            currency: settings.payment_currency || "LKR",
-            brandName: settings.payment_brand_name || tenant,
-            note: settings.payment_note || lead.message || lead.subject,
-            prefill: {
-              name: lead.name,
-              email: lead.email,
-              phone: lead.phone,
-              subject: lead.subject,
-              message: lead.message,
-            },
-          }),
         });
-
-        const payload = (await response.json().catch(() => null)) as
-          | { data?: { token?: string } }
-          | { error?: string }
-          | null;
-
-        if (!response.ok) {
-          throw new Error(
-            (payload as { error?: string } | null)?.error ??
-              "Failed to create intake link.",
-          );
-        }
-
-        const responseData =
-          payload && typeof payload === "object" && "data" in payload
-            ? payload.data
-            : null;
-        const token = responseData?.token ?? "";
+        const token = encodeCustomerPortalSession(session);
         if (!token) {
           throw new Error("The intake token was not returned.");
         }

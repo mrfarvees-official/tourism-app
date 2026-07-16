@@ -358,6 +358,52 @@ const bookingConfig: ResourceConfig = {
   }),
 };
 
+const reviewConfig: ResourceConfig = {
+  endpoint: "/api/admin/reviews",
+  singular: "review",
+  editable: true,
+  fields: [
+    { name: "booking_reference", label: "Booking reference", type: "text", placeholder: "TBK-2026-000101", span: 2 },
+    { name: "customer_name", label: "Customer name", type: "text", placeholder: "Ayesha Khan" },
+    { name: "customer_email", label: "Customer email", type: "text", placeholder: "customer@example.com" },
+    { name: "title", label: "Review title", type: "text", placeholder: "Excellent trip" },
+    { name: "message", label: "Message", type: "textarea", span: 2 },
+    { name: "rating", label: "Rating", type: "number", placeholder: "5" },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      options: [
+        { label: "Draft", value: "draft" },
+        { label: "Submitted", value: "submitted" },
+        { label: "Published", value: "published" },
+        { label: "Hidden", value: "hidden" },
+      ],
+    },
+    { name: "response", label: "Admin response", type: "textarea", span: 2 },
+  ],
+  buildForm: (row) => ({
+    booking_reference: readText(row, "booking_reference", readText(row, "bookingReference")),
+    customer_name: readText(row, "customer_name", readText(row, "customerName")),
+    customer_email: readText(row, "customer_email", readText(row, "customerEmail")),
+    title: readText(row, "title"),
+    message: readText(row, "message"),
+    rating: readText(row, "rating", "5"),
+    status: readText(row, "status", "submitted"),
+    response: readText(row, "response"),
+  }),
+  buildPayload: (form) => ({
+    booking_reference: String(form.booking_reference ?? ""),
+    customer_name: String(form.customer_name ?? ""),
+    customer_email: String(form.customer_email ?? ""),
+    title: String(form.title ?? ""),
+    message: String(form.message ?? ""),
+    rating: toNumberValue(form.rating),
+    status: String(form.status ?? "submitted"),
+    response: String(form.response ?? ""),
+  }),
+};
+
 const stayConfig: ResourceConfig = {
   endpoint: "/api/admin/stays",
   singular: "stay",
@@ -494,6 +540,8 @@ export default function BusinessModulePanel({ tenant, moduleKey, title, descript
         ? activityConfig
         : moduleKey === "bookings"
           ? bookingConfig
+          : moduleKey === "reviews"
+            ? reviewConfig
           : moduleKey === "accommodations"
             ? stayConfig
             : transportConfig;

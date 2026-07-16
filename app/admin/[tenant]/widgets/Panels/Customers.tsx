@@ -16,6 +16,7 @@ type CustomerRow = {
   passportNumber: string;
   preferredLanguage: string;
   loyaltyTier: LoyaltyTier;
+  status: "active" | "suspended";
   emergencyContact: string;
   address: string;
   createdAt: string;
@@ -30,6 +31,7 @@ type CustomerFormState = {
   passportNumber: string;
   preferredLanguage: string;
   loyaltyTier: LoyaltyTier;
+  status: "active" | "suspended";
   emergencyContact: string;
   address: string;
 };
@@ -54,6 +56,7 @@ const emptyForm: CustomerFormState = {
   passportNumber: "",
   preferredLanguage: "",
   loyaltyTier: "Explorer",
+  status: "active",
   emergencyContact: "",
   address: "",
 };
@@ -90,6 +93,7 @@ function unwrapItems(payload: unknown): CustomerRow[] {
       passportNumber: getString(row.passport_number, getString(row.passportNumber)),
       preferredLanguage: getString(row.preferred_language, getString(row.preferredLanguage)),
       loyaltyTier: (getString(row.loyalty_tier, "Explorer") as LoyaltyTier) || "Explorer",
+      status: (getString(row.status, "active") as "active" | "suspended") || "active",
       emergencyContact: getString(row.emergency_contact, getString(row.emergencyContact)),
       address: getString(row.address),
       createdAt: getString(row.created_at, getString(row.createdAt)),
@@ -167,6 +171,7 @@ export default function CustomersPanel({ tenant }: Props) {
       passportNumber: row.passportNumber,
       preferredLanguage: row.preferredLanguage,
       loyaltyTier: row.loyaltyTier,
+      status: row.status,
       emergencyContact: row.emergencyContact,
       address: row.address,
     });
@@ -191,6 +196,7 @@ export default function CustomersPanel({ tenant }: Props) {
       passport_number: form.passportNumber.trim(),
       preferred_language: form.preferredLanguage.trim(),
       loyalty_tier: form.loyaltyTier,
+      status: form.status,
       emergency_contact: form.emergencyContact.trim(),
       address: form.address.trim(),
     };
@@ -223,6 +229,19 @@ export default function CustomersPanel({ tenant }: Props) {
       await loadRows();
     } catch (error) {
       setNotice({ tone: "error", message: getErrorMessage(error, "Unable to delete customer.") });
+    }
+  };
+
+  const handleStatusToggle = async (row: CustomerRow, status: "active" | "suspended") => {
+    try {
+      await http.patch(`/api/admin/customers/${row.id}/status`, {
+        tenantKey: tenant,
+        status,
+      });
+      setNotice({ tone: "success", message: `Customer ${status}.` });
+      await loadRows();
+    } catch (error) {
+      setNotice({ tone: "error", message: getErrorMessage(error, "Unable to update customer status.") });
     }
   };
 
@@ -298,6 +317,7 @@ export default function CustomersPanel({ tenant }: Props) {
                   <th className="px-4 py-3">Customer</th>
                   <th className="px-4 py-3">Contact</th>
                   <th className="px-4 py-3">Profile</th>
+                  <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Address</th>
                   <th className="px-4 py-3">Updated</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -306,13 +326,13 @@ export default function CustomersPanel({ tenant }: Props) {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-muted">
+                    <td colSpan={7} className="px-4 py-10 text-muted">
                       Loading customers...
                     </td>
                   </tr>
                 ) : rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-muted">
+                    <td colSpan={7} className="px-4 py-10 text-muted">
                       No customers found.
                     </td>
                   </tr>
@@ -343,6 +363,11 @@ export default function CustomersPanel({ tenant }: Props) {
                         </span>
                       </td>
                       <td className="px-4 py-4 align-top text-sm text-muted">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${row.status === "suspended" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+                          {row.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 align-top text-sm text-muted">
                         <div className="max-w-sm leading-6">{row.address || "-"}</div>
                         <div className="mt-1 text-xs">Emergency: {row.emergencyContact || "-"}</div>
                       </td>
@@ -355,6 +380,13 @@ export default function CustomersPanel({ tenant }: Props) {
                             className="rounded-lg border border-border bg-bg px-3 py-2 text-xs font-semibold text-fg transition hover:bg-hover"
                           >
                             Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleStatusToggle(row, row.status === "active" ? "suspended" : "active")}
+                            className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${row.status === "active" ? "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100" : "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                          >
+                            {row.status === "active" ? "Suspend" : "Activate"}
                           </button>
                           <button
                             type="button"
@@ -503,6 +535,19 @@ export default function CustomersPanel({ tenant }: Props) {
                     <option value="Explorer">Explorer</option>
                     <option value="Insider">Insider</option>
                     <option value="VIP">VIP</option>
+                  </select>
+                </label>
+                <label className="grid gap-2 text-sm">
+                  <span className="font-medium">Status</span>
+                  <select
+                    value={form.status}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, status: event.target.value as "active" | "suspended" }))
+                    }
+                    className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
+                  >
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
                   </select>
                 </label>
                 <label className="grid gap-2 text-sm">

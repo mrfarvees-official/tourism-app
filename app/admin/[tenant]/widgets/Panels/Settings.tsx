@@ -6,6 +6,7 @@ import { useContactSettings } from "@/src/api/hooks/settings/useContactSettings"
 import { useDevice } from "@/src/api/hooks/settings/useDevice";
 import { useOrganization } from "@/src/api/hooks/settings/useOrganization";
 import { useTheme } from "@/src/api/hooks/settings/useTheme";
+import { updateOrganizationProfile } from "@/src/api/routes/settings/organization";
 import { formatDateLong } from "./panelUtils";
 
 type Props = {
@@ -41,10 +42,27 @@ export default function SettingsPanel({ tenant }: Props) {
   const { sessions, loading, actionLoading, logoutDevice, logoutOtherDevices } = useDevice();
   const [contactMessage, setContactMessage] = useState<string | null>(null);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [organizationMessage, setOrganizationMessage] = useState<string | null>(null);
+  const [organizationSaving, setOrganizationSaving] = useState(false);
 
   const organization = details?.organization ?? details ?? null;
   const themeTokens = currentTheme?.tokens ?? null;
   const paymentSummary = `${settings.payment_provider ?? "paypal_sandbox"} • LKR`;
+  const [organizationForm, setOrganizationForm] = useState({
+    name: organization?.name ?? tenant,
+    key: organization?.key ?? tenant,
+    timezone: organization?.timezone ?? "Asia/Colombo",
+    locale: organization?.locale ?? "en",
+  });
+
+  React.useEffect(() => {
+    setOrganizationForm({
+      name: organization?.name ?? tenant,
+      key: organization?.key ?? tenant,
+      timezone: organization?.timezone ?? "Asia/Colombo",
+      locale: organization?.locale ?? "en",
+    });
+  }, [organization?.key, organization?.locale, organization?.name, organization?.timezone, tenant]);
 
   const handleContactSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,6 +85,27 @@ export default function SettingsPanel({ tenant }: Props) {
       setPaymentMessage("Payment settings saved.");
     } catch {
       setPaymentMessage(null);
+    }
+  };
+
+  const handleOrganizationSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setOrganizationMessage(null);
+    setOrganizationSaving(true);
+
+    try {
+      await updateOrganizationProfile({
+        tenantKey: tenant,
+        name: organizationForm.name.trim() || tenant,
+        key: organizationForm.key.trim() || tenant,
+        timezone: organizationForm.timezone.trim() || "Asia/Colombo",
+        locale: organizationForm.locale.trim() || "en",
+      });
+      setOrganizationMessage("Tenant settings saved.");
+    } catch (error) {
+      setOrganizationMessage(error instanceof Error ? error.message : "Failed to save tenant settings.");
+    } finally {
+      setOrganizationSaving(false);
     }
   };
 
@@ -95,27 +134,65 @@ export default function SettingsPanel({ tenant }: Props) {
           <section className="bg-bg px-6 py-5 shadow-sm">
             <div className="border-b border-border pb-4">
               <h2 className="text-lg font-semibold">Organization profile</h2>
-              <p className="mt-1 text-sm text-muted">Pulled directly from the backend tenant record.</p>
+              <p className="mt-1 text-sm text-muted">Edit the tenant name, key, timezone, and locale that drive routing and reporting.</p>
             </div>
 
-            <div className="mt-5 space-y-3 text-sm">
-              <div className="bg-menu px-4 py-4 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Key</p>
-                <p className="mt-2 font-medium text-fg">{organization?.key ?? tenant}</p>
+            <form className="mt-5 grid gap-4" onSubmit={handleOrganizationSave}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="grid gap-2 text-sm font-medium text-fg">
+                  Tenant name
+                  <input
+                    value={organizationForm.name}
+                    onChange={(event) => setOrganizationForm((prev) => ({ ...prev, name: event.target.value }))}
+                    className="bg-menu px-4 py-3 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-fg">
+                  Tenant key
+                  <input
+                    value={organizationForm.key}
+                    onChange={(event) => setOrganizationForm((prev) => ({ ...prev, key: event.target.value }))}
+                    className="bg-menu px-4 py-3 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-fg">
+                  Timezone
+                  <input
+                    value={organizationForm.timezone}
+                    onChange={(event) => setOrganizationForm((prev) => ({ ...prev, timezone: event.target.value }))}
+                    className="bg-menu px-4 py-3 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-fg">
+                  Locale
+                  <input
+                    value={organizationForm.locale}
+                    onChange={(event) => setOrganizationForm((prev) => ({ ...prev, locale: event.target.value }))}
+                    className="bg-menu px-4 py-3 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+                  />
+                </label>
               </div>
-              <div className="bg-menu px-4 py-4 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Timezone</p>
-                <p className="mt-2 font-medium text-fg">{organization?.timezone ?? "Not set"}</p>
+
+              <div className="grid gap-3 text-sm text-muted">
+                <div className="bg-menu px-4 py-4 shadow-sm">
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted">Updated</p>
+                  <p className="mt-2 font-medium text-fg">{formatDateLong(organization?.updated_at)}</p>
+                </div>
               </div>
-              <div className="bg-menu px-4 py-4 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Locale</p>
-                <p className="mt-2 font-medium text-fg">{organization?.locale ?? "Not set"}</p>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={organizationSaving}
+                  className="bg-fg px-5 py-3 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {organizationSaving ? "Saving..." : "Save tenant settings"}
+                </button>
+                <span className="text-xs uppercase tracking-[0.3em] text-muted">Name, key, timezone, locale</span>
               </div>
-              <div className="bg-menu px-4 py-4 shadow-sm">
-                <p className="text-xs uppercase tracking-[0.3em] text-muted">Updated</p>
-                <p className="mt-2 font-medium text-fg">{formatDateLong(organization?.updated_at)}</p>
-              </div>
-            </div>
+
+              {organizationMessage ? <p className="text-sm text-green-700">{organizationMessage}</p> : null}
+            </form>
           </section>
 
           <section className="bg-menu px-6 py-5 shadow-sm">

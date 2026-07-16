@@ -22,6 +22,7 @@ type DestinationRow = {
   nearbyAttractions: string;
   latitude: string;
   longitude: string;
+  amount: string;
   imageUrl: string;
   featured: boolean;
   status: DestinationStatus;
@@ -40,6 +41,7 @@ type DestinationFormState = {
   nearbyAttractions: string;
   latitude: string;
   longitude: string;
+  amount: string;
   imageUrl: string;
   featured: boolean;
   status: DestinationStatus;
@@ -70,6 +72,7 @@ const emptyForm: DestinationFormState = {
   nearbyAttractions: "",
   latitude: "",
   longitude: "",
+  amount: "",
   imageUrl: "",
   featured: false,
   status: "draft",
@@ -122,6 +125,7 @@ function unwrapItems(payload: unknown): DestinationRow[] {
       nearbyAttractions: getString(row.nearbyAttractions, getString(fields.nearbyAttractions)),
       latitude: getString(row.latitude, getString(fields.latitude)),
       longitude: getString(row.longitude, getString(fields.longitude)),
+      amount: getString(row.amount, getString(row.price, getString(fields.amount, getString(fields.price)))),
       imageUrl: getString(row.imageUrl, getString(row.image, "/no-image.jpg")),
       featured: Boolean(row.featured ?? fields.featured),
       status: (row.status as DestinationStatus) ?? "draft",
@@ -196,6 +200,7 @@ export default function DestinationManager({ tenant, title, description }: Props
         row.district,
         row.bestTimeToVisit,
         row.nearbyAttractions,
+        row.amount,
         row.status,
       ]
         .join(" ")
@@ -233,6 +238,7 @@ export default function DestinationManager({ tenant, title, description }: Props
       nearbyAttractions: row.nearbyAttractions,
       latitude: row.latitude,
       longitude: row.longitude,
+      amount: row.amount,
       imageUrl: row.imageUrl,
       featured: row.featured,
       status: row.status,
@@ -261,6 +267,7 @@ export default function DestinationManager({ tenant, title, description }: Props
       nearbyAttractions: form.nearbyAttractions.trim(),
       latitude: form.latitude.trim(),
       longitude: form.longitude.trim(),
+      amount: form.amount.trim(),
       imageUrl: form.imageUrl.trim(),
       featured: form.featured,
       status: form.status,
@@ -400,6 +407,7 @@ export default function DestinationManager({ tenant, title, description }: Props
                   <th className="px-4 py-3">Destination</th>
                   <th className="px-4 py-3">Location</th>
                   <th className="px-4 py-3">Tourism info</th>
+                  <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3">Image</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -408,13 +416,13 @@ export default function DestinationManager({ tenant, title, description }: Props
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-muted">
+                    <td colSpan={7} className="px-4 py-10 text-muted">
                       Loading destinations...
                     </td>
                   </tr>
                 ) : pagedRows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-muted">
+                    <td colSpan={7} className="px-4 py-10 text-muted">
                       No destinations found.
                     </td>
                   </tr>
@@ -434,6 +442,12 @@ export default function DestinationManager({ tenant, title, description }: Props
                         <div>{row.bestTimeToVisit || "-"}</div>
                         <div className="mt-1 max-w-sm">{row.nearbyAttractions || "-"}</div>
                         <div className="mt-1 text-xs">Lat {row.latitude || "-"}, Lng {row.longitude || "-"}</div>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <div className="text-sm font-semibold text-title">
+                          {row.amount ? `LKR ${Number(row.amount).toLocaleString()}` : "-"}
+                        </div>
+                        <div className="mt-1 text-xs text-muted">Used for intake pricing.</div>
                       </td>
                       <td className="px-4 py-4 align-top">
                         <div className="flex items-center gap-3">
@@ -632,6 +646,16 @@ export default function DestinationManager({ tenant, title, description }: Props
                     }
                     className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
                     placeholder="Rock fortress, village tours, viewpoints"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm">
+                  <span className="font-medium">Price / amount</span>
+                  <input
+                    value={form.amount}
+                    onChange={(event) => setForm((current) => ({ ...current, amount: event.target.value }))}
+                    className="rounded-xl border border-border bg-white px-4 py-3 outline-none focus:border-primary"
+                    placeholder="150000"
+                    inputMode="numeric"
                   />
                 </label>
                 <label className="grid gap-2 text-sm">

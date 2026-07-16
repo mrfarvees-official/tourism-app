@@ -6,6 +6,15 @@ import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { http } from "@/src/api/config/http";
 
+type Booking = {
+  id: string;
+  reference: string;
+  packageName: string;
+  destination: string;
+  bookingStatus: string;
+  paymentStatus: string;
+};
+
 type Review = {
   id: string;
   bookingId: string;
@@ -16,8 +25,29 @@ type Review = {
   createdAt: string;
 };
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function ratingLabel(value: number) {
+  return `${value} star${value === 1 ? "" : "s"}`;
+}
+
+function findBookingLabel(bookings: Booking[], bookingId: string) {
+  const match = bookings.find((booking) => booking.id === bookingId || booking.reference === bookingId);
+  if (!match) return bookingId || "Unassigned booking";
+  return `${match.reference} · ${match.packageName}`;
+}
+
 export default function CustomerReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -33,10 +63,19 @@ export default function CustomerReviewsPage() {
 
     async function loadReviews() {
       try {
-        const response = await http.get("/api/customer/reviews", {
-          params: { tenantKey: "lanka-trails" },
-        });
-        if (active) setReviews((response.data?.data ?? []) as Review[]);
+        const [reviewsResponse, bookingsResponse] = await Promise.all([
+          http.get("/api/customer/reviews", {
+            params: { tenantKey: "lanka-trails" },
+          }),
+          http.get("/api/customer/bookings", {
+            params: { tenantKey: "lanka-trails" },
+          }),
+        ]);
+
+        if (active) {
+          setReviews((reviewsResponse.data?.data ?? []) as Review[]);
+          setBookings((bookingsResponse.data?.data ?? []) as Booking[]);
+        }
       } catch {
         if (active) setMessage("Unable to load reviews.");
       } finally {
@@ -51,6 +90,14 @@ export default function CustomerReviewsPage() {
   }, []);
 
   const publishedCount = useMemo(() => reviews.filter((review) => review.status === "published").length, [reviews]);
+  const selectableBookings = useMemo(
+    () => bookings.filter((booking) => ["confirmed", "completed", "checked_in", "pending"].includes(booking.bookingStatus)),
+    [bookings],
+  );
+  const ownerReviews = useMemo(
+    () => reviews.filter((review) => !form.bookingId || review.bookingId === form.bookingId),
+    [form.bookingId, reviews],
+  );
 
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,7 +130,7 @@ export default function CustomerReviewsPage() {
               Share feedback after each trip
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-              Use this page to capture trip ratings, notes, and final feedback in a format support can review quickly.
+              Use this page to capture trip ratings, notes, and final feedback. The right side keeps your past reviews visible beside the form.
             </p>
           </div>
           <Link href="/customer/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-semibold text-title">
@@ -96,7 +143,22 @@ export default function CustomerReviewsPage() {
           <form onSubmit={submitReview} className="rounded-[1.75rem] border border-border bg-slate-50 p-5">
             <h2 className="text-xl font-semibold text-title">Leave a review</h2>
             <div className="mt-4 grid gap-4">
-              <Field label="Booking reference" value={form.bookingId} onChange={(value) => setForm((current) => ({ ...current, bookingId: value }))} />
+              <label className="grid gap-2 text-sm font-medium text-slate-700">
+                <span>Booking</span>
+                <select
+                  value={form.bookingId}
+                  onChange={(event) => setForm((current) => ({ ...current, bookingId: event.target.value }))}
+                  className="rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  required
+                >
+                  <option value="">Select a booking</option>
+                  {selectableBookings.map((booking) => (
+                    <option key={booking.id} value={booking.id}>
+                      {booking.reference} · {booking.packageName}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Field label="Title" value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
               <label className="grid gap-2 text-sm font-medium text-slate-700">
                 <span>Rating</span>
@@ -107,7 +169,7 @@ export default function CustomerReviewsPage() {
                 >
                   {[5, 4, 3, 2, 1].map((value) => (
                     <option key={value} value={value}>
-                      {value} star{value > 1 ? "s" : ""}
+                      {ratingLabel(value)}
                     </option>
                   ))}
                 </select>
@@ -125,7 +187,7 @@ export default function CustomerReviewsPage() {
             {message ? <div className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">{message}</div> : null}
             <button
               type="submit"
-              disabled={saving || loading}
+              disabled={saving || loading || selectableBookings.length === 0}
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
               {saving ? "Saving..." : "Submit review"}
@@ -144,7 +206,7 @@ export default function CustomerReviewsPage() {
             </div>
 
             <div className="grid gap-4">
-              {reviews.map((review) => (
+              {ownerReviews.map((review) => (
                 <article key={review.id} className="rounded-[1.75rem] border border-border bg-white p-5 shadow-sm">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-1 text-amber-500">
@@ -157,11 +219,12 @@ export default function CustomerReviewsPage() {
                     </span>
                   </div>
                   <h3 className="mt-4 text-xl font-semibold text-title">{review.title}</h3>
+                  <p className="mt-2 text-sm text-primary">{findBookingLabel(bookings, review.bookingId)}</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{review.message}</p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</p>
+                  <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-400">{formatDate(review.createdAt)}</p>
                 </article>
               ))}
-              {!loading && reviews.length === 0 ? (
+              {!loading && ownerReviews.length === 0 ? (
                 <div className="rounded-[1.75rem] border border-dashed border-border bg-slate-50 p-8 text-center text-slate-600">
                   No reviews yet.
                 </div>
