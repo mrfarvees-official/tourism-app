@@ -218,10 +218,10 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatMoney(value: number) {
+function formatMoney(value: number, currency = "LKR") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "LKR",
+    currency,
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -577,7 +577,7 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
                     <p className="font-medium text-slate-900">{selectedItem?.title ?? "No item selected"}</p>
                     <p>{selectedItem?.subtitle ?? "Items load directly from the backend for the active category."}</p>
                     <p className="text-slate-500">
-                      Amount: {selectedItem ? formatMoney(selectedTotal, selectedItem.currency || "USD") : "N/A"}
+                      Amount: {selectedItem ? formatMoney(selectedTotal) : "N/A"}
                     </p>
                   </div>
                 </div>
