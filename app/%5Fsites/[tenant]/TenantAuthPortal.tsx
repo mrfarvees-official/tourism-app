@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Container from "@/src/shared/ui/Container";
 import { clearAuthError, login, register } from "@/src/shared/redux/store/authSlice";
 import type { AppDispatch, RootState } from "@/src/shared/redux/store";
+import { getTenantBasePath, prefixTenantBasePath } from "@/src/utils/tenantRouting";
 
 type Mode = "signin" | "signup";
 
@@ -23,6 +24,7 @@ export default function TenantAuthPortal({ tenant, mode }: Props) {
   const requestStatus = useSelector((s: RootState) => s.auth.requestStatus);
   const authError = useSelector((s: RootState) => s.auth.error);
   const isLoading = requestStatus === "loading";
+  const tenantBasePath = getTenantBasePath(tenant);
 
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -39,7 +41,10 @@ export default function TenantAuthPortal({ tenant, mode }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, email, password, passwordConfirmation]);
 
-  const next = searchParams.get("next") || "/customer/dashboard";
+  const next = prefixTenantBasePath(
+    tenantBasePath,
+    searchParams.get("next") || "/customer/dashboard",
+  );
 
   function validateSignIn() {
     if (!email.trim()) return "Please enter your email.";
@@ -211,7 +216,10 @@ export default function TenantAuthPortal({ tenant, mode }: Props) {
           <p className="text-center text-sm text-slate-600">
             {mode === "signin" ? "Need a customer account? " : "Already registered? "}
             <Link
-              href={mode === "signin" ? "/signup" : "/signin"}
+              href={prefixTenantBasePath(
+                tenantBasePath,
+                mode === "signin" ? "/signup" : "/signin",
+              )}
               className="font-semibold text-primary"
             >
               {mode === "signin" ? "Sign up" : "Sign in"}

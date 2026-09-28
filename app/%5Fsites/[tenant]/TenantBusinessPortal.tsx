@@ -8,9 +8,11 @@ import RenderComponent, {
 } from "@/app/designer/[tenant]/widgets/palette/RenderComponent";
 import { sitePage } from "@/app/designer/[tenant]/widgets/palette/data";
 import type { ComponentNode, DesignerState } from "@/app/designer/[tenant]/widgets/palette/types";
+import { getTenantBasePath, prefixTenantBasePath } from "@/src/utils/tenantRouting";
 import { DestinationCard } from "@/src/shared/components/tourism";
 import type { TourismItem } from "@/src/shared/tourism/demoData";
 import { http } from "@/src/api/config/http";
+import { buildContactInquiryPayload, sendContactInquiry } from "@/src/api/routes/settings/contact";
 import {
   ClipboardList,
   CreditCard,
@@ -199,32 +201,6 @@ function badgeClass(status: string) {
     default:
       return "bg-slate-100 text-slate-700";
   }
-}
-
-function getTenantBasePath(tenant: string) {
-  if (typeof window === "undefined" || !tenant) {
-    return "";
-  }
-
-  const parts = window.location.pathname.split("/").filter(Boolean);
-  if ((parts[0] === "sites" || parts[0] === "_sites") && parts[1] === tenant) {
-    return `/sites/${tenant}`;
-  }
-
-  return "";
-}
-
-function prefixTenantBasePath(basePath: string, href: string) {
-  if (!basePath) {
-    return href;
-  }
-
-  if (/^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(href)) {
-    return href;
-  }
-
-  const normalizedHref = href.startsWith("/") ? href : `/${href}`;
-  return `${basePath}${normalizedHref}`;
 }
 
 const unwrapPayload = (value: unknown): unknown => {
@@ -1186,15 +1162,52 @@ function BookingConfirmation() {
   );
 }
 
-function Contact() {
+function Contact({ tenant }: { tenant: string }) {
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [submitState, setSubmitState] = useState<{
+    status: "idle" | "submitting" | "success" | "error";
+    message: string;
+  }>({ status: "idle", message: "" });
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitState({ status: "submitting", message: "" });
+
+    try {
+      const payload = buildContactInquiryPayload(tenant, form, {
+        pageSlug: "contact",
+        source: "tenant-contact-page",
+      });
+      await sendContactInquiry(tenant, payload);
+      setForm({ name: "", email: "", message: "" });
+      setSubmitState({ status: "success", message: "Your inquiry was sent successfully." });
+    } catch (error: unknown) {
+      const response =
+        error && typeof error === "object"
+          ? (error as { response?: { data?: { error?: string; message?: string } }; message?: string })
+          : null;
+      setSubmitState({
+        status: "error",
+        message:
+          response?.response?.data?.error ??
+          response?.response?.data?.message ??
+          response?.message ??
+          "Failed to send inquiry.",
+      });
+    }
+  }
+
   return (
     <section className="mx-auto max-w-7xl px-5 py-8">
       <h1 className="text-3xl font-semibold text-slate-950">Contact</h1>
-      <form className="mt-6 grid max-w-3xl gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <label className="grid gap-2 text-sm font-medium">Name<input className="rounded-md border border-slate-300 px-3 py-2" /></label>
-        <label className="grid gap-2 text-sm font-medium">Email<input type="email" className="rounded-md border border-slate-300 px-3 py-2" /></label>
-        <label className="grid gap-2 text-sm font-medium">Message<textarea className="min-h-28 rounded-md border border-slate-300 px-3 py-2" /></label>
-        <button type="button" className="w-fit rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white">Send inquiry</button>
+      <form onSubmit={handleSubmit} className="mt-6 grid max-w-3xl gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <label className="grid gap-2 text-sm font-medium">Name<input required value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} className="rounded-md border border-slate-300 px-3 py-2" /></label>
+        <label className="grid gap-2 text-sm font-medium">Email<input required type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} className="rounded-md border border-slate-300 px-3 py-2" /></label>
+        <label className="grid gap-2 text-sm font-medium">Message<textarea required value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} className="min-h-28 rounded-md border border-slate-300 px-3 py-2" /></label>
+        <button type="submit" disabled={submitState.status === "submitting"} className="w-fit rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          {submitState.status === "submitting" ? "Sending..." : "Send inquiry"}
+        </button>
+        {submitState.message ? <p className={submitState.status === "error" ? "text-sm text-red-700" : "text-sm text-green-700"}>{submitState.message}</p> : null}
       </form>
     </section>
   );
@@ -1252,7 +1265,7 @@ export default function TenantBusinessPortal({ tenant, path }: Props) {
       {section === "customer" ? <CustomerDashboard tenant={resolvedTenant} /> : null}
       {section === "booking" && slug === "start" ? <BookingStart tenant={resolvedTenant} /> : null}
       {section === "booking" && slug === "confirmation" ? <BookingConfirmation /> : null}
-      {section === "contact" ? <Contact /> : null}
+      {section === "contact" ? <Contact tenant={resolvedTenant} /> : null}
       {schema.footer ? (
         <RenderComponent
           component={schema.footer}

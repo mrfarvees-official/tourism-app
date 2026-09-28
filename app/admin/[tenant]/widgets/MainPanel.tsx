@@ -30,7 +30,6 @@ const isMenuKey = (v: string): v is MenuKey =>
     "transport",
     "bookings",
     "inquiries",
-    "reviews",
   ].includes(v);
 
 export default function MainPanel({ tenant }: { tenant: string }) {

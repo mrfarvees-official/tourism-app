@@ -136,14 +136,6 @@ export default function TenantPanels({
               description="Triage customer inquiries and prepare booking conversions."
             />
           )}
-          {currentMenu === "reviews" && (
-            <BusinessModulePanel
-              tenant={tenant}
-              moduleKey="reviews"
-              title="Reviews"
-              description="Moderate customer reviews and published feedback."
-            />
-          )}
         </motion.div>
       </AnimatePresence>
     </div>

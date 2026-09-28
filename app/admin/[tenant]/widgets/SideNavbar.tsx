@@ -16,7 +16,6 @@ import {
   FaHotel,
   FaCar,
   FaCalendarCheck,
-  FaStar,
 } from "react-icons/fa6";
 import { BiSolidPlaneAlt } from "react-icons/bi";
 import { MdBarChart, MdSchema } from "react-icons/md";
@@ -43,8 +42,7 @@ export type MenuKey =
   | "accommodations"
   | "transport"
   | "bookings"
-  | "inquiries"
-  | "reviews";
+  | "inquiries";
 
 type Props = {
   currentMenu: MenuKey;
@@ -253,15 +251,6 @@ export default function SideNavbar({
               label="Customers"
               onClick={() => onChangeMenu("customers")}
               Icon={FaUser}
-            />
-          </li>
-          <li>
-            <NavItem
-              active={currentMenu === "reviews"}
-              open={open}
-              label="Reviews"
-              onClick={() => onChangeMenu("reviews")}
-              Icon={FaStar}
             />
           </li>
           <li>

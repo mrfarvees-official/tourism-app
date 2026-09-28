@@ -2,6 +2,7 @@ import SitePageClient from "./SitePageClient";
 import CustomerIntakePortal from "./CustomerIntakePortal";
 import TenantBusinessPortal from "./TenantBusinessPortal";
 import TenantCustomerAuthPage from "./TenantCustomerAuthPage";
+import { BookingStartPage } from "@/app/booking/start/page";
 import { ComponentNode } from "@/app/designer/[tenant]/widgets/palette/types";
 
 type PageSchema = {
@@ -173,6 +174,10 @@ export default async function Site({ params, searchParams }: Props) {
         mode={path === "signin" ? "signin" : "signup"}
       />
     );
+  }
+
+  if (path === "booking/start") {
+    return <BookingStartPage tenantKey={resolvedParams.tenant} />;
   }
 
   if (isBusinessRoute(path)) {

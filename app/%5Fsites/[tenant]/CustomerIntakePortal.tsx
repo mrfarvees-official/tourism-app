@@ -2,11 +2,8 @@
 
 import React, { useMemo, useState } from "react";
 import { bookingService } from "@/src/api/services/bookingService";
-import { activityService } from "@/src/api/services/activityService";
-import { destinationService } from "@/src/api/services/destinationService";
 import { packageService } from "@/src/api/services/packageService";
 import { useContactSettings } from "@/src/api/hooks/settings/useContactSettings";
-import { tourismServiceService } from "@/src/api/services/tourismServiceService";
 import {
   decodeCustomerPortalSession,
   isCustomerPortalSessionExpired,
@@ -38,8 +35,6 @@ type PrimaryContact = {
   visa_type: string;
   notes: string;
 };
-
-type TripCategory = "destination" | "package" | "service" | "activity";
 
 type CardBrand = "visa" | "mastercard" | "credit_card" | "american_express";
 
@@ -77,13 +72,6 @@ const initialCardDraft: CardDraft = {
   expiry: "12/29",
   cvc: "123",
   brand: "visa",
-};
-
-const categoryLabels: Record<TripCategory, string> = {
-  destination: "Destination",
-  package: "Package",
-  service: "Service",
-  activity: "Activity",
 };
 
 function parseAmount(value?: string | number | null) {
@@ -179,36 +167,6 @@ function TextAreaField({
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: TourismItem[];
-}) {
-  return (
-    <label className="grid gap-2 text-sm font-medium text-slate-700">
-      <span>{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-      >
-        {options.length === 0 ? <option value="">No options available</option> : null}
-        {options.map((item) => (
-          <option key={item.slug} value={item.slug}>
-            {item.title}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white/10 px-4 py-3">
@@ -258,7 +216,6 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
     type: "idle" | "saving" | "success" | "error";
     message: string;
   }>({ type: "idle", message: "" });
-  const [activeCategory, setActiveCategory] = useState<TripCategory>("package");
   const [items, setItems] = useState<TourismItem[]>([]);
   const [cardDraft, setCardDraft] = useState<CardDraft>(initialCardDraft);
   const [selectedSlug, setSelectedSlug] = useState("");
@@ -298,14 +255,7 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
 
     const loadItems = async () => {
       try {
-        const response =
-          activeCategory === "destination"
-            ? await destinationService.list(tenant)
-            : activeCategory === "package"
-              ? await packageService.list(tenant)
-              : activeCategory === "service"
-                ? await tourismServiceService.list(tenant)
-                : await activityService.list(tenant);
+        const response = await packageService.list(tenant);
 
         if (!active) {
           return;
@@ -326,7 +276,7 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
     return () => {
       active = false;
     };
-  }, [activeCategory, tenant]);
+  }, [tenant]);
 
   if (expired) {
     return <ExpiredView tenant={tenant} />;
@@ -370,14 +320,14 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
         customer_name: primaryContact.name || session?.customerName || "Customer",
         customer_email: primaryContact.email || session?.customerEmail || "",
         customer_phone: primaryContact.phone || session?.customerPhone || "",
-        destination: activeCategory === "destination" ? (selectedItem?.title ?? "Sri Lanka") : "",
-        destination_slug: activeCategory === "destination" ? (selectedItem?.slug ?? "") : "",
-        package_name: activeCategory === "package" ? (selectedItem?.title ?? "Custom Booking") : "",
-        package_slug: activeCategory === "package" ? (selectedItem?.slug ?? "") : "",
-        service_name: activeCategory === "service" ? (selectedItem?.title ?? "") : "",
-        service_slug: activeCategory === "service" ? (selectedItem?.slug ?? "") : "",
-        activity_name: activeCategory === "activity" ? (selectedItem?.title ?? "") : "",
-        activity_slug: activeCategory === "activity" ? (selectedItem?.slug ?? "") : "",
+        destination: "",
+        destination_slug: "",
+        package_name: selectedItem?.title ?? "Custom Booking",
+        package_slug: selectedItem?.slug ?? "",
+        service_name: "",
+        service_slug: "",
+        activity_name: "",
+        activity_slug: "",
         travel_date: session?.createdAt ? new Date(session.createdAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
         return_date: session?.expiresAt ? new Date(session.expiresAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
         adults: travelers.length || 1,
@@ -399,10 +349,10 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
         trip_highlights: [selectedItem?.fields?.highlights, selectedItem?.fields?.includes, selectedItem?.fields?.coverage].filter(Boolean),
         add_ons: [selectedItem?.fields?.includes, selectedItem?.fields?.coverage].filter(Boolean),
         itinerary: [selectedItem?.title].filter((value): value is string => Boolean(value)),
-        destination_story: activeCategory === "destination" ? String(selectedItem?.fields?.story ?? "") : "",
-        package_story: activeCategory === "package" ? String(selectedItem?.fields?.story ?? "") : "",
-        service_story: activeCategory === "service" ? String(selectedItem?.fields?.story ?? "") : "",
-        activity_story: activeCategory === "activity" ? String(selectedItem?.fields?.story ?? "") : "",
+        destination_story: "",
+        package_story: String(selectedItem?.fields?.story ?? ""),
+        service_story: "",
+        activity_story: "",
         support_contact: settings.reply_to_email || settings.email || "support@lankatrails.example",
         token,
       });
@@ -530,71 +480,81 @@ export default function CustomerIntakePortal({ tenant, token }: Props) {
               </div>
             </section>
 
-            <section className="rounded-[1.75rem] border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]">
-              <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">Trip selection</h2>
-                  <p className="text-sm text-slate-500">
-                    Choose one category, then pick the backend item you want to book.
-                  </p>
-                </div>
-                <div className="rounded-full bg-slate-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  10% deposit
-                </div>
-              </div>
-
-              <div className="mb-4 flex flex-wrap gap-2">
-                {(Object.keys(categoryLabels) as TripCategory[]).map((category) => {
-                  const isActive = activeCategory === category;
-
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => setActiveCategory(category)}
-                      className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
-                        isActive
-                          ? "border-slate-900 bg-slate-900 text-white"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
-                      }`}
-                    >
-                      {categoryLabels[category]}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                <SelectField
-                  label={categoryLabels[activeCategory]}
-                  value={selectedSlug}
-                  onChange={setSelectedSlug}
-                  options={items}
-                />
-                <div className="rounded-[1.5rem] bg-[#fbfaf7] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Selection summary</p>
-                  <div className="mt-3 space-y-2 text-sm text-slate-700">
-                    <p className="font-medium text-slate-900">{selectedItem?.title ?? "No item selected"}</p>
-                    <p>{selectedItem?.subtitle ?? "Items load directly from the backend for the active category."}</p>
-                    <p className="text-slate-500">
-                      Amount: {selectedItem ? formatMoney(selectedTotal) : "N/A"}
-                    </p>
+            <section className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.07)]">
+              <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-[#fbfaf7] px-5 py-5 sm:px-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-sm font-semibold text-white">1</span>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Build your journey</p>
+                      <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Trip selection</h2>
+                      <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+                        Choose a category and select the experience you want to include in this booking.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm">
+                    10% deposit
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Selected total</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{formatMoney(selectedTotal)}</p>
+              <div className="px-5 py-5 sm:px-6 sm:py-6">
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-stretch">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-sm font-semibold text-slate-900" htmlFor="intake-trip-item">
+                        Package
+                      </label>
+                      <span className="text-xs text-slate-400">{items.length} available</span>
+                    </div>
+                    <select
+                      id="intake-trip-item"
+                      value={selectedSlug}
+                      onChange={(event) => setSelectedSlug(event.target.value)}
+                      className="mt-3 h-14 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 text-base font-semibold text-slate-900 outline-none transition hover:border-slate-400 focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100"
+                    >
+                      {items.length === 0 ? <option value="">No options available</option> : null}
+                      {items.map((item) => (
+                        <option key={item.slug} value={item.slug}>
+                          {item.title}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-3 text-xs leading-5 text-slate-500">
+                      Select the package for this request. You can review the amount before continuing.
+                    </p>
+                  </div>
+
+                  <div className="relative overflow-hidden rounded-[1.5rem] bg-slate-950 p-5 text-white shadow-sm">
+                    <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+                    <p className="relative text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Selection summary</p>
+                    <div className="relative mt-4">
+                      <h3 className="text-xl font-semibold tracking-tight">{selectedItem?.title ?? "No item selected"}</h3>
+                      <p className="mt-2 text-sm leading-6 text-white/65">
+                        {selectedItem?.subtitle ?? "Items load directly from the backend for the active category."}
+                      </p>
+                      <div className="mt-5 flex items-end justify-between gap-3 border-t border-white/10 pt-4">
+                        <span className="text-xs uppercase tracking-[0.2em] text-white/45">Amount</span>
+                        <span className="text-lg font-semibold">{selectedItem ? formatMoney(selectedTotal) : "N/A"}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Deposit due</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{formatMoney(depositAmount)}</p>
-                </div>
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Travelers</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-900">{travelers.length}</p>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Selected total</p>
+                    <p className="mt-2 text-xl font-semibold tracking-tight text-slate-950">{formatMoney(selectedTotal)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700/60">Deposit due</p>
+                    <p className="mt-2 text-xl font-semibold tracking-tight text-emerald-950">{formatMoney(depositAmount)}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Travelers</p>
+                    <p className="mt-2 text-xl font-semibold tracking-tight text-slate-950">{travelers.length}</p>
+                  </div>
                 </div>
               </div>
             </section>

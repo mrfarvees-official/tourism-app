@@ -11,6 +11,7 @@ import { bookingService } from "@/src/api/services/bookingService";
 import { packageService } from "@/src/api/services/packageService";
 import { tourismServiceService } from "@/src/api/services/tourismServiceService";
 import type { TourismItem } from "@/src/shared/tourism/demoData";
+import { getTenantBasePath, prefixTenantBasePath } from "@/src/utils/tenantRouting";
 
 type BookingDraft = {
   tenantKey: string;
@@ -114,6 +115,10 @@ const acceptedBrands: Array<{ label: string; value: CardBrand }> = [
 ];
 
 function readItems(payload: unknown): TourismItem[] {
+  if (Array.isArray(payload)) {
+    return payload as TourismItem[];
+  }
+
   if (!payload || typeof payload !== "object") {
     return [];
   }
@@ -129,12 +134,17 @@ function readItems(payload: unknown): TourismItem[] {
   return [];
 }
 
-export default function BookingStartPage() {
+export function BookingStartPage({ tenantKey = initialDraft.tenantKey }: { tenantKey?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [draft, setDraft] = useState<BookingDraft>(initialDraft);
+  const [draft, setDraft] = useState<BookingDraft>(() => ({
+    ...initialDraft,
+    tenantKey,
+  }));
   const [cardDraft, setCardDraft] = useState<CardDraft>(initialCardDraft);
   const [collections, setCollections] = useState<Collections>(emptyCollections);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
+  const [collectionsError, setCollectionsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [paymentWorking, setPaymentWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,6 +153,9 @@ export default function BookingStartPage() {
     let active = true;
 
     const loadCollections = async () => {
+      setCollectionsLoading(true);
+      setCollectionsError(null);
+
       try {
         const [destinationResponse, packageResponse, serviceResponse, activityResponse] = await Promise.all([
           destinationService.list(draft.tenantKey),
@@ -164,6 +177,11 @@ export default function BookingStartPage() {
       } catch {
         if (active) {
           setCollections(emptyCollections);
+          setCollectionsError("Unable to load booking options. Please refresh and try again.");
+        }
+      } finally {
+        if (active) {
+          setCollectionsLoading(false);
         }
       }
     };
@@ -373,8 +391,12 @@ export default function BookingStartPage() {
           }
         | undefined;
       const bookingId = payload?.reference ?? payload?.booking_reference ?? "";
+      const confirmationPath = prefixTenantBasePath(
+        getTenantBasePath(draft.tenantKey),
+        "/booking/confirmation",
+      );
       router.push(
-        `/booking/confirmation?bookingId=${encodeURIComponent(bookingId)}&customerName=${encodeURIComponent(payload?.customer_name ?? draft.customerName)}&customerEmail=${encodeURIComponent(payload?.customer_email ?? draft.customerEmail)}&packageName=${encodeURIComponent(payload?.package_name ?? selectedPackage?.title ?? "Custom Booking")}&destination=${encodeURIComponent(payload?.destination ?? selectedDestination?.title ?? "Sri Lanka")}&travelDate=${encodeURIComponent(payload?.travel_date ?? draft.travelDate)}&returnDate=${encodeURIComponent(payload?.return_date ?? draft.returnDate)}&totalAmount=${encodeURIComponent(String(payload?.total_amount ?? totalAmount))}&paidAmount=${encodeURIComponent(String(payload?.paid_amount ?? paidAmount))}&bookingStatus=${encodeURIComponent(payload?.status ?? "confirmed")}&paymentStatus=${encodeURIComponent(payload?.payment_status ?? "paid")}&routeSummary=${encodeURIComponent(payload?.route_summary ?? routeSummary)}&tripStory=${encodeURIComponent(payload?.trip_story ?? journeyStory)}`,
+        `${confirmationPath}?bookingId=${encodeURIComponent(bookingId)}&customerName=${encodeURIComponent(payload?.customer_name ?? draft.customerName)}&customerEmail=${encodeURIComponent(payload?.customer_email ?? draft.customerEmail)}&packageName=${encodeURIComponent(payload?.package_name ?? selectedPackage?.title ?? "Custom Booking")}&destination=${encodeURIComponent(payload?.destination ?? selectedDestination?.title ?? "Sri Lanka")}&travelDate=${encodeURIComponent(payload?.travel_date ?? draft.travelDate)}&returnDate=${encodeURIComponent(payload?.return_date ?? draft.returnDate)}&totalAmount=${encodeURIComponent(String(payload?.total_amount ?? totalAmount))}&paidAmount=${encodeURIComponent(String(payload?.paid_amount ?? paidAmount))}&bookingStatus=${encodeURIComponent(payload?.status ?? "confirmed")}&paymentStatus=${encodeURIComponent(payload?.payment_status ?? "paid")}&routeSummary=${encodeURIComponent(payload?.route_summary ?? routeSummary)}&tripStory=${encodeURIComponent(payload?.trip_story ?? journeyStory)}`,
       );
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to create booking.");
@@ -402,6 +424,8 @@ export default function BookingStartPage() {
               value={draft.destinationSlug}
               onChange={(value) => setDraft((current) => ({ ...current, destinationSlug: value }))}
               options={collections.destinations.map((item) => ({ value: item.slug, label: item.title }))}
+              loading={collectionsLoading}
+              error={collectionsError}
             />
           </div>
 
@@ -411,12 +435,16 @@ export default function BookingStartPage() {
               value={draft.packageSlug}
               onChange={(value) => setDraft((current) => ({ ...current, packageSlug: value }))}
               options={collections.packages.map((item) => ({ value: item.slug, label: item.title }))}
+              loading={collectionsLoading}
+              error={collectionsError}
             />
             <SelectField
               label="Service"
               value={draft.serviceSlug}
               onChange={(value) => setDraft((current) => ({ ...current, serviceSlug: value }))}
               options={collections.services.map((item) => ({ value: item.slug, label: item.title }))}
+              loading={collectionsLoading}
+              error={collectionsError}
             />
           </div>
 
@@ -426,6 +454,8 @@ export default function BookingStartPage() {
               value={draft.activitySlug}
               onChange={(value) => setDraft((current) => ({ ...current, activitySlug: value }))}
               options={collections.activities.map((item) => ({ value: item.slug, label: item.title }))}
+              loading={collectionsLoading}
+              error={collectionsError}
             />
             <Field label="Notes" value={draft.notes} onChange={(value) => setDraft((current) => ({ ...current, notes: value }))} />
           </div>
@@ -527,7 +557,7 @@ export default function BookingStartPage() {
             >
               {paymentWorking ? "Processing payment..." : submitting ? "Submitting..." : "Pay full amount and create booking"}
             </button>
-            <Link href="/customer/bookings" className="rounded-xl border border-border px-5 py-3 text-sm font-semibold text-title">
+            <Link href={prefixTenantBasePath(getTenantBasePath(draft.tenantKey), "/customer/bookings")} className="rounded-xl border border-border px-5 py-3 text-sm font-semibold text-title">
               View bookings
             </Link>
           </div>
@@ -606,6 +636,10 @@ export default function BookingStartPage() {
   );
 }
 
+export default function BookingStartPageRoute() {
+  return <BookingStartPage />;
+}
+
 function Field({
   label,
   value,
@@ -620,7 +654,12 @@ function Field({
   return (
     <label className="grid gap-2 text-sm font-medium">
       <span>{label}</span>
-      <input className="h-11 rounded-xl border border-border px-3" type={type} value={value} onChange={(event) => onChange(event.target.value)} />
+      <input
+        className="h-11 rounded-xl border border-border bg-white px-3 text-slate-950 placeholder:text-slate-400"
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </label>
   );
 }
@@ -630,17 +669,22 @@ function SelectField({
   value,
   onChange,
   options,
+  loading = false,
+  error = null,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
+  loading?: boolean;
+  error?: string | null;
 }) {
   return (
     <label className="grid gap-2 text-sm font-medium">
       <span>{label}</span>
       <select className="h-11 rounded-xl border border-border bg-white px-3" value={value} onChange={(event) => onChange(event.target.value)}>
-        {!options.length ? <option value="">Loading options...</option> : null}
+        {loading ? <option value="">Loading options...</option> : null}
+        {!loading && !options.length ? <option value="">{error ? "Unable to load options" : "No options available"}</option> : null}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

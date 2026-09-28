@@ -15,6 +15,10 @@ import * as IoIcons from "react-icons/io5";
 import * as BsIcons from "react-icons/bs";
 import * as HiIcons from "react-icons/hi2";
 import * as LuIcons from "lucide-react";
+import {
+  getTenantBasePath,
+  prefixTenantBasePath,
+} from "@/src/utils/tenantRouting";
 
 function getSize(size?: Dimension): string | undefined {
   if (!size) return undefined;
@@ -385,38 +389,6 @@ function getTenantKeyFromLocation(): string | null {
     }
   }
   return null;
-}
-
-function getTenantBasePath(tenantKey: string | null | undefined): string {
-  if (typeof window === "undefined" || !tenantKey) {
-    return "";
-  }
-
-  const parts = window.location.pathname.split("/").filter(Boolean);
-  if ((parts[0] === "sites" || parts[0] === "_sites") && parts[1] === tenantKey) {
-    return `/sites/${tenantKey}`;
-  }
-
-  return "";
-}
-
-function prefixTenantBasePath(basePath: string, href: string): string {
-  if (!basePath) {
-    return href;
-  }
-
-  if (
-    /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(href) ||
-    href.startsWith("/api/") ||
-    href.startsWith("/_next/") ||
-    href.startsWith("/sites/") ||
-    href.startsWith("/_sites/")
-  ) {
-    return href;
-  }
-
-  const normalizedHref = href.startsWith("/") ? href : `/${href}`;
-  return `${basePath}${normalizedHref}`;
 }
 
 function buildTargetEndpoint({
@@ -1633,7 +1605,7 @@ function RenderComponentInner({
         return (
           <div>
             <a
-              href="/customer/dashboard"
+              href={prefixTenantBasePath(getTenantBasePath(tenantKey), "/customer/dashboard")}
               style={inlineLinkStyle}
             >
               <span
@@ -1654,7 +1626,7 @@ function RenderComponentInner({
           try {
             await dispatch(logout({ redirectTo: "/signin" })).unwrap();
             if (typeof window !== "undefined") {
-              window.location.assign("/signin");
+              window.location.assign(prefixTenantBasePath(getTenantBasePath(tenantKey), "/signin"));
             }
           } catch {
             // auth slice already carries the failure state
