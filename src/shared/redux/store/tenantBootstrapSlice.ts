@@ -23,22 +23,16 @@ type Palette = {
 type ThemeRecord = {
   id: string;
   name: string;
-  colors: Palette; // single palette only
+  colors: Palette | { light?: Palette; dark?: Palette };
   custom_css?: string | null;
 };
 
-type ThemeTokensWire = string | { light: unknown; dark: unknown };
-
-type BootstrapResponse = {
-  data: {
-    tenant: { key: string; name: string };
-    theme: {
-      id?: string; // optional from API
-      name?: string; // optional from API
-      mode_default: "light" | "dark";
-      tokens: ThemeTokensWire;
-      custom_css: string | null;
-    };
+type BootstrapData = {
+  tenant: { key: string; name: string };
+  theme: {
+    mode_default: "light" | "dark";
+    tokens: unknown;
+    custom_css: string | null;
   };
 };
 
@@ -75,47 +69,32 @@ function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null;
 }
 
-function parseTokens(
-  tokensRaw: ThemeTokensWire,
-): { light: Palette; dark: Palette } | null {
-  let parsed: unknown = tokensRaw;
-
-  if (typeof tokensRaw === "string") {
-    try {
-      parsed = JSON.parse(tokensRaw);
-    } catch {
-      return null;
-    }
-  }
-
-  if (!isRecord(parsed)) return null;
-  const light = (parsed as any).light;
-  const dark = (parsed as any).dark;
-  if (!isRecord(light) || !isRecord(dark)) return null;
-
-  // We trust API provides correct keys (hex strings). Cast to Palette.
-  return { light: light as Palette, dark: dark as Palette };
-}
-
 // ---- thunk ----
 export const fetchTenantBootstrap = createAsyncThunk(
   "tenantBootstrap/fetch",
   async (tenantKey: string, { rejectWithValue }) => {
     try {
-      const res = await http.get("/api/company/bootstrap", {
+      const res = await http.get<{ data: BootstrapData }>("/api/company/bootstrap", {
         params: { tenantKey },
       });
 
-      const data = (res as any).data.data;
+      const data = res.data.data;
 
       const tokensRaw = data.theme.tokens;
       const parsed =
         typeof tokensRaw === "string" ? JSON.parse(tokensRaw) : tokensRaw;
 
+      const themePayload = isRecord(parsed) ? parsed : {};
+      const colors = themePayload.colors ?? (
+        themePayload.light || themePayload.dark
+          ? { light: themePayload.light, dark: themePayload.dark }
+          : themePayload
+      );
+
       const themeRecord: ThemeRecord = {
-        id: parsed?.id ?? "midnight",
-        name: parsed?.name ?? "Midnight",
-        colors: (parsed?.colors ?? {}) as Palette, // hex colors
+        id: typeof themePayload.id === "string" ? themePayload.id : "midnight",
+        name: typeof themePayload.name === "string" ? themePayload.name : "Midnight",
+        colors: colors as ThemeRecord["colors"],
         custom_css: data.theme.custom_css,
       };
 
@@ -126,10 +105,13 @@ export const fetchTenantBootstrap = createAsyncThunk(
         activeThemeId: themeRecord.id,
         custom_css: data.theme.custom_css,
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = isRecord(err) ? err : {};
+      const response = isRecord(error.response) ? error.response : {};
+      const responseData = isRecord(response.data) ? response.data : {};
       const message =
-        err?.response?.data?.message ||
-        err?.message ||
+        (typeof responseData.message === "string" && responseData.message) ||
+        (typeof error.message === "string" && error.message) ||
         "Bootstrap request failed";
       return rejectWithValue(message);
     }

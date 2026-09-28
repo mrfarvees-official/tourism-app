@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/src/shared/redux/store/hooks";
 import { fetchTenantBootstrap } from "@/src/shared/redux/store/tenantBootstrapSlice";
-import { applyTenantThemeInline, resetToGlobalTheme } from "@/src/utils/runtimeConfig";
+import { applyTenantTheme, resetToGlobalTheme } from "@/src/utils/runtimeConfig";
 import { useBootstrapGate } from "@/src/app/BootstrapGate";
 
 export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }) {
@@ -87,7 +87,7 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
     document.documentElement.dataset.theme = isDark ? "dark" : "light";
     document.documentElement.classList.toggle("dark", isDark);
 
-    applyTenantThemeInline(activeTheme.colors);
+    applyTenantTheme(activeTheme.colors);
 
     if (activeTheme.custom_css) {
       const id = "tenant-custom-css";
@@ -108,7 +108,7 @@ export default function TenantBootstrapper({ tenantKey }: { tenantKey?: string }
     if (!isAuthed) return;
     if (!activeTheme?.colors) return;
 
-    const reapply = () => applyTenantThemeInline(activeTheme.colors);
+    const reapply = () => applyTenantTheme(activeTheme.colors);
     window.addEventListener("tenant-theme-changed", reapply);
     return () => window.removeEventListener("tenant-theme-changed", reapply);
   }, [isAuthed, activeTheme]);

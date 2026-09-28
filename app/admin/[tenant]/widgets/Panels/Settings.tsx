@@ -6,12 +6,120 @@ import { useContactSettings } from "@/src/api/hooks/settings/useContactSettings"
 import { useDevice } from "@/src/api/hooks/settings/useDevice";
 import { useOrganization } from "@/src/api/hooks/settings/useOrganization";
 import { useTheme } from "@/src/api/hooks/settings/useTheme";
+import { getTheme, updateTheme } from "@/src/api/routes/settings/theme";
 import { updateOrganizationProfile } from "@/src/api/routes/settings/organization";
+import { useAppDispatch } from "@/src/shared/redux/store/hooks";
+import { fetchTenantBootstrap } from "@/src/shared/redux/store/tenantBootstrapSlice";
+import { applyTenantTheme } from "@/src/utils/runtimeConfig";
 import { formatDateLong } from "./panelUtils";
 
 type Props = {
   tenant: string;
 };
+
+type ThemePalette = Record<string, string>;
+type ThemeMode = "light" | "dark";
+
+type ThemeEditorState = {
+  light: ThemePalette;
+  dark: ThemePalette;
+  hasDark: boolean;
+};
+
+const themeColorFields = [
+  ["bg", "Background"],
+  ["fg", "Foreground"],
+  ["primary", "Primary"],
+  ["secondary", "Secondary"],
+  ["menu", "Menu"],
+  ["content", "Content"],
+  ["border", "Border"],
+  ["muted", "Muted"],
+  ["hover", "Hover"],
+  ["hover_text", "Hover text"],
+  ["accent", "Accent"],
+  ["icons", "Icons"],
+  ["info", "Info"],
+  ["success", "Success"],
+  ["warn", "Warning"],
+  ["danger", "Danger"],
+  ["toast", "Toast"],
+] as const;
+
+const defaultThemePalette: ThemePalette = {
+  bg: "#f8fafc",
+  fg: "#0f172a",
+  primary: "#0f766e",
+  secondary: "#475569",
+  menu: "#ffffff",
+  content: "#ffffff",
+  border: "#e2e8f0",
+  muted: "#64748b",
+  hover: "#f1f5f9",
+  hover_text: "#0f172a",
+  accent: "#f59e0b",
+  icons: "#475569",
+  info: "#2563eb",
+  success: "#16a34a",
+  warn: "#d97706",
+  danger: "#dc2626",
+  toast: "#0f172a",
+  radius: "16px",
+};
+
+function asThemePalette(value: unknown): ThemePalette {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.entries(value).reduce<ThemePalette>((result, [key, item]) => {
+    if (typeof item === "string") result[key] = item;
+    return result;
+  }, {});
+}
+
+function parseThemeEditor(value: unknown): ThemeEditorState {
+  let parsed = value;
+
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const record = parsed as Record<string, unknown>;
+    const light = asThemePalette(record.light);
+    const dark = asThemePalette(record.dark);
+
+    if (Object.keys(light).length || Object.keys(dark).length) {
+      return {
+        light: { ...defaultThemePalette, ...light },
+        dark: { ...defaultThemePalette, ...dark },
+        hasDark: Object.keys(dark).length > 0,
+      };
+    }
+
+    const single = asThemePalette(parsed);
+    if (Object.keys(single).length) {
+      return {
+        light: { ...defaultThemePalette, ...single },
+        dark: { ...defaultThemePalette, ...single },
+        hasDark: false,
+      };
+    }
+  }
+
+  return {
+    light: { ...defaultThemePalette },
+    dark: { ...defaultThemePalette },
+    hasDark: false,
+  };
+}
+
+function isColorValue(value: string) {
+  return /^#[0-9a-f]{6}$/i.test(value);
+}
 
 function Metric({
   title,
@@ -36,6 +144,7 @@ function Metric({
 }
 
 export default function SettingsPanel({ tenant }: Props) {
+  const dispatch = useAppDispatch();
   const { details } = useOrganization(tenant);
   const { currentTheme } = useTheme(tenant);
   const { settings, setSettings, loading: contactLoading, saving: contactSaving, errors: contactErrors, saveSettings } = useContactSettings(tenant);
@@ -43,6 +152,11 @@ export default function SettingsPanel({ tenant }: Props) {
   const [contactMessage, setContactMessage] = useState<string | null>(null);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
   const [organizationMessage, setOrganizationMessage] = useState<string | null>(null);
+  const [themeEditor, setThemeEditor] = useState<ThemeEditorState>(() => parseThemeEditor(null));
+  const [themeModeDefault, setThemeModeDefault] = useState<"light" | "dark">("light");
+  const [themeMessage, setThemeMessage] = useState<string | null>(null);
+  const [themeError, setThemeError] = useState<string | null>(null);
+  const [themeSaving, setThemeSaving] = useState(false);
   const [organizationSaving, setOrganizationSaving] = useState(false);
 
   const organization = details?.organization ?? details ?? null;
@@ -63,6 +177,15 @@ export default function SettingsPanel({ tenant }: Props) {
       locale: organization?.locale ?? "en",
     });
   }, [organization?.key, organization?.locale, organization?.name, organization?.timezone, tenant]);
+
+  React.useEffect(() => {
+    if (currentTheme?.tokens) {
+      setThemeEditor(parseThemeEditor(currentTheme.tokens));
+    }
+    if (currentTheme?.mode_default === "light" || currentTheme?.mode_default === "dark") {
+      setThemeModeDefault(currentTheme.mode_default);
+    }
+  }, [currentTheme?.mode_default, currentTheme?.tokens]);
 
   const handleContactSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,6 +230,62 @@ export default function SettingsPanel({ tenant }: Props) {
     } finally {
       setOrganizationSaving(false);
     }
+  };
+
+  const updateThemeColor = (mode: "light" | "dark", key: string, value: string) => {
+    setThemeEditor((previous) => ({
+      ...previous,
+      [mode]: { ...previous[mode], [key]: value },
+    }));
+    setThemeMessage(null);
+    setThemeError(null);
+  };
+
+  const handleThemeSave = async () => {
+    setThemeSaving(true);
+    setThemeMessage(null);
+    setThemeError(null);
+
+    try {
+      const tokens = themeEditor.hasDark
+        ? { light: themeEditor.light, dark: themeEditor.dark }
+        : themeEditor.light;
+
+      await updateTheme({
+        tenantKey: tenant,
+        mode_default: themeModeDefault,
+        tokens: JSON.stringify(tokens),
+      });
+
+      // Read the persisted value back from the API, then refresh the shared
+      // tenant bootstrap so every screen uses the saved theme.
+      const savedTheme = await getTheme(tenant);
+      if (!savedTheme) throw new Error("Theme was saved but could not be read back.");
+      const savedTokens = savedTheme?.data?.tokens;
+      setThemeEditor(parseThemeEditor(savedTokens));
+      if (savedTheme.data.mode_default === "light" || savedTheme.data.mode_default === "dark") {
+        setThemeModeDefault(savedTheme.data.mode_default);
+      }
+
+      const savedEditor = parseThemeEditor(savedTokens);
+      const savedThemeInput = savedEditor.hasDark
+        ? { light: savedEditor.light, dark: savedEditor.dark }
+        : savedEditor.light;
+      applyTenantTheme(savedThemeInput);
+      dispatch(fetchTenantBootstrap(tenant));
+
+      setThemeMessage("Theme settings saved.");
+    } catch (error) {
+      setThemeError(error instanceof Error ? error.message : "Failed to save theme settings.");
+    } finally {
+      setThemeSaving(false);
+    }
+  };
+
+  const handleThemeReset = () => {
+    setThemeEditor(parseThemeEditor(themeTokens));
+    setThemeMessage(null);
+    setThemeError(null);
   };
 
   return (
@@ -326,6 +505,121 @@ export default function SettingsPanel({ tenant }: Props) {
               {contactErrors ? <p className="text-sm text-danger">{contactErrors}</p> : null}
             </div>
           </form>
+        </section>
+
+        <section className="mt-6 bg-menu px-6 py-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
+            <div>
+              <h2 className="text-lg font-semibold">Theme management</h2>
+              <p className="mt-1 text-sm text-muted">
+                Adjust the tenant color palette and preview the changes before saving.
+              </p>
+            </div>
+            <FaPalette className="text-muted" />
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-fg">
+              Default appearance
+              <select
+                value={themeModeDefault}
+                onChange={(event) => setThemeModeDefault(event.target.value as "light" | "dark")}
+                className="bg-bg px-3 py-2 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-fg">
+              <input
+                type="checkbox"
+                checked={themeEditor.hasDark}
+                onChange={(event) => setThemeEditor((previous) => ({ ...previous, hasDark: event.target.checked }))}
+                className="h-4 w-4 accent-current"
+              />
+              Enable separate dark palette
+            </label>
+            <span className="text-xs uppercase tracking-[0.3em] text-muted">
+              {themeEditor.hasDark ? "Light and dark tokens" : "Single palette"}
+            </span>
+          </div>
+
+          <div className={`mt-5 grid gap-6 ${themeEditor.hasDark ? "xl:grid-cols-2" : ""}`}>
+            {(themeEditor.hasDark ? (["light", "dark"] as ThemeMode[]) : (["light"] as ThemeMode[])).map((mode) => (
+              <div key={mode} className="bg-bg px-4 py-4 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="font-semibold capitalize text-fg">{mode} palette</h3>
+                  <div
+                    className="h-8 w-16 rounded border border-border"
+                    style={{ backgroundColor: isColorValue(themeEditor[mode].primary) ? themeEditor[mode].primary : undefined }}
+                    title={`${mode} primary preview`}
+                  />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {themeColorFields.map(([key, label]) => {
+                    const value = themeEditor[mode][key] ?? "";
+
+                    return (
+                      <label key={key} className="grid gap-2 text-sm font-medium text-fg">
+                        {label}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={isColorValue(value) ? value : "#000000"}
+                            onChange={(event) => updateThemeColor(mode, key, event.target.value)}
+                            className="h-11 w-12 cursor-pointer bg-transparent"
+                            aria-label={`${mode} ${label} color`}
+                          />
+                          <input
+                            value={value}
+                            onChange={(event) => updateThemeColor(mode, key, event.target.value)}
+                            placeholder="#000000"
+                            className="min-w-0 flex-1 bg-menu px-3 py-3 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+                          />
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <label className="mt-3 grid gap-2 text-sm font-medium text-fg">
+                  Border radius
+                  <input
+                    value={themeEditor[mode].radius ?? ""}
+                    onChange={(event) => updateThemeColor(mode, "radius", event.target.value)}
+                    placeholder="16px"
+                    className="bg-menu px-3 py-3 text-fg outline-none ring-1 ring-border transition focus:ring-2 focus:ring-fg/40"
+                  />
+                </label>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void handleThemeSave()}
+              disabled={themeSaving}
+              className="bg-fg px-5 py-3 text-sm font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {themeSaving ? "Saving..." : "Save theme settings"}
+            </button>
+            <button
+              type="button"
+              onClick={handleThemeReset}
+              disabled={themeSaving}
+              className="bg-bg px-5 py-3 text-sm font-semibold text-fg transition hover:bg-hover hover:text-hover_text disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Reset changes
+            </button>
+            <span className="text-xs uppercase tracking-[0.3em] text-muted">
+              {themeSaving ? "Saving theme..." : "Changes apply to the tenant palette"}
+            </span>
+          </div>
+
+          {themeMessage ? <p className="mt-3 text-sm text-green-700">{themeMessage}</p> : null}
+          {themeError ? <p className="mt-3 text-sm text-danger">{themeError}</p> : null}
         </section>
 
         <section className="mt-6 bg-bg px-6 py-5 shadow-sm">
